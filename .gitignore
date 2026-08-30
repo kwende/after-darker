@@ -1,0 +1,52 @@
+# IDE and operating-system files
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+.DS_Store
+Thumbs.db
+
+# Common build output
+bin/
+obj/
+artifacts/
+TestResults/
+coverage/
+
+# Local logs and scratch data
+*.log
+scratch/
+tmp/
+
+# Bring-your-own legacy inputs and reference media
+#
+# These files may be copyrighted, private, very large, or all three. Keep them
+# outside the repository and record only hashes and factual observations in
+# docs when they are used as research evidence.
+private/
+samples/private/
+*.AD
+*.ad
+*.A$
+*.a$
+*.SCR
+*.scr
+*.EXE
+*.exe
+*.DLL
+*.dll
+*.ISO
+*.iso
+*.IMG
+*.img
+*.VHD
+*.vhd
+*.VHDX
+*.vhdx
+*.MP4
+*.mp4
+*.AVI
+*.avi
+*.ZIP
+*.zip
