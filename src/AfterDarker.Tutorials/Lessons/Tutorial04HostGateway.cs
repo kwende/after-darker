@@ -1,4 +1,6 @@
 using System.Buffers.Binary;
+using AfterDarker.Core.Win16;
+using AfterDarker.Core.X86;
 using UnicornEngine;
 using UnicornEngine.Const;
 
@@ -15,6 +17,20 @@ public sealed class Tutorial04HostGateway : ITutorial
 
     public void Run()
     {
+        Result observed = Execute(output: Console.Out);
+        if (observed is not { FinalSp: 0x1000, FinalCs: 0x0008, FinalIp: 0x001C,
+            FinalAx: 0xFFFE, FinalDs: 0x0018, FinalSs: 0x0020, ProtectedMode: true } ||
+            observed.Calls.Count != 2 || observed.StoredValues[0] != 12 || observed.StoredValues[1] != 0xFFFE)
+            throw new InvalidOperationException($"Host gateway completion did not match the lesson: {observed}.");
+        Console.WriteLine("PASS: two host calls returned to x86; the guest stored both results and restored its stack.");
+    }
+
+    // Supplying a typed handler lets tests distinguish marshaling from arithmetic.
+    // The default console lesson still uses the same small HostAdd service.
+    public Result Execute(Func<short, short, short>? handler = null, TextWriter? output = null)
+    {
+        output ??= TextWriter.Null;
+        handler ??= HostAdd;
         const long pageSize = 0x1000;
         const uint callerBase = 0x10000, gatewayBase = 0x20000;
         const uint dataBase = 0x30000, stackBase = 0x40000, gdtBase = 0x50000;
@@ -43,19 +59,20 @@ public sealed class Tutorial04HostGateway : ITutorial
         // This is a tiny synthetic service table, not an NE import resolver.
         var bindings = new Dictionary<GuestAddress, HostBinding>
         {
-            [new(gatewaySelector, gatewayOffset)] = new("Tutorial!HostAdd", 4, HostAdd),
+            [new(gatewaySelector, gatewayOffset)] = new("Tutorial!HostAdd", 4, handler),
         };
-        (short Left, short Right, short Result, ushort ReturnIp, ushort ResultOffset)[] expectedCalls =
+        (short Left, short Right, ushort ReturnIp, ushort ResultOffset)[] expectedCalls =
         [
-            (7, 5, 12, 0x000B, 0x0020),
-            (-7, 5, -2, 0x0019, 0x0022),
+            (7, 5, 0x000B, 0x0020),
+            (-7, 5, 0x0019, 0x0022),
         ];
+        var calls = new List<CallResult>();
 
         byte[] gdt = new byte[5 * 8];
-        Create16BitDescriptor(callerBase, segmentLimit, true).CopyTo(gdt, callerSelector);
-        Create16BitDescriptor(gatewayBase, segmentLimit, true).CopyTo(gdt, gatewaySelector);
-        Create16BitDescriptor(dataBase, segmentLimit, false).CopyTo(gdt, dataSelector);
-        Create16BitDescriptor(stackBase, segmentLimit, false).CopyTo(gdt, stackSelector);
+        SegmentDescriptor16.Encode(callerBase, segmentLimit, true).CopyTo(gdt, callerSelector);
+        SegmentDescriptor16.Encode(gatewayBase, segmentLimit, true).CopyTo(gdt, gatewaySelector);
+        SegmentDescriptor16.Encode(dataBase, segmentLimit, false).CopyTo(gdt, dataSelector);
+        SegmentDescriptor16.Encode(stackBase, segmentLimit, false).CopyTo(gdt, stackSelector);
 
         // As in tutorial 03: protected-mode API setup, with 16-bit descriptors.
         using var emulator = new Unicorn(Common.UC_ARCH_X86, Common.UC_MODE_32);
@@ -127,10 +144,13 @@ public sealed class Tutorial04HostGateway : ITutorial
                 byte[] frame = new byte[frameSize];
                 emulator.MemRead(stackBase + sp, frame);
                 // At the gateway: [SP+0]=IP, [+2]=CS, [+4]=right, [+6]=left.
-                ushort returnIp = BinaryPrimitives.ReadUInt16LittleEndian(frame.AsSpan(0, 2));
-                ushort returnCs = BinaryPrimitives.ReadUInt16LittleEndian(frame.AsSpan(2, 2));
-                short right = BinaryPrimitives.ReadInt16LittleEndian(frame.AsSpan(4, 2));
-                short left = BinaryPrimitives.ReadInt16LittleEndian(frame.AsSpan(6, 2));
+                // The decoder's byte layout lives in Core/Win16/FarPascalWordFrame.cs
+                // and is unit tested independently of the emulator.
+                var decoded = new FarPascalWordFrame(frame);
+                ushort returnIp = decoded.ReturnIp;
+                ushort returnCs = decoded.ReturnCs;
+                short left = decoded.ReadArgument(0);
+                short right = decoded.ReadArgument(1);
                 if (returnCs != callerSelector || returnIp != expected.ReturnIp ||
                     left != expected.Left || right != expected.Right)
                     throw new InvalidOperationException($"{binding.Name}: unexpected return {returnCs:X4}:{returnIp:X4} or arguments ({left}, {right}).");
@@ -139,24 +159,26 @@ public sealed class Tutorial04HostGateway : ITutorial
                 if (ReadWord(emulator, dataBase + expected.ResultOffset) != marker)
                     throw new InvalidOperationException("The guest result changed before its host call returned.");
                 if (callIndex > 0 && ReadWord(emulator, dataBase + expectedCalls[callIndex - 1].ResultOffset) !=
-                    unchecked((ushort)expectedCalls[callIndex - 1].Result))
+                    unchecked((ushort)calls[callIndex - 1].ReturnedValue))
                     throw new InvalidOperationException("The previous guest store did not complete before the next call.");
 
-                Console.WriteLine($"Trap {trapCount}: {entry}, hook linear address 0x{reportedAddress:X5}, SP=0x{sp:X4}");
+                output.WriteLine($"Trap {trapCount}: {entry}, hook linear address 0x{reportedAddress:X5}, SP=0x{sp:X4}");
                 short result = binding.Handler(left, right); // The addition happens in C#.
-                Console.WriteLine($"Host: {binding.Name}({left}, {right}) = {result}; return {returnCs:X4}:{returnIp:X4}");
+                output.WriteLine($"Host: {binding.Name}({left}, {right}) = {result}; return {returnCs:X4}:{returnIp:X4}");
 
                 // Simulate same-privilege RETF 4: restore CS:IP, pop four return bytes,
                 // and remove four argument bytes. The guest performs no RETF itself.
                 emulator.RegWrite(X86.UC_X86_REG_AX, unchecked((ushort)result));
                 emulator.RegWrite(X86.UC_X86_REG_CS, returnCs);
                 emulator.RegWrite(X86.UC_X86_REG_EIP, returnIp);
-                emulator.RegWrite(X86.UC_X86_REG_SP, sp + frameSize);
+                emulator.RegWrite(X86.UC_X86_REG_SP, decoded.StackPointerAfterReturn(checked((ushort)sp)));
                 if (ReadWord(emulator, dataBase + expected.ResultOffset) != marker)
                     throw new InvalidOperationException("Host dispatch must not write the guest result location.");
 
                 resumeIp = returnIp;
                 previousAx = unchecked((ushort)result);
+                calls.Add(new(entry.Selector, entry.Offset, reportedAddress, sp,
+                    returnCs, returnIp, left, right, result));
             }
 
             // Resume after the second host return so the GUEST executes its final MOV.
@@ -165,26 +187,21 @@ public sealed class Tutorial04HostGateway : ITutorial
             if (trappedLinearAddress is not null || trapCount != expectedCalls.Length)
                 throw new InvalidOperationException("Unexpected extra gateway entry while completing the guest.");
 
+            var storedValues = new List<ushort>();
             foreach (var expected in expectedCalls)
             {
                 ushort actualBits = ReadWord(emulator, dataBase + expected.ResultOffset);
-                Console.WriteLine($"Guest stored {unchecked((short)actualBits)} (0x{actualBits:X4}) at {dataSelector:X4}:{expected.ResultOffset:X4}");
-                if (actualBits != unchecked((ushort)expected.Result))
-                    throw new InvalidOperationException($"Expected guest result {expected.Result} at offset 0x{expected.ResultOffset:X4}.");
+                output.WriteLine($"Guest stored {unchecked((short)actualBits)} (0x{actualBits:X4}) at {dataSelector:X4}:{expected.ResultOffset:X4}");
+                storedValues.Add(actualBits);
             }
 
             long finalSp = emulator.RegRead(X86.UC_X86_REG_SP);
             long finalCs = emulator.RegRead(X86.UC_X86_REG_CS);
             long finalIp = emulator.RegRead(X86.UC_X86_REG_EIP);
-            Console.WriteLine($"Final CS:IP = {finalCs:X4}:{finalIp:X4}; SP = 0x{finalSp:X4}; host calls = {trapCount}");
-            if (finalSp != initialSp || finalCs != callerSelector || finalIp != callerCode.Length ||
-                emulator.RegRead(X86.UC_X86_REG_AX) != unchecked((ushort)expectedCalls[^1].Result) ||
-                emulator.RegRead(X86.UC_X86_REG_DS) != dataSelector ||
-                emulator.RegRead(X86.UC_X86_REG_SS) != stackSelector ||
-                (emulator.RegRead(X86.UC_X86_REG_CR0) & 1) == 0)
-                throw new InvalidOperationException("Guest completion registers or restored stack do not match the expected state.");
-
-            Console.WriteLine("PASS: two host calls returned to x86; the guest stored both results and restored its stack.");
+            output.WriteLine($"Final CS:IP = {finalCs:X4}:{finalIp:X4}; SP = 0x{finalSp:X4}; host calls = {trapCount}");
+            return new(calls.AsReadOnly(), storedValues.AsReadOnly(), finalSp, finalCs, finalIp,
+                emulator.RegRead(X86.UC_X86_REG_AX), emulator.RegRead(X86.UC_X86_REG_DS),
+                emulator.RegRead(X86.UC_X86_REG_SS), (emulator.RegRead(X86.UC_X86_REG_CR0) & 1) != 0);
         }
         finally
         {
@@ -192,6 +209,12 @@ public sealed class Tutorial04HostGateway : ITutorial
             emulator.Close();
         }
     }
+
+    public sealed record Result(IReadOnlyList<CallResult> Calls, IReadOnlyList<ushort> StoredValues,
+        long FinalSp, long FinalCs, long FinalIp, long FinalAx, long FinalDs, long FinalSs, bool ProtectedMode);
+
+    public sealed record CallResult(ushort Selector, ushort Offset, long LinearAddress, long StackPointer,
+        ushort ReturnCs, ushort ReturnIp, short Left, short Right, short ReturnedValue);
 
     // A typed synthetic API: signed 16-bit arguments/result, wrapping like 16-bit ADD.
     private static short HostAdd(short left, short right) => unchecked((short)(left + right));
@@ -209,19 +232,6 @@ public sealed class Tutorial04HostGateway : ITutorial
         byte[] bytes = new byte[2];
         emulator.MemRead(linearAddress, bytes);
         return BinaryPrimitives.ReadUInt16LittleEndian(bytes);
-    }
-
-    // Identical descriptor encoding to tutorial 03: byte limits, D/B=0, privilege 0.
-    private static byte[] Create16BitDescriptor(uint baseAddress, ushort inclusiveLimit, bool executable)
-    {
-        byte[] descriptor = new byte[8];
-        BinaryPrimitives.WriteUInt16LittleEndian(descriptor.AsSpan(0, 2), inclusiveLimit);
-        BinaryPrimitives.WriteUInt16LittleEndian(descriptor.AsSpan(2, 2), (ushort)baseAddress);
-        descriptor[4] = (byte)(baseAddress >> 16);
-        descriptor[5] = executable ? (byte)0x9B : (byte)0x93;
-        descriptor[6] = 0;
-        descriptor[7] = (byte)(baseAddress >> 24);
-        return descriptor;
     }
 
     private static void WriteDescriptorTableRegister(Unicorn emulator, uint baseAddress, uint inclusiveLimit)

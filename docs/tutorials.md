@@ -12,13 +12,13 @@ These were already installed on the development machine. Windows PowerShell
 and Windows `tar.exe` handle the native dependency restore.
 
 1. Open `AfterDarker.sln` in Visual Studio.
-2. The only executable project is `AfterDarker.Tutorials`; select it as the
-   startup project if Visual Studio asks.
+2. Select `AfterDarker.Tutorials` as the startup project. The solution also has
+   a test runner executable; the tutorial project remains the F5 learning tool.
 3. Press **F5** using the `Tutorial 01 - 16-bit addition` launch profile.
 
 The program exits without waiting for keyboard input. Visual Studio may keep
 its debug console open afterward according to the IDE's settings. Put a
-breakpoint on `RegRead` in `Tutorial01Addition.Run` to inspect the host code.
+breakpoint on `RegRead` in `Tutorial01Addition.Execute` to inspect the host code.
 Stepping in C# steps the host, not individual guest instructions.
 
 From the repository root, the equivalent command is:
@@ -84,7 +84,8 @@ dotnet run --project src/AfterDarker.Tutorials --launch-profile "Tutorial 02 - s
 
 Read
 [`Tutorial02StackCall.cs`](../src/AfterDarker.Tutorials/Lessons/Tutorial02StackCall.cs).
-The stack allocation and register initialization are directly in `Run()`.
+The stack allocation and register initialization are directly in `Execute()`;
+`Run()` invokes it, checks the lesson's expectations, and prints success.
 The lesson maps a separate read/write page at `0x8000..0x8FFF`, initializes
 `SS=0` and `SP=0x9000`, and runs the entire guest sequence without callbacks.
 The subroutine copies its in-call `SP` into `DX` for inspection afterward.
@@ -174,8 +175,9 @@ dotnet run --project src/AfterDarker.Tutorials --launch-profile "Tutorial 04 - h
 ```
 
 Read [`Tutorial04HostGateway.cs`](../src/AfterDarker.Tutorials/Lessons/Tutorial04HostGateway.cs).
-It repeats tutorial 03's descriptor setup so the mechanism can be read in one
-class. The callee address now names a synthetic C# service:
+It repeats tutorial 03's memory/register setup so the mechanism remains visible.
+Both lessons use the tested `SegmentDescriptor16.Encode` helper for the eight
+descriptor bytes. The callee address now names a synthetic C# service:
 
 ```text
 x86 pushes two arguments and executes CALL FAR 0010:0200
@@ -204,6 +206,9 @@ stop, `SS=0020`, `SP=0FF8`, and the eight-byte frame is:
 | `+6` | First argument pushed: left | `7` | `-7` |
 
 C# reads the frame after checking its bounds against the known stack page.
+The byte decoding and cleanup calculation are now shared through
+[`FarPascalWordFrame`](../src/AfterDarker.Core/Win16/FarPascalWordFrame.cs),
+with independent unit tests for order, signedness, and invalid frames.
 It restores the saved CS:IP and advances SP by eight: four bytes for the far
 return address plus four for the arguments. This simulates `RETF 4`; tutorial
 04 contains no guest `RETF` instruction. The next `EmuStart` begins at the saved
@@ -227,6 +232,26 @@ pointer translator, or reverse callbacks. Segment protection remains a
 separate proof boundary.
 
 ## Shared runner
+
+The tutorials remain first-class examples alongside [the automated tests](testing.md).
+Each lesson now has two entry points:
+
+- `Run()` preserves the narrated console lesson and its success checks.
+- `Execute(...)` performs the same emulation and returns a typed `Result` of
+  actual observations. Tests assert these values directly. With no writer
+  supplied, it is quiet; `Run()` supplies `Console.Out`.
+
+Guest byte arrays, memory maps, registers, hooks, and return simulation remain
+in the lesson classes. Only the descriptor encoder and far Pascal word-frame
+decoder have moved to `AfterDarker.Core`. This keeps tests and examples on the
+same implementation without turning the lessons into calls to an opaque runner.
+
+Tutorial 01 accepts alternative word operands. Tutorial 04 accepts an optional
+typed host handler so tests can distinguish argument order from arithmetic and
+verify values other than the lesson's fixed sums. The default F5 behavior is
+unchanged. `Execute()` returns observations rather than declaring final success;
+`Run()` and the test methods each verify their own expectations. Checks needed
+to safely dispatch the gateway still execute inside `Execute()`.
 
 [`ITutorial`](../src/AfterDarker.Tutorials/ITutorial.cs) exposes `Id`, `Title`,
 and `Run()`. [`Program.cs`](../src/AfterDarker.Tutorials/Program.cs) registers
@@ -278,8 +303,8 @@ setting and uses the MinGW DLL to avoid the MSVC release's debug-runtime depende
 
 The build runs `tools/configure-tutorial-apphost.ps1`, which locates Microsoft's
 `editbin` and applies `/GUARD:NO` only to this project's generated executable.
-The script restricts the target to the tutorial's `bin/` directory. This opts
-the tutorial process out of CFG; it does not change machine-wide security
+The script restricts targets to the tutorial and test executables inside their
+respective `bin/` directories. This opts those processes out of CFG; it does not change machine-wide security
 settings or patch the shared .NET host. This is a tutorial compatibility
 tradeoff to revisit before any broader runtime/distribution decision.
 See [upstream's CFG report](https://github.com/unicorn-engine/unicorn/issues/2281).

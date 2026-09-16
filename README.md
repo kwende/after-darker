@@ -62,8 +62,10 @@ See:
 
 - [Architecture](docs/architecture.md)
 - [Current status and proof boundary](docs/current-status.md)
+- [Local module import/API census](docs/research/ad-import-census.md)
 - [Agent collaboration charter](AGENTS.md)
 - [Run and understand the tutorials](docs/tutorials.md)
+- [Run the automated tests](docs/testing.md)
 
 Open `AfterDarker.sln` in Visual Studio with .NET 10 support and press **F5**.
 The single console project runs tutorial 01 by default and exits after printing
@@ -73,6 +75,11 @@ Select the `Tutorial 02 - stack and near call` launch profile to run the stack
 experiment instead.
 Select `Tutorial 03 - protected-mode far call` for the guest-to-guest far call.
 Select `Tutorial 04 - host gateway` for a far call serviced by C#.
+
+Run `dotnet test` from the repository root for the C# test suite. The solution
+contains a small shared `AfterDarker.Core` library, the educational console app,
+and `AfterDarker.Tests`. Keep `AfterDarker.Tutorials` as the startup project for
+F5; automated tests are available separately through Test Explorer.
 
 ## Guiding principles
 

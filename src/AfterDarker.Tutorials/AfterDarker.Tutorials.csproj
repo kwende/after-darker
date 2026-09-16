@@ -12,6 +12,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="../AfterDarker.Core/AfterDarker.Core.csproj" />
     <PackageReference Include="UnicornEngine.Unicorn" Version="2.1.3" />
     <None Include="$(UnicornNativePath)" Link="unicorn.dll" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>

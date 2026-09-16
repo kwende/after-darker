@@ -15,6 +15,9 @@
         "type": "Transitive",
         "resolved": "6.0.7",
         "contentHash": "e6wGrq5smV3Yk2fBE/Y0nBG5oFyF59k5Je0a0QDydUpg6liyaafGjD3xvutciKepCP2knspZ/sWViC/F1OyyQQ=="
+      },
+      "afterdarker.core": {
+        "type": "Project"
       }
     },
     "net10.0/win-x64": {

@@ -8,9 +8,25 @@ After Darker has a C# tutorial console host with real-mode addition and
 near-call experiments, plus 16-bit protected-mode far-call and synthetic host
 gateway experiments using Unicorn 2.1.3. No After Dark runtime, NE loader,
 Win16 shim, or renderer has been implemented here yet.
+`AfterDarker.Core` contains two extracted binary-layout helpers, with a C#
+MSTest project covering those helpers and the existing tutorial behavior.
 
 ## Established evidence
 
+- The [C# test suite](testing.md) has 32 passing cases: 15 unit, 13 native-engine
+  conformance, and four tutorial entry-point checks. It uses the same guest
+  programs as the lessons, with typed observations and independent assertions.
+  Temporary omitted-cleanup and wrong-return mutations were rejected. This
+  coverage does not extend to unimplemented Windows APIs or segment protection.
+- A static [import census](research/ad-import-census.md) covers all 29 local
+  Windows NE modules: 51 GDI, 35 USER, and 43 KERNEL targets (including one
+  imported constant), plus 59 AD_RSRC, 10 AD_SND, and one WIN87EM target.
+  No direct thread/synchronization or Win16 task-wait/yield imports were found.
+  Memory management, files/settings, clocks, dialog callbacks, helper libraries,
+  and GraphStat's `WinExec` import are visible. The helper DLLs are absent, so
+  their transitive dependencies remain unexamined. This is artifact evidence,
+  not proof of which APIs run during drawing. Per-input hashes and the full
+  API-to-module mapping accompany the report.
 - Tutorial 01 runs `MOV AX, 7; ADD AX, 5` in Unicorn from a native Windows C#
   host, reads `AX=12` and `IP=0x1006`, and exits successfully. This is a bounded
   two-instruction real-mode probe, not protected-mode conformance.
@@ -85,8 +101,9 @@ explicitly.
 
 ## Next planning point
 
-The owner authorized tutorial 04 and its commit/push for morning review.
-Review tutorial 04 together before advancing. The owner wants F5-able
+The owner authorized introducing a C# test project while preserving the console
+as a first-class educational tool. Review the extraction and tutorial 04 before
+advancing to another emulation concept. The owner wants F5-able
 C# lessons in one console app, with separate implementation classes invoked
 through `ITutorial`. Understanding and explicit readiness govern progression.
 Issue #1 tracks the broader protected-mode and host-gateway experiments.
@@ -94,6 +111,45 @@ Tutorial 04 implements the narrow host trap; the broader issue is not complete.
 See [the tutorial guide](tutorials.md).
 
 ## Session log
+
+### 2026-09-16 — C# testing foundation
+
+- Created `codex/foundation-unit-tests`, preserving the uncommitted import
+  census work. The owner subsequently authorized committing and pushing both
+  the census and test foundation for review before merging.
+- Added MSTest.Sdk 4.4.1/Microsoft.Testing.Platform 2.4.1 with pinned dependencies
+  and a .NET 10 test-runner selection. The generated test executable receives
+  the same restricted CFG workaround as the tutorial executable.
+- Extracted descriptor encoding and far Pascal word-frame decoding into a
+  dependency-free Core library. Lessons still own their guest bytes, memory
+  maps, hooks, register operations, and console success checks. Their new
+  `Execute` entry points return actual observations for independent assertions.
+- Added 32 cases for binary layouts, malformed input, word arithmetic bounds,
+  near/far calls, gateway marshaling and guest stores, signed return extremes,
+  handler failure, and the original tutorial entry points.
+- Verified unit-test filtering/discovery and native execution through MTP.
+  Temporary omitted argument cleanup caused two unit failures; temporary RET
+  in place of RETF caused the far-call conformance failure. Sources restored.
+- The full suite and four console launch profiles pass. Interactive Test
+  Explorer remains a manual check. No Windows API mocks were added.
+
+### 2026-09-16 — local import/API census
+
+- Created `codex/ad-import-census` from the tutorial 04 branch for the requested
+  inspection. Added an offline research inspector and factual reports; no
+  emulator or Win16 service implementation changed.
+- Read all `.ad`/`.dll` candidates under the ignored `ad/` directory. All 29
+  parse as Windows NE; the two supporting non-executable files were skipped.
+- Resolved Windows/WIN87EM ordinal names against Wine 10.0 export metadata.
+  AD_RSRC's 59 distinct ordinal contracts remain unresolved. Ten AD_SND names
+  are present in callers, but that does not recover their full ABI/behavior.
+- Verified the inspector using generated ordinal/name imports, internal
+  references, truncated inputs, an invalid module index, and unresolved imports.
+  The complete collection passes structural checks. Original binaries remain
+  ignored; the report contains hashes and metadata only.
+- The scan supports a narrow initial guest context, not a claim that the whole
+  collection needs no scheduling. Dialog re-entrancy and asynchronous sound
+  need separate investigation when those modules become targets.
 
 ### 2026-09-16 — tutorial 04: host gateway
 

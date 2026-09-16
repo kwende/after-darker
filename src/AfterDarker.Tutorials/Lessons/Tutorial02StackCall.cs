@@ -15,12 +15,21 @@ public sealed class Tutorial02StackCall : ITutorial
 
     public void Run()
     {
+        Result observed = Execute(Console.Out);
+        if (observed is not { Ax: 12, CalleeSp: 0x8FFE, FinalSp: 0x9000,
+            SavedReturnIp: 0x1006, FinalIp: 0x100E, FinalCs: 0, FinalSs: 0 })
+            throw new InvalidOperationException($"Near CALL/RET state did not match the lesson: {observed}.");
+        Console.WriteLine("PASS: the guest CALL/RET used the stack and restored SP.");
+    }
+
+    public Result Execute(TextWriter? output = null)
+    {
+        output ??= TextWriter.Null;
         const long codeAddress = 0x1000;
         const long pageSize = 0x1000;
         const long stackAddress = 0x8000;
         const long initialStackPointer = stackAddress + pageSize; // 0x9000, just above the stack.
         const long expectedCalleeStackPointer = initialStackPointer - 2;
-        const long expectedReturnAddress = codeAddress + 6; // Instruction after CALL.
 
         byte[] code =
         [
@@ -56,8 +65,8 @@ public sealed class Tutorial02StackCall : ITutorial
             emulator.RegWrite(X86.UC_X86_REG_DX, 0);
             emulator.MemWrite(expectedCalleeStackPointer, [0xCC, 0xCC]); // Must be overwritten by CALL.
 
-            Console.WriteLine("Guest stack: 0x8000..0x8FFF; SS = 0x0000");
-            Console.WriteLine("Guest: MOV AX, 7; CALL AddFive; JMP Done; AddFive: MOV DX, SP; ADD AX, 5; RET");
+            output.WriteLine("Guest stack: 0x8000..0x8FFF; SS = 0x0000");
+            output.WriteLine("Guest: MOV AX, 7; CALL AddFive; JMP Done; AddFive: MOV DX, SP; ADD AX, 5; RET");
             emulator.EmuStart(codeAddress, endAddress, timeout: 1_000_000, count: 16);
 
             long result = emulator.RegRead(X86.UC_X86_REG_AX);
@@ -72,25 +81,19 @@ public sealed class Tutorial02StackCall : ITutorial
             emulator.MemRead(expectedCalleeStackPointer, savedReturnBytes);
             ushort savedReturnAddress = BinaryPrimitives.ReadUInt16LittleEndian(savedReturnBytes);
 
-            Console.WriteLine($"AX = {result} (0x{result:X4})");
-            Console.WriteLine($"SP: before = 0x{initialStackPointer:X4}, inside call = 0x{calleeStackPointer:X4}, after = 0x{finalStackPointer:X4}");
-            Console.WriteLine($"Saved return word at 0x{expectedCalleeStackPointer:X4} = 0x{savedReturnAddress:X4}");
-            Console.WriteLine($"Final CS:IP = {codeSegment:X4}:{instructionPointer:X4}; SS = 0x{stackSegment:X4}");
-
-            if (result != 12 || calleeStackPointer != expectedCalleeStackPointer ||
-                finalStackPointer != initialStackPointer || savedReturnAddress != expectedReturnAddress ||
-                instructionPointer != endAddress || codeSegment != 0 || stackSegment != 0)
-            {
-                throw new InvalidOperationException(
-                    $"Expected AX=12, in-call SP=0x{expectedCalleeStackPointer:X4}, restored SP=0x{initialStackPointer:X4}, " +
-                    $"saved return=0x{expectedReturnAddress:X4}, final IP=0x{endAddress:X4}, and CS=SS=0.");
-            }
-
-            Console.WriteLine("PASS: the guest CALL/RET used the stack and restored SP.");
+            output.WriteLine($"AX = {result} (0x{result:X4})");
+            output.WriteLine($"SP: before = 0x{initialStackPointer:X4}, inside call = 0x{calleeStackPointer:X4}, after = 0x{finalStackPointer:X4}");
+            output.WriteLine($"Saved return word at 0x{expectedCalleeStackPointer:X4} = 0x{savedReturnAddress:X4}");
+            output.WriteLine($"Final CS:IP = {codeSegment:X4}:{instructionPointer:X4}; SS = 0x{stackSegment:X4}");
+            return new(result, calleeStackPointer, finalStackPointer, savedReturnAddress,
+                instructionPointer, codeSegment, stackSegment);
         }
         finally
         {
             emulator.Close(); // Binding 2.1.3 requires explicit native-engine cleanup.
         }
     }
+
+    public sealed record Result(long Ax, long CalleeSp, long FinalSp, ushort SavedReturnIp,
+        long FinalIp, long FinalCs, long FinalSs);
 }

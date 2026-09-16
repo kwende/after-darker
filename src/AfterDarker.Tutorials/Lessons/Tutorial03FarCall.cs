@@ -1,4 +1,5 @@
 using System.Buffers.Binary;
+using AfterDarker.Core.X86;
 using UnicornEngine;
 using UnicornEngine.Const;
 
@@ -15,6 +16,18 @@ public sealed class Tutorial03FarCall : ITutorial
 
     public void Run()
     {
+        Result observed = Execute(Console.Out);
+        if (observed is not { ProtectedMode: true, Ax: 12, StoredValue: 12,
+            CalleeCs: 0x0010, CalleeSp: 0x0FFC, FinalSp: 0x1000,
+            SavedIp: 0x0008, SavedCs: 0x0008, FinalCs: 0x0008,
+            FinalIp: 0x000B, FinalDs: 0x0018, FinalSs: 0x0020 })
+            throw new InvalidOperationException($"Far CALL/RETF state did not match the lesson: {observed}.");
+        Console.WriteLine("PASS: CALL FAR / RETF restored CS:IP and SP; the guest stored the returned value.");
+    }
+
+    public Result Execute(TextWriter? output = null)
+    {
+        output ??= TextWriter.Null;
         const long pageSize = 0x1000;
         const uint callerBase = 0x10000;
         const uint calleeBase = 0x20000;
@@ -30,7 +43,6 @@ public sealed class Tutorial03FarCall : ITutorial
         const ushort segmentLimit = 0x0FFF; // Inclusive, byte-granularity limit.
         const ushort calleeOffset = 0x0200;
         const ushort resultOffset = 0x0020;
-        const ushort returnOffset = 0x0008;
         const ushort initialStackPointer = 0x1000;
         const ushort expectedCalleeStackPointer = initialStackPointer - 4;
 
@@ -51,10 +63,11 @@ public sealed class Tutorial03FarCall : ITutorial
 
         // Entry zero is the required null descriptor. Each following entry is 8 bytes.
         byte[] descriptorTable = new byte[5 * 8];
-        Create16BitDescriptor(callerBase, segmentLimit, executable: true).CopyTo(descriptorTable, callerSelector);
-        Create16BitDescriptor(calleeBase, segmentLimit, executable: true).CopyTo(descriptorTable, calleeSelector);
-        Create16BitDescriptor(dataBase, segmentLimit, executable: false).CopyTo(descriptorTable, dataSelector);
-        Create16BitDescriptor(stackBase, segmentLimit, executable: false).CopyTo(descriptorTable, stackSelector);
+        // The byte encoder is shared with lesson 04 and has independent unit tests.
+        SegmentDescriptor16.Encode(callerBase, segmentLimit, executable: true).CopyTo(descriptorTable, callerSelector);
+        SegmentDescriptor16.Encode(calleeBase, segmentLimit, executable: true).CopyTo(descriptorTable, calleeSelector);
+        SegmentDescriptor16.Encode(dataBase, segmentLimit, executable: false).CopyTo(descriptorTable, dataSelector);
+        SegmentDescriptor16.Encode(stackBase, segmentLimit, executable: false).CopyTo(descriptorTable, stackSelector);
 
         // Unicorn 2.1.3's UC_MODE_16 register/start APIs assume real-mode bases.
         // UC_MODE_32 initializes protected mode. Our descriptors' D/B=0 bits then
@@ -84,8 +97,8 @@ public sealed class Tutorial03FarCall : ITutorial
             emulator.RegWrite(X86.UC_X86_REG_EBX, 0);
             emulator.RegWrite(X86.UC_X86_REG_EDX, 0);
 
-            Console.WriteLine("Caller 0008:0000 -> callee 0010:0200 -> caller 0008:0008");
-            Console.WriteLine("Segment bases: caller=0x10000, callee=0x20000, data=0x30000, stack=0x40000");
+            output.WriteLine("Caller 0008:0000 -> callee 0010:0200 -> caller 0008:0008");
+            output.WriteLine("Segment bases: caller=0x10000, callee=0x20000, data=0x30000, stack=0x40000");
 
             // In this engine mode, beginAddr is written to EIP (an offset), while
             // untilAddr is compared with the linear execution address (CS.base + IP).
@@ -112,24 +125,14 @@ public sealed class Tutorial03FarCall : ITutorial
             ushort savedIp = BinaryPrimitives.ReadUInt16LittleEndian(savedReturnBytes.AsSpan(0, 2));
             ushort savedCs = BinaryPrimitives.ReadUInt16LittleEndian(savedReturnBytes.AsSpan(2, 2));
 
-            Console.WriteLine($"Protected mode: {protectedMode}; callee CS captured in BX = 0x{observedCalleeSelector:X4}");
-            Console.WriteLine($"AX = {resultInAx}; guest result at 0018:0020 (linear 0x{dataBase + resultOffset:X5}) = {resultInMemory}");
-            Console.WriteLine($"SP: before = 0x{initialStackPointer:X4}, inside call = 0x{observedCalleeStackPointer:X4}, after = 0x{finalStackPointer:X4}");
-            Console.WriteLine($"Saved return CS:IP = {savedCs:X4}:{savedIp:X4}");
-            Console.WriteLine($"Final CS:IP = {finalCodeSelector:X4}:{finalInstructionOffset:X4}; DS = 0x{finalDataSelector:X4}; SS = 0x{finalStackSelector:X4}");
-
-            if (!protectedMode || resultInAx != 12 || resultInMemory != 12 ||
-                observedCalleeSelector != calleeSelector || observedCalleeStackPointer != expectedCalleeStackPointer ||
-                finalStackPointer != initialStackPointer || savedIp != returnOffset || savedCs != callerSelector ||
-                finalCodeSelector != callerSelector || finalInstructionOffset != callerCode.Length ||
-                finalDataSelector != dataSelector || finalStackSelector != stackSelector)
-            {
-                throw new InvalidOperationException(
-                    "Expected protected mode, AX=memory=12, callee CS=0010, in-call SP=0FFC, restored SP=1000, " +
-                    "saved return=0008:0008, final CS:IP=0008:000B, DS=0018, and SS=0020.");
-            }
-
-            Console.WriteLine("PASS: CALL FAR / RETF restored CS:IP and SP; the guest stored the returned value.");
+            output.WriteLine($"Protected mode: {protectedMode}; callee CS captured in BX = 0x{observedCalleeSelector:X4}");
+            output.WriteLine($"AX = {resultInAx}; guest result at 0018:0020 (linear 0x{dataBase + resultOffset:X5}) = {resultInMemory}");
+            output.WriteLine($"SP: before = 0x{initialStackPointer:X4}, inside call = 0x{observedCalleeStackPointer:X4}, after = 0x{finalStackPointer:X4}");
+            output.WriteLine($"Saved return CS:IP = {savedCs:X4}:{savedIp:X4}");
+            output.WriteLine($"Final CS:IP = {finalCodeSelector:X4}:{finalInstructionOffset:X4}; DS = 0x{finalDataSelector:X4}; SS = 0x{finalStackSelector:X4}");
+            return new(protectedMode, resultInAx, resultInMemory, observedCalleeSelector,
+                observedCalleeStackPointer, finalStackPointer, savedIp, savedCs,
+                finalCodeSelector, finalInstructionOffset, finalDataSelector, finalStackSelector);
         }
         finally
         {
@@ -137,20 +140,9 @@ public sealed class Tutorial03FarCall : ITutorial
         }
     }
 
-    // This lesson's descriptors use byte limits, 16-bit defaults, and privilege 0.
-    // Keeping the hardware byte layout here avoids hiding it behind a general loader.
-    private static byte[] Create16BitDescriptor(uint baseAddress, ushort inclusiveLimit, bool executable)
-    {
-        byte[] descriptor = new byte[8];
-        BinaryPrimitives.WriteUInt16LittleEndian(descriptor.AsSpan(0, 2), inclusiveLimit);
-        BinaryPrimitives.WriteUInt16LittleEndian(descriptor.AsSpan(2, 2), (ushort)baseAddress);
-        descriptor[4] = (byte)(baseAddress >> 16);
-        // Present, privilege 0, code/data, readable code or writable data, accessed.
-        descriptor[5] = executable ? (byte)0x9B : (byte)0x93;
-        descriptor[6] = 0; // G=0: byte limit; D/B=0: 16-bit code/stack; upper limit bits=0.
-        descriptor[7] = (byte)(baseAddress >> 24);
-        return descriptor;
-    }
+    public sealed record Result(bool ProtectedMode, long Ax, ushort StoredValue,
+        long CalleeCs, long CalleeSp, long FinalSp, ushort SavedIp, ushort SavedCs,
+        long FinalCs, long FinalIp, long FinalDs, long FinalSs);
 
     private static void WriteDescriptorTableRegister(Unicorn emulator, uint baseAddress, uint inclusiveLimit)
     {

@@ -14,6 +14,17 @@ public sealed class Tutorial01Addition : ITutorial
 
     public void Run()
     {
+        Result observed = Execute(output: Console.Out);
+        if (observed is not { Ax: 12, Ip: 0x1006 })
+            throw new InvalidOperationException($"Expected AX=12 and IP=0x1006; got {observed}.");
+        Console.WriteLine("PASS: the guest computed 7 + 5 and reached the end of its code.");
+    }
+
+    // The console and tests execute the same instructions. Tests inspect values,
+    // not formatted console output, and can vary the two word-sized operands.
+    public Result Execute(ushort left = 7, ushort right = 5, TextWriter? output = null)
+    {
+        output ??= TextWriter.Null;
         // These are guest addresses, not pointers into our C# process.
         const long codeAddress = 0x1000;
         const long mappedSize = 0x1000; // Unicorn maps memory in aligned 4 KiB pages.
@@ -22,8 +33,8 @@ public sealed class Tutorial01Addition : ITutorial
         // Keeping assembly beside its bytes avoids needing an assembler for lesson 01.
         byte[] code =
         [
-            0xB8, 0x07, 0x00, // MOV AX, 7  -- load the first constant into AX
-            0x05, 0x05, 0x00, // ADD AX, 5  -- the emulated CPU performs the addition
+            0xB8, (byte)left, (byte)(left >> 8),   // MOV AX, left  (7 in the lesson)
+            0x05, (byte)right, (byte)(right >> 8), // ADD AX, right (5 in the lesson)
         ];
         long endAddress = codeAddress + code.Length;
 
@@ -35,7 +46,7 @@ public sealed class Tutorial01Addition : ITutorial
             emulator.RegWrite(X86.UC_X86_REG_CS, 0); // Real-mode CS=0 makes IP match our address.
             emulator.RegWrite(X86.UC_X86_REG_AX, 0);
 
-            Console.WriteLine("Guest: MOV AX, 7; ADD AX, 5");
+            output.WriteLine($"Guest: MOV AX, {left}; ADD AX, {right}");
 
             // Run synchronously until the first byte AFTER our code (0x1006).
             // No hooks, callbacks, or guest exit syscall are required.
@@ -44,14 +55,8 @@ public sealed class Tutorial01Addition : ITutorial
 
             long result = emulator.RegRead(X86.UC_X86_REG_AX);
             long instructionPointer = emulator.RegRead(X86.UC_X86_REG_IP);
-            Console.WriteLine($"AX = {result} (0x{result:X4})");
-
-            // Check the register AND completion address: a bounded stop alone is not success.
-            if (result != 12 || instructionPointer != endAddress)
-                throw new InvalidOperationException(
-                    $"Expected AX=12 and IP=0x{endAddress:X4}; got AX={result}, IP=0x{instructionPointer:X4}.");
-
-            Console.WriteLine("PASS: the guest computed 7 + 5 and reached the end of its code.");
+            output.WriteLine($"AX = {result} (0x{result:X4})");
+            return new(result, instructionPointer);
         }
         finally
         {
@@ -59,4 +64,6 @@ public sealed class Tutorial01Addition : ITutorial
             emulator.Close();
         }
     }
+
+    public sealed record Result(long Ax, long Ip);
 }

@@ -110,6 +110,13 @@ same engine. Limit/access enforcement and segment overrides remain unproven.
 See [tutorial 03](tutorials.md#tutorial-03-protected-mode-far-call) and
 [tutorial 04](tutorials.md#tutorial-04-host-gateway).
 
+`AfterDarker.Core` now holds the shared descriptor encoder and the narrow far
+Pascal word-frame decoder extracted from these lessons. The lesson classes
+still contain the guest programs and emulator operations, and return typed
+observations to `AfterDarker.Tests`. Unit tests exercise the pure helpers;
+conformance tests exercise actual Unicorn execution. This is testable shared
+code, not yet a general CPU adapter or Win16 ABI layer. See [testing](testing.md).
+
 ### 3.4 Import gateway
 
 The import gateway translates guest calls into typed host operations.

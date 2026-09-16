@@ -4,13 +4,18 @@ $ErrorActionPreference = 'Stop'
 Import-Module "$PSHOME/Modules/Microsoft.PowerShell.Utility/Microsoft.PowerShell.Utility.psd1"
 Import-Module "$PSHOME/Modules/Microsoft.PowerShell.Management/Microsoft.PowerShell.Management.psd1"
 
-# Change only this project's generated executable, never a shared dotnet host or
+# Change only our generated executables, never a shared dotnet host or
 # Windows policy. See docs/tutorials.md for the observed CFG failure and tradeoff.
-$expectedDirectory = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../src/AfterDarker.Tutorials/bin/'))
 $executable = (Resolve-Path -LiteralPath $ExecutablePath).Path
-if (-not $executable.StartsWith($expectedDirectory, [StringComparison]::OrdinalIgnoreCase) -or
-    [IO.Path]::GetFileName($executable) -ne 'AfterDarker.Tutorials.exe') {
-    throw 'Only the tutorial executable inside its build output directory may be configured.'
+$allowedOutputs = @{
+    'AfterDarker.Tutorials.exe' = '../src/AfterDarker.Tutorials/bin/'
+    'AfterDarker.Tests.exe' = '../tests/AfterDarker.Tests/bin/'
+}
+$outputDirectory = $allowedOutputs[[IO.Path]::GetFileName($executable)]
+if (-not $outputDirectory -or -not $executable.StartsWith(
+        [IO.Path]::GetFullPath((Join-Path $PSScriptRoot $outputDirectory)),
+        [StringComparison]::OrdinalIgnoreCase)) {
+    throw 'Only the tutorial or test executable inside its own bin directory may be configured.'
 }
 
 $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio/Installer/vswhere.exe'
@@ -24,4 +29,4 @@ if (-not $editbin) {
 }
 
 & $editbin /NOLOGO /GUARD:NO $executable
-if ($LASTEXITCODE -ne 0) { throw 'Could not configure the tutorial apphost for Unicorn.' }
+if ($LASTEXITCODE -ne 0) { throw 'Could not configure the project apphost for Unicorn.' }
