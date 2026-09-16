@@ -7,6 +7,10 @@
     "Tutorial 02 - stack and near call": {
       "commandName": "Project",
       "commandLineArgs": "02"
+    },
+    "Tutorial 03 - protected-mode far call": {
+      "commandName": "Project",
+      "commandLineArgs": "03"
     }
   }
 }

@@ -4,9 +4,10 @@ Last updated: 2026-09-16
 
 ## Project phase
 
-After Darker has a C# tutorial console host with 16-bit real-mode addition and
-guest-stack near-call experiments using Unicorn 2.1.3. No After Dark runtime,
-NE loader, Win16 shim, or renderer has been implemented here yet.
+After Darker has a C# tutorial console host with real-mode addition and
+near-call experiments, plus a 16-bit protected-mode far-call experiment using
+Unicorn 2.1.3. No After Dark runtime, NE loader, Win16 shim, or renderer has been
+implemented here yet.
 
 ## Established evidence
 
@@ -17,6 +18,11 @@ NE loader, Win16 shim, or renderer has been implemented here yet.
   `AX=12`, in-call `SP=0x8FFE`, restored `SP=0x9000`, a saved return word of
   `0x1006`, final `CS:IP=0000:100E`, and unchanged `SS=0`. The program exits with
   code 0. This is observed real-mode behavior only.
+- Tutorial 03 observes a same-privilege protected-mode far call between code
+  descriptors with distinct nonzero bases. The callee captures `CS=0010` and
+  `SP=0FFC`, adds five, and executes `RETF`. The caller stores `12` at
+  `DS:0020` (linear `0x30020`). The saved return is `0008:0008`, final execution
+  is `0008:000B`, and `SP=1000` is restored. `CR0.PE=1` is verified.
 
 - Installed After Dark Windows modules can be 16-bit New Executable (`NE`)
   libraries with `MZ` containers, segment tables, imports, exports, resources,
@@ -47,11 +53,9 @@ NE loader, Win16 shim, or renderer has been implemented here yet.
 
 ## Important unproven assumptions
 
-- No candidate CPU engine has yet passed an After Darker protected-mode
-  conformance probe.
-- In particular, 16-bit mode support alone does not prove correct selector
-  bases/limits, segment overrides, far control flow, gateway address reporting,
-  or safe resume after a host exit.
+- Tutorial 03 is a narrow protected-mode success, not completion of the CPU
+  conformance ladder. Segment-limit/access enforcement, segment overrides,
+  gateway address reporting, and safe resume after a host exit remain unproven.
 - No `.AD` module has executed inside an After Darker-owned compatibility layer.
 - No After Dark system/module structure has been constructed and consumed by
   original module code in this repository.
@@ -73,14 +77,34 @@ explicitly.
 
 ## Next planning point
 
-The owner has reviewed tutorial 01 and authorized the stack experiment. Review
-tutorial 02 together before advancing. The owner wants F5-able
+The owner reviewed the stack experiment and authorized the guest-only far-call
+experiment. Review tutorial 03 together before advancing. The owner wants F5-able
 C# lessons in one console app, with separate implementation classes invoked
 through `ITutorial`. Understanding and explicit readiness govern progression.
-Issue #1 tracks the later protected-mode and host-gateway experiments; those
-remain unimplemented. See [the tutorial guide](tutorials.md).
+Issue #1 tracks the broader protected-mode and host-gateway experiments.
+Tutorial 04's host trap remains unimplemented. See [the tutorial guide](tutorials.md).
 
 ## Session log
+
+### 2026-09-16 — tutorial 03: protected-mode far call
+
+- Branched from merged tutorial 02 on `main` to
+  `codex/tutorial-03-protected-far-call`.
+- Added `Tutorial03FarCall` and its F5 launch profile in the same console app.
+  GDT construction, register setup, guest bytes, and assertions remain visible
+  in the lesson. No new dependencies were added.
+- Source inspection found Unicorn 2.1.3's `UC_MODE_16` register/start APIs assume
+  real-mode addressing. The lesson uses `UC_MODE_32` with 16-bit descriptors.
+  The observed run begins with offset EIP=0 and stops at the caller's linear
+  completion address; both API conventions are documented in the code.
+- Verified separate caller/callee/data/stack bases, captured callee CS/SP,
+  four saved return bytes, restored CS:IP/SP, preserved DS/SS, and the guest's
+  store of the returned AX into previously marked data memory.
+- A temporary `RETF` to `RET` substitution fails with exit 1: CS stays `0010`,
+  SP is only restored to `0FFE`, and result memory retains `0xCCCC`. Restored
+  `RETF` passes with exit 0. The negative mutation is not part of the lesson.
+- Tutorials 01 and 02 remain regression checks. No host trap, selector protection
+  claim, privilege transition, or Win16 import support is introduced.
 
 ### 2026-09-16 — tutorial 02: guest stack and near call
 
