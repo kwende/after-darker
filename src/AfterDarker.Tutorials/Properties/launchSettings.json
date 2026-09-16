@@ -11,6 +11,14 @@
     "Tutorial 03 - protected-mode far call": {
       "commandName": "Project",
       "commandLineArgs": "03"
+    },
+    "Tutorial 04 - host gateway": {
+      "commandName": "Project",
+      "commandLineArgs": "04"
+    },
+    "Tutorial 05 - NE file inspection": {
+      "commandName": "Project",
+      "commandLineArgs": "05"
     }
   }
 }

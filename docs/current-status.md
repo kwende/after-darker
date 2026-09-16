@@ -5,12 +5,42 @@ Last updated: 2026-09-16
 ## Project phase
 
 After Darker has a C# tutorial console host with real-mode addition and
-near-call experiments, plus a 16-bit protected-mode far-call experiment using
-Unicorn 2.1.3. No After Dark runtime, NE loader, Win16 shim, or renderer has been
-implemented here yet.
+near-call experiments, plus 16-bit protected-mode far-call and synthetic host
+gateway experiments using Unicorn 2.1.3. No After Dark runtime, NE loader,
+Win16 shim, or renderer has been implemented here yet.
+`AfterDarker.Core` contains two extracted binary-layout helpers, a Windows NE
+metadata reader, and a separate After Dark invocation-plan model. The C# MSTest
+project covers these mechanisms and the five educational console lessons.
 
 ## Established evidence
 
+- [Tutorial 05](tutorials.md#tutorial-05-read-a-windows-ne-file) reads a local
+  Windows NE file into typed C# records, reports startup/export addresses,
+  import identities/fixup heads, resource identifiers/ranges, and an externally
+  defined After Dark call plan. All 29 local NE inputs inspect successfully.
+  This does not load segments, apply fixups, decode resources, or execute them.
+- The [Mondrian code-path analysis](research/mondrian-static-analysis.md)
+  follows startup and lifecycle branches beyond the import census. Its
+  successful visuals path appears to need nine Windows imports plus DOS
+  date/time services (`INT 21h`, AH=2Ah/2Ch). No files, threads, task waits,
+  dialogs, or callbacks were found on that path. Clock seeding, tick-based
+  pacing, two host memory records, and static rectangle history are identified.
+  This is static evidence only; Mondrian has not executed in this runtime.
+- The [C# test suite](testing.md) has 72 passing cases: 54 unit, 13 native-engine
+  conformance, and five tutorial entry-point checks. It uses generated NE
+  fixtures and the same guest
+  programs as the lessons, with typed observations and independent assertions.
+  Temporary omitted-cleanup and wrong-return mutations were rejected. This
+  coverage does not extend to unimplemented Windows APIs or segment protection.
+- A static [import census](research/ad-import-census.md) covers all 29 local
+  Windows NE modules: 51 GDI, 35 USER, and 43 KERNEL targets (including one
+  imported constant), plus 59 AD_RSRC, 10 AD_SND, and one WIN87EM target.
+  No direct thread/synchronization or Win16 task-wait/yield imports were found.
+  Memory management, files/settings, clocks, dialog callbacks, helper libraries,
+  and GraphStat's `WinExec` import are visible. The helper DLLs are absent, so
+  their transitive dependencies remain unexamined. This is artifact evidence,
+  not proof of which APIs run during drawing. Per-input hashes and the full
+  API-to-module mapping accompany the report.
 - Tutorial 01 runs `MOV AX, 7; ADD AX, 5` in Unicorn from a native Windows C#
   host, reads `AX=12` and `IP=0x1006`, and exits successfully. This is a bounded
   two-instruction real-mode probe, not protected-mode conformance.
@@ -23,6 +53,13 @@ implemented here yet.
   `SP=0FFC`, adds five, and executes `RETF`. The caller stores `12` at
   `DS:0020` (linear `0x30020`). The saved return is `0008:0008`, final execution
   is `0008:000B`, and `SP=1000` is restored. `CR0.PE=1` is verified.
+- Tutorial 04 observes two protected-mode far calls to synthetic gateway
+  `0010:0200`. The code hook reports linear `0x20200` and stops before the
+  gateway instruction executes. After `EmuStart` returns, C# reads signed
+  Pascal arguments `(7, 5)` and `(-7, 5)` from `SS:0FF8`, invokes a typed
+  handler, writes AX, and simulates same-privilege `RETF 4`. The resumed guest
+  stores `12` and `-2` at `0018:0020` and `0018:0022`. Final `CS:IP=0008:001C`,
+  restored `SP=1000`, preserved DS/SS, and `CR0.PE=1` are verified.
 
 - Installed After Dark Windows modules can be 16-bit New Executable (`NE`)
   libraries with `MZ` containers, segment tables, imports, exports, resources,
@@ -38,7 +75,7 @@ implemented here yet.
 
 - The host supplies the HDC and guest structures, and the module performs its
   drawing through imported Win16 GDI operations.
-- Spiral Gyra presents a promising first original-code target because its
+- Spiral Gyra remains a promising later original-code target because its
   observed rendering vocabulary is small: pen creation/selection, current-point
   movement, line drawing, stock objects, and object deletion.
 - Stained Glass is a larger 25,008-byte NE module with nine segments and imports
@@ -47,15 +84,16 @@ implemented here yet.
   construction.
 - WineVDM/OTVDM is existing evidence that Win16 applications can execute on
   modern 64-bit Windows without booting a complete Windows guest.
-- A synthetic import gateway can conceptually map an NE import to a host-owned
-  far address, stop guest execution on entry, marshal Win16 arguments, call a
-  host handler, simulate the far Pascal return, and resume.
+- Tutorial 04 demonstrates the synthetic gateway execution boundary. Mapping
+  real NE imports onto it remains a proposed loader responsibility.
 
 ## Important unproven assumptions
 
-- Tutorial 03 is a narrow protected-mode success, not completion of the CPU
-  conformance ladder. Segment-limit/access enforcement, segment overrides,
-  gateway address reporting, and safe resume after a host exit remain unproven.
+- Tutorials 03 and 04 are narrow protected-mode successes, not completion of
+  the CPU conformance ladder. Segment-limit/access enforcement, segment
+  overrides, privilege transitions, general pointer translation, and broader
+  ABI layouts remain unproven. Two successful host exits/resumes do not establish
+  compatibility with arbitrary Win16 guest code.
 - No `.AD` module has executed inside an After Darker-owned compatibility layer.
 - No After Dark system/module structure has been constructed and consumed by
   original module code in this repository.
@@ -77,14 +115,130 @@ explicitly.
 
 ## Next planning point
 
-The owner reviewed the stack experiment and authorized the guest-only far-call
-experiment. Review tutorial 03 together before advancing. The owner wants F5-able
+The owner requested static analysis to bound the Windows support needed for
+one original screensaver's visuals. Mondrian is the current first candidate;
+fixed host-supplied options are sufficient for the proposed scope, without
+options dialogs or settings persistence. The owner authorized the typed NE
+inspection tutorial and accompanying tests. Review tutorial 05's parsed values
+and contract-based call plan together before implementing the loader/services.
+The owner wants F5-able
 C# lessons in one console app, with separate implementation classes invoked
 through `ITutorial`. Understanding and explicit readiness govern progression.
 Issue #1 tracks the broader protected-mode and host-gateway experiments.
-Tutorial 04's host trap remains unimplemented. See [the tutorial guide](tutorials.md).
+Tutorial 04 implements the narrow host trap; the broader issue is not complete.
+See [the tutorial guide](tutorials.md).
 
 ## Session log
+
+### 2026-09-16 — tutorial 05: typed NE inspection
+
+- Created `codex/tutorial-05-ne-inspector`, preserving prior uncommitted
+  Mondrian research and DOS-reference notes. Added the lesson through the
+  existing `ITutorial` interface, with an F5 profile and optional path argument.
+- Added a CPU-independent Core reader/model for headers, segments, entry
+  bundles, names, imports, raw fixups, and numeric/named resource metadata.
+  A separate typed SDK call plan resolves MODULE by name rather than guessing
+  an ordinal, and keeps DLL initialization distinct from lifecycle messages.
+- Added generated fixtures and deterministic tests. The 72-case suite passes;
+  private input files remain outside automated tests. All 29 local NE modules
+  produce reports; Mondrian's startup/export addresses match the prior audit.
+  Import identities and relocation counts also agree with the independent
+  Python census for all 29 inputs, normalizing module-name case for comparison.
+- Reported seven custom Mondrian resources without inferring their purpose.
+  Resource bytes are not decoded or copied into public artifacts. Ordinal
+  annotations reuse factual Wine 10.0 census metadata, clearly labeled as a
+  reference rather than names/signatures found in the inspected file.
+- Verified launch-profile execution and both prompted/explicit paths. No
+  interactive Visual Studio F5 session was observed. No new packages, loader,
+  service handlers, or original-module execution were introduced.
+
+### 2026-09-16 — local DOS source reference
+
+- At the owner's request, cloned Microsoft's MS-DOS repository into sibling
+  `C:\repos\MS-DOS`, at revision
+  `2d04cacc5322951f187bb17e017c12920ac8ebe2`. Verified origin, clean checkout,
+  MIT license declaration, and date/time service source locations.
+- Added a [source guide](research/dos-source-reference.md) and agent guidance
+  to consult those sources when DOS behavior needs clarification, recording
+  version/revision and pairing implementation evidence with API documentation.
+- This is a research checkout only. No DOS build/execution, runtime dependency,
+  or expansion of supported services was introduced.
+
+### 2026-09-16 — Mondrian static lifecycle analysis
+
+- Created `codex/mondrian-static-analysis` from the testing foundation branch.
+  Added a hash-specific research inspector and a factual path report; no
+  original module was executed and no runtime service was implemented.
+- Followed NE relocation chains, all entry points, direct calls/branches, and
+  the bounded lifecycle switch. Thirty roots decode without unresolved control
+  transfers; Capstone and Iced agree on instruction lengths in those traversals.
+- Separated five compatibility-error text imports and three diagnostic imports
+  from the nine-service successful lifecycle. Imported placeholders still need
+  bindings; excluded services should fail by name if reached.
+- Found clock interrupts invisible to the import census, a timezone environment
+  lookup, and tick calibration that cannot use a permanently constant clock.
+- Recorded host field offsets/constraints, undefined return-value edges, the
+  200-entry static rectangle history, and outstanding rectangle-semantics tests.
+- Verified inspector structural invariants on the identified input. Research
+  dependencies, original binaries, and generated full listings remain ignored.
+  C# projects and runtime dependencies are unchanged; no new runtime proof is
+  claimed. The owner's first milestone is visuals with fixed supplied options.
+
+### 2026-09-16 — C# testing foundation
+
+- Created `codex/foundation-unit-tests`, preserving the uncommitted import
+  census work. The owner subsequently authorized committing and pushing both
+  the census and test foundation for review before merging.
+- Added MSTest.Sdk 4.4.1/Microsoft.Testing.Platform 2.4.1 with pinned dependencies
+  and a .NET 10 test-runner selection. The generated test executable receives
+  the same restricted CFG workaround as the tutorial executable.
+- Extracted descriptor encoding and far Pascal word-frame decoding into a
+  dependency-free Core library. Lessons still own their guest bytes, memory
+  maps, hooks, register operations, and console success checks. Their new
+  `Execute` entry points return actual observations for independent assertions.
+- Added 32 cases for binary layouts, malformed input, word arithmetic bounds,
+  near/far calls, gateway marshaling and guest stores, signed return extremes,
+  handler failure, and the original tutorial entry points.
+- Verified unit-test filtering/discovery and native execution through MTP.
+  Temporary omitted argument cleanup caused two unit failures; temporary RET
+  in place of RETF caused the far-call conformance failure. Sources restored.
+- The full suite and four console launch profiles pass. Interactive Test
+  Explorer remains a manual check. No Windows API mocks were added.
+
+### 2026-09-16 — local import/API census
+
+- Created `codex/ad-import-census` from the tutorial 04 branch for the requested
+  inspection. Added an offline research inspector and factual reports; no
+  emulator or Win16 service implementation changed.
+- Read all `.ad`/`.dll` candidates under the ignored `ad/` directory. All 29
+  parse as Windows NE; the two supporting non-executable files were skipped.
+- Resolved Windows/WIN87EM ordinal names against Wine 10.0 export metadata.
+  AD_RSRC's 59 distinct ordinal contracts remain unresolved. Ten AD_SND names
+  are present in callers, but that does not recover their full ABI/behavior.
+- Verified the inspector using generated ordinal/name imports, internal
+  references, truncated inputs, an invalid module index, and unresolved imports.
+  The complete collection passes structural checks. Original binaries remain
+  ignored; the report contains hashes and metadata only.
+- The scan supports a narrow initial guest context, not a claim that the whole
+  collection needs no scheduling. Dialog re-entrancy and asynchronous sound
+  need separate investigation when those modules become targets.
+
+### 2026-09-16 — tutorial 04: host gateway
+
+- Branched from merged tutorial 03 on `main` to `codex/tutorial-04-host-gateway`.
+- Added `Tutorial04HostGateway` and its F5 launch profile in the existing app,
+  with no new dependencies. The same descriptor setup stays visible in the
+  lesson; a small typed service table makes the gateway binding inspectable.
+- Observed two bounded stop/dispatch/resume cycles on one engine. Stack
+  arguments, return addresses, hook timing/address, guest-only result stores,
+  and final registers are asserted. Host dispatch runs outside the hook.
+- Temporary negative mutations each exited 1: unknown gateway offset, incorrect
+  argument offset, omitted Pascal argument cleanup, and a missing guest store.
+  Restoring the source restored success; mutations are not committed.
+- Tutorial 04's launch-profile run and regression runs of tutorials 01–03
+  pass. Interactive Visual Studio F5 remains a manual check.
+- This is a synthetic service using one fixed ABI and known stack descriptor.
+  It adds no NE loader, real Win16 import, privilege transition, or renderer.
 
 ### 2026-09-16 — tutorial 03: protected-mode far call
 

@@ -47,6 +47,14 @@ The initial runtime can avoid module-provided configuration dialogs. It can
 construct the system/module records, supply control values directly, and focus
 on `PREINITIALIZE`, `INITIALIZE`, `BLANK`, `DRAWFRAME`, and `CLOSE`.
 
+The [Mondrian static path analysis](research/mondrian-static-analysis.md) now
+grounds this first target: nine Windows imports and two DOS date/time interrupt
+services appear sufficient for its successful startup/drawing/close path.
+This is a static scope estimate, not an execution proof. The owner explicitly
+prioritizes original-code visuals with fixed options over dialogs or settings
+persistence. Supply options in guest records and preserve the guest's drawing
+logic; do not build unrelated Windows services in anticipation of other modules.
+
 ## 3. Layered design
 
 ### 3.1 Artifact inspector
@@ -61,6 +69,15 @@ Responsibilities:
 - Produce a stable machine-readable inspection report without executing code.
 
 This layer must not depend on the CPU engine or renderer.
+
+`AfterDarker.Core.Ne.NeReader` now implements the Windows NE inspection subset
+described in [tutorial 05](tutorials.md#tutorial-05-read-a-windows-ne-file).
+It returns a typed `NeImage`. Segment numbers remain file-level identifiers;
+the parser neither assigns selectors nor applies relocations. Raw relocation
+records identify imports, but their source chains are not expanded or patched.
+Resource records expose identifiers and stored byte ranges without decoding
+their contents. `AfterDarkCallPlan` separately combines parsed export addresses
+with the external SDK lifecycle contract; that contract is not inferred from NE.
 
 ### 3.2 NE loader
 
@@ -103,8 +120,19 @@ descriptor bases for two code segments, data, and stack; a same-privilege
 16-bit far call and return; and a guest memory write after return. It initializes
 Unicorn with `UC_MODE_32` for its protected-mode API behavior, then installs
 descriptors with D/B=0 for 16-bit code and stack semantics. This is a lesson-local
-setup, not a general CPU adapter. Limit/access enforcement and host-gateway
-stop/resume behavior remain unproven. See [tutorial 03](tutorials.md#tutorial-03-protected-mode-far-call).
+setup, not a general CPU adapter. Tutorial 04 additionally demonstrates a code
+hook reporting the gateway's linear address, stopping before its first
+instruction, and resuming after host-managed return simulation, twice on the
+same engine. Limit/access enforcement and segment overrides remain unproven.
+See [tutorial 03](tutorials.md#tutorial-03-protected-mode-far-call) and
+[tutorial 04](tutorials.md#tutorial-04-host-gateway).
+
+`AfterDarker.Core` now holds the shared descriptor encoder and the narrow far
+Pascal word-frame decoder extracted from these lessons. The lesson classes
+still contain the guest programs and emulator operations, and return typed
+observations to `AfterDarker.Tests`. Unit tests exercise the pure helpers;
+conformance tests exercise actual Unicorn execution. This is testable shared
+code, not yet a general CPU adapter or Win16 ABI layer. See [testing](testing.md).
 
 ### 3.4 Import gateway
 
@@ -156,6 +184,14 @@ guest executes CALL FAR gateway:offset
 The gateway range and lookup scheme belong to After Darker. A CPU engine may
 provide the code hook or exit facility, but it does not inherently understand
 Win16 imports.
+
+Tutorial 04 is an observed, lesson-local prototype of this execution boundary:
+`0010:0200` maps to `Tutorial!HostAdd`, which takes two signed 16-bit Pascal
+arguments and returns AX. The hook only records the exit and stops; C# decodes
+the stack, invokes the handler, and restores CS:IP/SP after `EmuStart` returns.
+Two successive calls produce guest stores of `12` and `-2`. The service is
+synthetic: NE import resolution, a general ABI registry, and actual Win16 APIs
+remain design work.
 
 ### 3.5 Win16 ABI and object model
 
@@ -338,7 +374,8 @@ Before attempting a complete module, prove each boundary separately:
 9. Route a tiny generated guest import through one host handler.
 10. Construct the After Dark records and call a minimal test module.
 11. Render deterministic pen/line operations to a software surface.
-12. Attempt Spiral Gyra as the first real-module vertical slice.
+12. Attempt Mondrian as the first real-module vertical slice, guided by its
+    static path analysis. Retain Spiral Gyra as a later line/pen target.
 
 Each step should leave a test and an explanatory trace. A later step does not
 erase uncertainty in an earlier one.
