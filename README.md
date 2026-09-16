@@ -50,6 +50,8 @@ entire desktop.
 The repository is in its bootstrap phase. Its C# tutorials run real-mode
 addition and near calls, a 16-bit protected-mode `CALL FAR`/`RETF` round trip,
 and a synthetic C# host gateway with stop, dispatch, and guest resume in Unicorn.
+Tutorial 05 reads Windows NE files into typed C# metadata and reports their
+entry points, imports, resources, and an assumed After Dark invocation plan.
 There is no After Dark runtime, NE loader, Win16 shim, or renderer yet.
 
 Prior research has established the After Dark lifecycle, inspected several
@@ -63,6 +65,8 @@ See:
 - [Architecture](docs/architecture.md)
 - [Current status and proof boundary](docs/current-status.md)
 - [Local module import/API census](docs/research/ad-import-census.md)
+- [Mondrian's constrained visuals path](docs/research/mondrian-static-analysis.md)
+- [Local MS-DOS source reference](docs/research/dos-source-reference.md)
 - [Agent collaboration charter](AGENTS.md)
 - [Run and understand the tutorials](docs/tutorials.md)
 - [Run the automated tests](docs/testing.md)
@@ -75,6 +79,13 @@ Select the `Tutorial 02 - stack and near call` launch profile to run the stack
 experiment instead.
 Select `Tutorial 03 - protected-mode far call` for the guest-to-guest far call.
 Select `Tutorial 04 - host gateway` for a far call serviced by C#.
+Select `Tutorial 05 - NE file inspection` to inspect a local `.AD` file. It
+prompts for a path, reports metadata, and exits without executing guest code.
+To supply the path from the command line:
+
+```powershell
+dotnet run --project src/AfterDarker.Tutorials --no-launch-profile -- 05 "C:\repos\after-darker\ad\Mondrian.ad"
+```
 
 Run `dotnet test` from the repository root for the C# test suite. The solution
 contains a small shared `AfterDarker.Core` library, the educational console app,

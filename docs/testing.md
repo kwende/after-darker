@@ -37,10 +37,10 @@ is verified; an interactive Test Explorer session remains a manual check.
 
 | Category | Cases | What is established |
 | --- | ---: | --- |
-| Unit | 15 | Descriptor base/limit/access byte layout; far-return IP/CS layout; Pascal argument order and signedness; cleanup size; rejection of incomplete frames, invalid indices, and unsupported SP wrapping |
+| Unit | 54 | Descriptor/frame layout plus typed NE header, segments, entries, imports, resources, malformed-input rejection, report evidence boundaries, and SDK invocation-plan selection |
 | Conformance | 13 | Actual Unicorn execution: word addition including wraparound, near CALL/RET, protected far CALL/RETF, two gateway stop/resume cycles, signed/custom returns, real guest stores, and handler exception propagation |
-| Tutorial | 4 | All four original `ITutorial.Run()` entry points still complete their own console success checks |
-| **Total** | **32** | All passing on the current Windows x64 development host |
+| Tutorial | 5 | Four CPU lessons plus NE inspection through both prompted and explicit paths using generated input |
+| **Total** | **72** | All passing on the current Windows x64 development host |
 
 Conformance tests use the native engine; they are not isolated unit tests or a
 mock of Unicorn. Categories make the distinction explicit. All fixtures are
@@ -58,7 +58,7 @@ Descriptor encoding tests establish bytes, not CPU enforcement of limits.
 
 ```text
 AfterDarker.Core
-    descriptor encoding + far Pascal word-frame decoding (no Unicorn dependency)
+    descriptors + far Pascal frames + typed NE metadata + SDK call plan (no Unicorn dependency)
         ^                         ^
         |                         |
 AfterDarker.Tutorials         unit tests
@@ -74,12 +74,21 @@ not return precomputed expectations. `Run()` supplies console narration and
 checks the original example. Tests assert those observations with independent
 expected values and can exercise additional inputs without parsing stdout.
 
-Only two existing mechanisms were extracted into the shared library:
+Two existing mechanisms were extracted into the shared library:
 
 - [`SegmentDescriptor16`](../src/AfterDarker.Core/X86/SegmentDescriptor16.cs)
   replaces the duplicate encoder in lessons 03 and 04.
 - [`FarPascalWordFrame`](../src/AfterDarker.Core/Win16/FarPascalWordFrame.cs)
   extracts lesson 04's return/argument decoding and cleanup arithmetic.
+
+Tutorial 05 adds `NeReader` and its typed metadata model to Core, plus a separate
+`AfterDarkCallPlan` for the external SDK convention. Tests generate a complete
+small metadata fixture in source: fixed/movable/constant entries, an unused
+ordinal, named and ordinal imports, numeric and named resources, and a
+zero-filled segment. Mutations check truncated structures, bad indices,
+overflowing offsets, invalid markers/alignment, and unsupported variants.
+Report tests distinguish facts from ABI assumptions and escape control bytes.
+These tests never open `ad/`, execute fixture bytes, or require new packages.
 
 The tests include a subtraction handler because addition cannot discriminate
 swapped arguments. Return-value cases exercise both signed word extremes.

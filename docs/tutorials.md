@@ -6,6 +6,9 @@ proof boundary. Work through one together before implementing the next.
 
 ## Run tutorial 01
 
+For inspecting an original local `.AD` file without executing it, jump to
+[tutorial 05](#tutorial-05-read-a-windows-ne-file).
+
 Prerequisites: Windows x64, .NET 10 SDK, and Visual Studio with .NET 10 support
 and the **Desktop development with C++** tools (for Microsoft's `editbin`).
 These were already installed on the development machine. Windows PowerShell
@@ -334,3 +337,141 @@ Tutorial 04 was built and run through its launch profile on the same Windows
 x64 host with .NET SDK 10.0.401 and Unicorn 2.1.3. Both guest stores, both host
 exits/resumes, and final registers pass. Four temporary negative probes each
 exit 1; the restored lesson and regression runs of tutorials 01–03 exit 0.
+
+## Tutorial 05: read a Windows NE file
+
+Select **Tutorial 05 - NE file inspection** in Visual Studio and press F5.
+Enter the full path to a local `.AD` file when prompted. Quoted paths and paths
+with spaces are accepted. It displays the report and exits. Alternatively:
+
+```powershell
+dotnet run --project src/AfterDarker.Tutorials --no-launch-profile -- 05 "C:\repos\after-darker\ad\Mondrian.ad"
+```
+
+Relative paths are resolved against the process's working directory. Other
+file extensions are accepted if their bytes identify a Windows NE executable;
+compressed `.A$` files, PE files, and non-Windows NE variants are not supported.
+Missing/unreadable files or malformed metadata produce a diagnostic and exit 1.
+Tutorial 01 remains the default when no lesson is selected.
+
+Start reading at
+[`Tutorial05NeInspection`](../src/AfterDarker.Tutorials/Lessons/Tutorial05NeInspection.cs).
+Its `Execute(path)` returns a `NeImage`, then `Run()` passes that value to
+`NeInspectionReport.Write`. Put a breakpoint after `Execute` to inspect the
+records. The lesson creates no Unicorn engine. The shared app's existing build
+prerequisites still apply because it also hosts the CPU tutorials.
+
+### Typed results
+
+The parser is in [`NeReader`](../src/AfterDarker.Core/Ne/NeReader.cs), independent
+of file-system paths when called with bytes, and independent of the emulator,
+After Dark semantics, and console presentation. Its public result types are
+in [`NeImage`](../src/AfterDarker.Core/Ne/NeImage.cs):
+
+| Type / property | What a consumer receives |
+| --- | --- |
+| `NeHeader` | NE location, flags, OS/version, automatic data segment, heap/stack requests, startup segment/offset, initial stack fields, alignment |
+| `NeSegment` | Segment number, nullable disk offset, stored byte count, minimum allocation, flags and code/data classification |
+| `NeEntry` and `NeName` | Ordinals, fixed/movable addresses or constants, entry flags, resident/nonresident names; ordinal-zero module descriptions stay separate |
+| `NeImport` / `NeImage.Imports` | Distinct module-plus-ordinal or module-plus-name identities, without inventing names missing from the file |
+| `NeRelocation` | Each raw fixup record, its disk position, source head, flags/type, raw target fields, and optional import identity |
+| `NeResource` | Numeric or named type and ID, aligned stored byte range, and flags |
+| `NeAddress` | A segment number and offset; explicitly not a selector or flat file address |
+
+Collections returned by the parser are read-only. Imported identities contain
+either an ordinal or a name. Resource identifiers contain either a number or a
+name. Entries contain either an address or a constant value. These distinctions
+are preserved rather than reduced to formatted strings.
+
+The separate
+[`AfterDarkCallPlan`](../src/AfterDarker.Core/Win16/AfterDarkCallPlan.cs) describes
+the candidate SDK lifecycle in typed form:
+
+```csharp
+NeImage image = NeReader.ReadFile(path);
+NeAddress? startup = image.Header.Startup;
+NeEntry? module = image.FindExport("MODULE");
+AfterDarkCallPlan? plan = AfterDarkCallPlan.FromImage(image);
+
+// These are values to inspect/pass to later code, not calls into the guest.
+foreach (NeResource resource in image.Resources)
+{
+    NeResourceIdentifier type = resource.Type;
+    NeResourceIdentifier id = resource.Id;
+    int fileOffset = resource.FileOffset;
+    int storedLength = resource.Length;
+}
+```
+
+`AfterDarkCallPlan.FromImage` returns null unless a library exports `MODULE`
+into a code segment. It does not guess that ordinal 1 is always the dispatcher.
+Each `AfterDarkInvocation` holds an enum message, resolved entry address, and
+whether it is the repeated frame request. DLL startup is a separate address.
+The plan expresses a known external SDK contract, not a signature discovered
+inside NE or proof that this module implements it correctly.
+
+### Reading the report
+
+The report separates file facts from reference annotations and the proposed
+After Dark calling contract. On the inspected Mondrian input it reports:
+
+```text
+Header startup: S4:0000
+MODULE -> S1:003E
+17 distinct imports; 44 total relocation records (27 internal, 0 OS fixups).
+PREINITIALIZE: enter S1:003E, message=12
+INITIALIZE: enter S1:003E, message=0
+BLANK: enter S1:003E, message=1
+DRAWFRAME (repeat): enter S1:003E, message=2
+CLOSE: enter S1:003E, message=3
+```
+
+The report explains the far Pascal argument order, entry stack layout, AX
+return, and argument cleanup. It also states the required loader/data/stack
+preconditions and avoids claiming generic NE metadata supplies full Win16 ABIs.
+An imported ordinal's address cannot be obtained from the caller's file alone;
+the eventual loader must resolve a dependency export or assign a host gateway.
+
+Names for known imported ordinals are display-only annotations drawn from the
+existing [Wine 10.0 import census](research/ad-import-census.md). The small
+embedded TSV contains only module/ordinal/name/kind facts derived from
+`docs/research/ad-imports.csv`; unresolved ordinals stay unresolved. It is not a
+new package dependency or callable service registry. A reference declaration
+such as `pascal`, `stub`, or `equate` does not establish our support or a complete
+ABI. Named imports remain the names actually present in the input.
+
+Resource types/IDs are interpreted as numbers when the high bit is set and as
+resource-table-relative counted strings otherwise. Resource payload offsets
+and lengths use the resource table's own alignment shift. Mondrian has seven
+custom resource entries (types 1000 and 2000); the report does not assign them
+animation or settings semantics. Standard type labels include bitmap, icon,
+dialog, string table, and raw data. Individual strings, images, and custom
+payloads are not decoded; stored lengths can include alignment padding.
+
+### Parser boundaries and verification
+
+The reader checks signatures, ranges, table terminators, entry segment/ordinal
+references, import module indices, and resource payload ranges. It supports
+fixed/movable/constant entries, ordinal holes, zero-filled segments, the 64 KiB
+segment-size encoding, and ordinal/named imports. Iterated segments are rejected
+explicitly. Inputs are limited to 64 MiB and 100,000 metadata items.
+
+Raw relocation records are preserved, including internal references and OS
+fixups. This lesson does not validate/expand relocation chains, resolve all
+internal fixup targets, apply patches, decode instructions, decode resource
+payloads, construct SDK records, load executable memory, or run original code.
+Parsing success is not loader compatibility or a comprehensive NE validator.
+
+Generated test fixtures cover both ordinary and malformed metadata. Automated
+checks also exercise the tutorial's prompted and explicit-path entry points.
+All 29 private local modules were inspected successfully; those files and their
+full reports remain ignored and are never unit-test dependencies. The launch
+profile was exercised via `dotnet run`; interactive Visual Studio F5 remains a
+manual check.
+
+Format references: Microsoft's Windows 3.1 Programmer's Reference, Volume 4,
+[Chapter 6: Executable-File Header Format](https://bitsavers.trailing-edge.com/pdf/microsoft/windows_3.1/Windows_3.1_Programmers_Reference_Volume_4_Resources_1992.pdf),
+Wine 10.0's [NE header definitions](https://github.com/wine-mirror/wine/blob/wine-10.0/include/winnt.h),
+and [NE table inspection](https://github.com/wine-mirror/wine/blob/wine-10.0/dlls/krnl386.exe16/ne_module.c).
+The implementation is local C# code; Wine is a layout/reference source, not a
+linked or vendored runtime dependency.

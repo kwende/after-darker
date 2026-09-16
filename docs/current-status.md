@@ -8,13 +8,27 @@ After Darker has a C# tutorial console host with real-mode addition and
 near-call experiments, plus 16-bit protected-mode far-call and synthetic host
 gateway experiments using Unicorn 2.1.3. No After Dark runtime, NE loader,
 Win16 shim, or renderer has been implemented here yet.
-`AfterDarker.Core` contains two extracted binary-layout helpers, with a C#
-MSTest project covering those helpers and the existing tutorial behavior.
+`AfterDarker.Core` contains two extracted binary-layout helpers, a Windows NE
+metadata reader, and a separate After Dark invocation-plan model. The C# MSTest
+project covers these mechanisms and the five educational console lessons.
 
 ## Established evidence
 
-- The [C# test suite](testing.md) has 32 passing cases: 15 unit, 13 native-engine
-  conformance, and four tutorial entry-point checks. It uses the same guest
+- [Tutorial 05](tutorials.md#tutorial-05-read-a-windows-ne-file) reads a local
+  Windows NE file into typed C# records, reports startup/export addresses,
+  import identities/fixup heads, resource identifiers/ranges, and an externally
+  defined After Dark call plan. All 29 local NE inputs inspect successfully.
+  This does not load segments, apply fixups, decode resources, or execute them.
+- The [Mondrian code-path analysis](research/mondrian-static-analysis.md)
+  follows startup and lifecycle branches beyond the import census. Its
+  successful visuals path appears to need nine Windows imports plus DOS
+  date/time services (`INT 21h`, AH=2Ah/2Ch). No files, threads, task waits,
+  dialogs, or callbacks were found on that path. Clock seeding, tick-based
+  pacing, two host memory records, and static rectangle history are identified.
+  This is static evidence only; Mondrian has not executed in this runtime.
+- The [C# test suite](testing.md) has 72 passing cases: 54 unit, 13 native-engine
+  conformance, and five tutorial entry-point checks. It uses generated NE
+  fixtures and the same guest
   programs as the lessons, with typed observations and independent assertions.
   Temporary omitted-cleanup and wrong-return mutations were rejected. This
   coverage does not extend to unimplemented Windows APIs or segment protection.
@@ -61,7 +75,7 @@ MSTest project covering those helpers and the existing tutorial behavior.
 
 - The host supplies the HDC and guest structures, and the module performs its
   drawing through imported Win16 GDI operations.
-- Spiral Gyra presents a promising first original-code target because its
+- Spiral Gyra remains a promising later original-code target because its
   observed rendering vocabulary is small: pen creation/selection, current-point
   movement, line drawing, stock objects, and object deletion.
 - Stained Glass is a larger 25,008-byte NE module with nine segments and imports
@@ -101,9 +115,13 @@ explicitly.
 
 ## Next planning point
 
-The owner authorized introducing a C# test project while preserving the console
-as a first-class educational tool. Review the extraction and tutorial 04 before
-advancing to another emulation concept. The owner wants F5-able
+The owner requested static analysis to bound the Windows support needed for
+one original screensaver's visuals. Mondrian is the current first candidate;
+fixed host-supplied options are sufficient for the proposed scope, without
+options dialogs or settings persistence. The owner authorized the typed NE
+inspection tutorial and accompanying tests. Review tutorial 05's parsed values
+and contract-based call plan together before implementing the loader/services.
+The owner wants F5-able
 C# lessons in one console app, with separate implementation classes invoked
 through `ITutorial`. Understanding and explicit readiness govern progression.
 Issue #1 tracks the broader protected-mode and host-gateway experiments.
@@ -111,6 +129,60 @@ Tutorial 04 implements the narrow host trap; the broader issue is not complete.
 See [the tutorial guide](tutorials.md).
 
 ## Session log
+
+### 2026-09-16 — tutorial 05: typed NE inspection
+
+- Created `codex/tutorial-05-ne-inspector`, preserving prior uncommitted
+  Mondrian research and DOS-reference notes. Added the lesson through the
+  existing `ITutorial` interface, with an F5 profile and optional path argument.
+- Added a CPU-independent Core reader/model for headers, segments, entry
+  bundles, names, imports, raw fixups, and numeric/named resource metadata.
+  A separate typed SDK call plan resolves MODULE by name rather than guessing
+  an ordinal, and keeps DLL initialization distinct from lifecycle messages.
+- Added generated fixtures and deterministic tests. The 72-case suite passes;
+  private input files remain outside automated tests. All 29 local NE modules
+  produce reports; Mondrian's startup/export addresses match the prior audit.
+  Import identities and relocation counts also agree with the independent
+  Python census for all 29 inputs, normalizing module-name case for comparison.
+- Reported seven custom Mondrian resources without inferring their purpose.
+  Resource bytes are not decoded or copied into public artifacts. Ordinal
+  annotations reuse factual Wine 10.0 census metadata, clearly labeled as a
+  reference rather than names/signatures found in the inspected file.
+- Verified launch-profile execution and both prompted/explicit paths. No
+  interactive Visual Studio F5 session was observed. No new packages, loader,
+  service handlers, or original-module execution were introduced.
+
+### 2026-09-16 — local DOS source reference
+
+- At the owner's request, cloned Microsoft's MS-DOS repository into sibling
+  `C:\repos\MS-DOS`, at revision
+  `2d04cacc5322951f187bb17e017c12920ac8ebe2`. Verified origin, clean checkout,
+  MIT license declaration, and date/time service source locations.
+- Added a [source guide](research/dos-source-reference.md) and agent guidance
+  to consult those sources when DOS behavior needs clarification, recording
+  version/revision and pairing implementation evidence with API documentation.
+- This is a research checkout only. No DOS build/execution, runtime dependency,
+  or expansion of supported services was introduced.
+
+### 2026-09-16 — Mondrian static lifecycle analysis
+
+- Created `codex/mondrian-static-analysis` from the testing foundation branch.
+  Added a hash-specific research inspector and a factual path report; no
+  original module was executed and no runtime service was implemented.
+- Followed NE relocation chains, all entry points, direct calls/branches, and
+  the bounded lifecycle switch. Thirty roots decode without unresolved control
+  transfers; Capstone and Iced agree on instruction lengths in those traversals.
+- Separated five compatibility-error text imports and three diagnostic imports
+  from the nine-service successful lifecycle. Imported placeholders still need
+  bindings; excluded services should fail by name if reached.
+- Found clock interrupts invisible to the import census, a timezone environment
+  lookup, and tick calibration that cannot use a permanently constant clock.
+- Recorded host field offsets/constraints, undefined return-value edges, the
+  200-entry static rectangle history, and outstanding rectangle-semantics tests.
+- Verified inspector structural invariants on the identified input. Research
+  dependencies, original binaries, and generated full listings remain ignored.
+  C# projects and runtime dependencies are unchanged; no new runtime proof is
+  claimed. The owner's first milestone is visuals with fixed supplied options.
 
 ### 2026-09-16 — C# testing foundation
 

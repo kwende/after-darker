@@ -47,6 +47,14 @@ The initial runtime can avoid module-provided configuration dialogs. It can
 construct the system/module records, supply control values directly, and focus
 on `PREINITIALIZE`, `INITIALIZE`, `BLANK`, `DRAWFRAME`, and `CLOSE`.
 
+The [Mondrian static path analysis](research/mondrian-static-analysis.md) now
+grounds this first target: nine Windows imports and two DOS date/time interrupt
+services appear sufficient for its successful startup/drawing/close path.
+This is a static scope estimate, not an execution proof. The owner explicitly
+prioritizes original-code visuals with fixed options over dialogs or settings
+persistence. Supply options in guest records and preserve the guest's drawing
+logic; do not build unrelated Windows services in anticipation of other modules.
+
 ## 3. Layered design
 
 ### 3.1 Artifact inspector
@@ -61,6 +69,15 @@ Responsibilities:
 - Produce a stable machine-readable inspection report without executing code.
 
 This layer must not depend on the CPU engine or renderer.
+
+`AfterDarker.Core.Ne.NeReader` now implements the Windows NE inspection subset
+described in [tutorial 05](tutorials.md#tutorial-05-read-a-windows-ne-file).
+It returns a typed `NeImage`. Segment numbers remain file-level identifiers;
+the parser neither assigns selectors nor applies relocations. Raw relocation
+records identify imports, but their source chains are not expanded or patched.
+Resource records expose identifiers and stored byte ranges without decoding
+their contents. `AfterDarkCallPlan` separately combines parsed export addresses
+with the external SDK lifecycle contract; that contract is not inferred from NE.
 
 ### 3.2 NE loader
 
@@ -357,7 +374,8 @@ Before attempting a complete module, prove each boundary separately:
 9. Route a tiny generated guest import through one host handler.
 10. Construct the After Dark records and call a minimal test module.
 11. Render deterministic pen/line operations to a software surface.
-12. Attempt Spiral Gyra as the first real-module vertical slice.
+12. Attempt Mondrian as the first real-module vertical slice, guided by its
+    static path analysis. Retain Spiral Gyra as a later line/pen target.
 
 Each step should leave a test and an explanatory trace. A later step does not
 erase uncertainty in an earlier one.

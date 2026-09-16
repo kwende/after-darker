@@ -8,6 +8,7 @@ ITutorial[] tutorials =
     new Tutorial02StackCall(),
     new Tutorial03FarCall(),
     new Tutorial04HostGateway(),
+    new Tutorial05NeInspection(args is ["05", var path] ? path : null),
 ];
 
 if (args is ["--list"])
@@ -19,9 +20,9 @@ if (args is ["--list"])
 
 string selectedId = args.Length == 0 ? tutorials[0].Id : args[0];
 ITutorial? selected = tutorials.SingleOrDefault(tutorial => tutorial.Id == selectedId);
-if (args.Length > 1 || selected is null)
+if (selected is null || args.Length > (selectedId == "05" ? 2 : 1))
 {
-    Console.Error.WriteLine("Usage: AfterDarker.Tutorials [01 | 02 | 03 | 04 | --list]");
+    Console.Error.WriteLine("Usage: AfterDarker.Tutorials [01 | 02 | 03 | 04 | 05 [file.ad] | --list]");
     return 1;
 }
 

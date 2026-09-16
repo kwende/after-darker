@@ -15,6 +15,10 @@
     "Tutorial 04 - host gateway": {
       "commandName": "Project",
       "commandLineArgs": "04"
+    },
+    "Tutorial 05 - NE file inspection": {
+      "commandName": "Project",
+      "commandLineArgs": "05"
     }
   }
 }
