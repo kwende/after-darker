@@ -5,9 +5,9 @@ Last updated: 2026-09-16
 ## Project phase
 
 After Darker has a C# tutorial console host with real-mode addition and
-near-call experiments, plus a 16-bit protected-mode far-call experiment using
-Unicorn 2.1.3. No After Dark runtime, NE loader, Win16 shim, or renderer has been
-implemented here yet.
+near-call experiments, plus 16-bit protected-mode far-call and synthetic host
+gateway experiments using Unicorn 2.1.3. No After Dark runtime, NE loader,
+Win16 shim, or renderer has been implemented here yet.
 
 ## Established evidence
 
@@ -23,6 +23,13 @@ implemented here yet.
   `SP=0FFC`, adds five, and executes `RETF`. The caller stores `12` at
   `DS:0020` (linear `0x30020`). The saved return is `0008:0008`, final execution
   is `0008:000B`, and `SP=1000` is restored. `CR0.PE=1` is verified.
+- Tutorial 04 observes two protected-mode far calls to synthetic gateway
+  `0010:0200`. The code hook reports linear `0x20200` and stops before the
+  gateway instruction executes. After `EmuStart` returns, C# reads signed
+  Pascal arguments `(7, 5)` and `(-7, 5)` from `SS:0FF8`, invokes a typed
+  handler, writes AX, and simulates same-privilege `RETF 4`. The resumed guest
+  stores `12` and `-2` at `0018:0020` and `0018:0022`. Final `CS:IP=0008:001C`,
+  restored `SP=1000`, preserved DS/SS, and `CR0.PE=1` are verified.
 
 - Installed After Dark Windows modules can be 16-bit New Executable (`NE`)
   libraries with `MZ` containers, segment tables, imports, exports, resources,
@@ -47,15 +54,16 @@ implemented here yet.
   construction.
 - WineVDM/OTVDM is existing evidence that Win16 applications can execute on
   modern 64-bit Windows without booting a complete Windows guest.
-- A synthetic import gateway can conceptually map an NE import to a host-owned
-  far address, stop guest execution on entry, marshal Win16 arguments, call a
-  host handler, simulate the far Pascal return, and resume.
+- Tutorial 04 demonstrates the synthetic gateway execution boundary. Mapping
+  real NE imports onto it remains a proposed loader responsibility.
 
 ## Important unproven assumptions
 
-- Tutorial 03 is a narrow protected-mode success, not completion of the CPU
-  conformance ladder. Segment-limit/access enforcement, segment overrides,
-  gateway address reporting, and safe resume after a host exit remain unproven.
+- Tutorials 03 and 04 are narrow protected-mode successes, not completion of
+  the CPU conformance ladder. Segment-limit/access enforcement, segment
+  overrides, privilege transitions, general pointer translation, and broader
+  ABI layouts remain unproven. Two successful host exits/resumes do not establish
+  compatibility with arbitrary Win16 guest code.
 - No `.AD` module has executed inside an After Darker-owned compatibility layer.
 - No After Dark system/module structure has been constructed and consumed by
   original module code in this repository.
@@ -77,14 +85,32 @@ explicitly.
 
 ## Next planning point
 
-The owner reviewed the stack experiment and authorized the guest-only far-call
-experiment. Review tutorial 03 together before advancing. The owner wants F5-able
+The owner authorized tutorial 04 and its commit/push for morning review.
+Review tutorial 04 together before advancing. The owner wants F5-able
 C# lessons in one console app, with separate implementation classes invoked
 through `ITutorial`. Understanding and explicit readiness govern progression.
 Issue #1 tracks the broader protected-mode and host-gateway experiments.
-Tutorial 04's host trap remains unimplemented. See [the tutorial guide](tutorials.md).
+Tutorial 04 implements the narrow host trap; the broader issue is not complete.
+See [the tutorial guide](tutorials.md).
 
 ## Session log
+
+### 2026-09-16 — tutorial 04: host gateway
+
+- Branched from merged tutorial 03 on `main` to `codex/tutorial-04-host-gateway`.
+- Added `Tutorial04HostGateway` and its F5 launch profile in the existing app,
+  with no new dependencies. The same descriptor setup stays visible in the
+  lesson; a small typed service table makes the gateway binding inspectable.
+- Observed two bounded stop/dispatch/resume cycles on one engine. Stack
+  arguments, return addresses, hook timing/address, guest-only result stores,
+  and final registers are asserted. Host dispatch runs outside the hook.
+- Temporary negative mutations each exited 1: unknown gateway offset, incorrect
+  argument offset, omitted Pascal argument cleanup, and a missing guest store.
+  Restoring the source restored success; mutations are not committed.
+- Tutorial 04's launch-profile run and regression runs of tutorials 01–03
+  pass. Interactive Visual Studio F5 remains a manual check.
+- This is a synthetic service using one fixed ABI and known stack descriptor.
+  It adds no NE loader, real Win16 import, privilege transition, or renderer.
 
 ### 2026-09-16 — tutorial 03: protected-mode far call
 

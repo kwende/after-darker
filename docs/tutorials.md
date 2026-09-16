@@ -165,6 +165,67 @@ This proves the stated descriptor-base and far-call round trip. It does not
 prove limit/access enforcement, privilege transitions, host trap handling,
 host-managed return simulation, or After Dark compatibility.
 
+## Tutorial 04: host gateway
+
+Select **Tutorial 04 - host gateway** and press F5, or run:
+
+```powershell
+dotnet run --project src/AfterDarker.Tutorials --launch-profile "Tutorial 04 - host gateway"
+```
+
+Read [`Tutorial04HostGateway.cs`](../src/AfterDarker.Tutorials/Lessons/Tutorial04HostGateway.cs).
+It repeats tutorial 03's descriptor setup so the mechanism can be read in one
+class. The callee address now names a synthetic C# service:
+
+```text
+x86 pushes two arguments and executes CALL FAR 0010:0200
+    -> Unicorn's code hook records the address and calls EmuStop
+    -> EmuStart returns to C#
+    -> C# looks up Tutorial!HostAdd and reads its arguments from the guest stack
+    -> the handler computes the result; C# writes AX and simulates RETF 4
+    -> EmuStart resumes after CALL FAR
+    -> x86 stores AX in data memory
+    -> C# reads that memory to verify the result
+```
+
+The hook watches the reserved gateway segment. It reports linear `0x20200`;
+the binding lookup uses the guest's `CS:IP=0010:0200`. This is our chosen
+address and hook, not a built-in x86 trap or an operating-system service.
+Host argument decoding and service execution happen **after the hook returns**.
+
+Both calls use far Pascal argument order and callee cleanup. At each gateway
+stop, `SS=0020`, `SP=0FF8`, and the eight-byte frame is:
+
+| Relative to SP | Meaning | First call | Second call |
+| --- | --- | --- | --- |
+| `+0` | Saved return IP | `000B` | `0019` |
+| `+2` | Saved return CS | `0008` | `0008` |
+| `+4` | Last argument pushed: right | `5` | `5` |
+| `+6` | First argument pushed: left | `7` | `-7` |
+
+C# reads the frame after checking its bounds against the known stack page.
+It restores the saved CS:IP and advances SP by eight: four bytes for the far
+return address plus four for the arguments. This simulates `RETF 4`; tutorial
+04 contains no guest `RETF` instruction. The next `EmuStart` begins at the saved
+IP offset, with the caller's descriptor loaded back into CS.
+
+The second call repeats the whole boundary on the same engine and checks signed
+16-bit marshaling. Guest stores must replace `0xCCCC` markers with `12`
+(`0x000C`) at `0018:0020` and `-2` (`0xFFFE`) at `0018:0022`. C# supplies AX but
+does not write those result locations. Completion requires two host calls,
+`CS:IP=0008:001C`, and `SP=1000`, with DS/SS and protected mode preserved.
+
+A guard instruction at the gateway would change AX if allowed to execute;
+the lesson checks that it has not. Temporary negative probes also confirmed
+that an unknown entry, an incorrect argument offset, omitted argument cleanup,
+and a missing guest store each fail with exit code 1. The source was restored
+after each probe. All runs have instruction and time limits.
+
+This proves the two-call synthetic gateway path and this fixed, same-privilege
+ABI. It does not add NE import resolution, real Win16 services, a general
+pointer translator, or reverse callbacks. Segment protection remains a
+separate proof boundary.
+
 ## Shared runner
 
 [`ITutorial`](../src/AfterDarker.Tutorials/ITutorial.cs) exposes `Id`, `Title`,
@@ -172,13 +233,14 @@ and `Run()`. [`Program.cs`](../src/AfterDarker.Tutorials/Program.cs) registers
 lesson instances explicitly and invokes the selected instance through that
 interface. There is no reflection or plugin-loading machinery to learn first.
 
-Use `--list` to list lessons, or pass an ID such as `01`, `02`, or `03`:
+Use `--list` to list lessons, or pass an ID such as `01`, `02`, `03`, or `04`:
 
 ```powershell
 dotnet run --project src/AfterDarker.Tutorials --no-launch-profile -- --list
 dotnet run --project src/AfterDarker.Tutorials --no-launch-profile -- 01
 dotnet run --project src/AfterDarker.Tutorials --no-launch-profile -- 02
 dotnet run --project src/AfterDarker.Tutorials --no-launch-profile -- 03
+dotnet run --project src/AfterDarker.Tutorials --no-launch-profile -- 04
 ```
 
 Add future lessons as separate implementation classes in the same application,
@@ -242,3 +304,8 @@ Tutorial 03 was built and run on Windows x64 with .NET SDK 10.0.401 and the
 same pinned Unicorn 2.1.3 dependencies. Its normal run exits 0; the temporary
 wrong-return probe exits 1. The launch profile is exercised by `dotnet run`;
 interactive Visual Studio F5 remains a manual check.
+
+Tutorial 04 was built and run through its launch profile on the same Windows
+x64 host with .NET SDK 10.0.401 and Unicorn 2.1.3. Both guest stores, both host
+exits/resumes, and final registers pass. Four temporary negative probes each
+exit 1; the restored lesson and regression runs of tutorials 01–03 exit 0.

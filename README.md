@@ -48,15 +48,15 @@ entire desktop.
 ## Status
 
 The repository is in its bootstrap phase. Its C# tutorials run real-mode
-addition and near calls, plus a 16-bit protected-mode `CALL FAR`/`RETF` round
-trip in Unicorn. There is no After Dark runtime, NE loader, Win16 shim, or
-renderer yet.
+addition and near calls, a 16-bit protected-mode `CALL FAR`/`RETF` round trip,
+and a synthetic C# host gateway with stop, dispatch, and guest resume in Unicorn.
+There is no After Dark runtime, NE loader, Win16 shim, or renderer yet.
 
 Prior research has established the After Dark lifecycle, inspected several
 real modules, and recovered enough behavior from Spiral Gyra and Stained Glass
 to make them useful future conformance targets. A narrow protected-mode
-far-call probe now passes; segment protection, host gateways, and broader
-Win16 behavior still require conformance experiments.
+far-call probe and a two-call host-gateway probe now pass; segment protection
+and broader Win16 behavior still require conformance experiments.
 
 See:
 
@@ -72,6 +72,7 @@ See the tutorial guide for prerequisites and the Windows compatibility setting.
 Select the `Tutorial 02 - stack and near call` launch profile to run the stack
 experiment instead.
 Select `Tutorial 03 - protected-mode far call` for the guest-to-guest far call.
+Select `Tutorial 04 - host gateway` for a far call serviced by C#.
 
 ## Guiding principles
 

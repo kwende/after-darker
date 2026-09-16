@@ -103,8 +103,12 @@ descriptor bases for two code segments, data, and stack; a same-privilege
 16-bit far call and return; and a guest memory write after return. It initializes
 Unicorn with `UC_MODE_32` for its protected-mode API behavior, then installs
 descriptors with D/B=0 for 16-bit code and stack semantics. This is a lesson-local
-setup, not a general CPU adapter. Limit/access enforcement and host-gateway
-stop/resume behavior remain unproven. See [tutorial 03](tutorials.md#tutorial-03-protected-mode-far-call).
+setup, not a general CPU adapter. Tutorial 04 additionally demonstrates a code
+hook reporting the gateway's linear address, stopping before its first
+instruction, and resuming after host-managed return simulation, twice on the
+same engine. Limit/access enforcement and segment overrides remain unproven.
+See [tutorial 03](tutorials.md#tutorial-03-protected-mode-far-call) and
+[tutorial 04](tutorials.md#tutorial-04-host-gateway).
 
 ### 3.4 Import gateway
 
@@ -156,6 +160,14 @@ guest executes CALL FAR gateway:offset
 The gateway range and lookup scheme belong to After Darker. A CPU engine may
 provide the code hook or exit facility, but it does not inherently understand
 Win16 imports.
+
+Tutorial 04 is an observed, lesson-local prototype of this execution boundary:
+`0010:0200` maps to `Tutorial!HostAdd`, which takes two signed 16-bit Pascal
+arguments and returns AX. The hook only records the exit and stops; C# decodes
+the stack, invokes the handler, and restores CS:IP/SP after `EmuStart` returns.
+Two successive calls produce guest stores of `12` and `-2`. The service is
+synthetic: NE import resolution, a general ABI registry, and actual Win16 APIs
+remain design work.
 
 ### 3.5 Win16 ABI and object model
 
