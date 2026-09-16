@@ -22,8 +22,11 @@ tmp/
 # Bring-your-own legacy inputs and reference media
 #
 # These files may be copyrighted, private, very large, or all three. Keep them
-# outside the repository and record only hashes and factual observations in
-# docs when they are used as research evidence.
+# in ignored local directories or outside the repository, and record only hashes
+# and factual observations in docs when they are used as research evidence.
+# The root ad directory holds local After Dark copies for testing, including
+# supporting files regardless of extension. Never commit its contents.
+/ad/
 private/
 samples/private/
 *.AD
