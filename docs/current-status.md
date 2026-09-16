@@ -1,18 +1,22 @@
 # Current Status
 
-Last updated: 2026-09-15
+Last updated: 2026-09-16
 
 ## Project phase
 
-After Darker has a C# tutorial console host and one working 16-bit real-mode
-addition experiment using Unicorn 2.1.3. No After Dark runtime, NE loader,
-Win16 shim, or renderer has been implemented here yet.
+After Darker has a C# tutorial console host with 16-bit real-mode addition and
+guest-stack near-call experiments using Unicorn 2.1.3. No After Dark runtime,
+NE loader, Win16 shim, or renderer has been implemented here yet.
 
 ## Established evidence
 
 - Tutorial 01 runs `MOV AX, 7; ADD AX, 5` in Unicorn from a native Windows C#
   host, reads `AX=12` and `IP=0x1006`, and exits successfully. This is a bounded
   two-instruction real-mode probe, not protected-mode conformance.
+- Tutorial 02 maps a separate guest stack, runs a near `CALL`/`RET`, and verifies
+  `AX=12`, in-call `SP=0x8FFE`, restored `SP=0x9000`, a saved return word of
+  `0x1006`, final `CS:IP=0000:100E`, and unchanged `SS=0`. The program exits with
+  code 0. This is observed real-mode behavior only.
 
 - Installed After Dark Windows modules can be 16-bit New Executable (`NE`)
   libraries with `MZ` containers, segment tables, imports, exports, resources,
@@ -69,13 +73,27 @@ explicitly.
 
 ## Next planning point
 
-Walk through tutorial 01 together before advancing. The owner wants F5-able
+The owner has reviewed tutorial 01 and authorized the stack experiment. Review
+tutorial 02 together before advancing. The owner wants F5-able
 C# lessons in one console app, with separate implementation classes invoked
 through `ITutorial`. Understanding and explicit readiness govern progression.
 Issue #1 tracks the later protected-mode and host-gateway experiments; those
 remain unimplemented. See [the tutorial guide](tutorials.md).
 
 ## Session log
+
+### 2026-09-16 — tutorial 02: guest stack and near call
+
+- Branched from merged tutorial 01 on `main` to `codex/tutorial-02-stack-call`.
+- Added `Tutorial02StackCall` through the existing `ITutorial` interface and a
+  separate F5 launch profile; tutorial 01 remains the default lesson.
+- Allocated guest stack memory explicitly in the lesson, initialized `SS:SP`,
+  and checked the in-call stack pointer, saved return word, restored stack
+  pointer, arithmetic result, segment registers, and final instruction offset.
+- The guest captures its in-call `SP` in `DX`; no hooks, host callbacks, or
+  intermediate host-driven stops are used.
+- The tutorial 02 launch-profile run and tutorial 01 regression run pass.
+  No protected-mode or far-call behavior is claimed or implemented.
 
 ### 2026-09-15 — tutorial 01: 16-bit addition
 

@@ -47,9 +47,9 @@ entire desktop.
 
 ## Status
 
-The repository is in its bootstrap phase. Its first C# tutorial runs two
-16-bit x86 instructions in Unicorn and reads the result from `AX`. There is no
-After Dark runtime, NE loader, Win16 shim, or renderer yet.
+The repository is in its bootstrap phase. Its C# tutorials run 16-bit real-mode
+addition and a guest stack with a near `CALL`/`RET` in Unicorn. There is no After
+Dark runtime, NE loader, Win16 shim, or renderer yet.
 
 Prior research has established the After Dark lifecycle, inspected several
 real modules, and recovered enough behavior from Spiral Gyra and Stained Glass
@@ -68,6 +68,8 @@ Open `AfterDarker.sln` in Visual Studio with .NET 10 support and press **F5**.
 The single console project runs tutorial 01 by default and exits after printing
 `AX = 12 (0x000C)`. The first build restores its dependencies automatically.
 See the tutorial guide for prerequisites and the Windows compatibility setting.
+Select the `Tutorial 02 - stack and near call` launch profile to run the stack
+experiment instead.
 
 ## Guiding principles
 
