@@ -107,6 +107,12 @@ documentation in the same pull request.
 - Preserve original behavior by default. Label pacing, scaling, antialiasing,
   palette, DPI, and presentation changes as host adaptations.
 - A smoke test proves execution survived; it does not prove visual fidelity.
+- When a DOS service needs implementation or behavioral clarification, consult
+  the local Microsoft MS-DOS sources at `C:\repos\MS-DOS` and the
+  [DOS source reference](docs/research/dos-source-reference.md). Cite the DOS
+  version, revision, and relevant symbol alongside the API contract. These
+  sources are a research reference, not evidence for Win16 KERNEL/USER/GDI
+  semantics or a requirement to boot DOS.
 
 ## Architecture Rules
 
