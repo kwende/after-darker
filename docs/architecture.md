@@ -98,6 +98,14 @@ Required capabilities include:
 An engine claiming `16-bit mode` has not satisfied this contract until a probe
 demonstrates the protected-mode behaviors above.
 
+Tutorial 03 now demonstrates a narrow subset with Unicorn 2.1.3: nonzero
+descriptor bases for two code segments, data, and stack; a same-privilege
+16-bit far call and return; and a guest memory write after return. It initializes
+Unicorn with `UC_MODE_32` for its protected-mode API behavior, then installs
+descriptors with D/B=0 for 16-bit code and stack semantics. This is a lesson-local
+setup, not a general CPU adapter. Limit/access enforcement and host-gateway
+stop/resume behavior remain unproven. See [tutorial 03](tutorials.md#tutorial-03-protected-mode-far-call).
+
 ### 3.4 Import gateway
 
 The import gateway translates guest calls into typed host operations.

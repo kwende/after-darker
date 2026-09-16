@@ -105,6 +105,66 @@ The lesson checks every value above and exits with code 0 on success. It proves
 this real-mode near-call stack round trip. It does not test protected-mode
 descriptors, far calls, a host gateway, or stack overflow protection.
 
+## Tutorial 03: protected-mode far call
+
+Select **Tutorial 03 - protected-mode far call** and press F5, or run:
+
+```powershell
+dotnet run --project src/AfterDarker.Tutorials --launch-profile "Tutorial 03 - protected-mode far call"
+```
+
+Read [`Tutorial03FarCall.cs`](../src/AfterDarker.Tutorials/Lessons/Tutorial03FarCall.cs).
+This is one same-privilege guest-to-guest far call. No host hooks or callbacks
+are installed. The caller executes `MOV AX, 7`, `CALL FAR 0010:0200`, then
+`MOV [DS:0020], AX`. The callee captures its CS/SP, adds five, and executes `RETF`.
+
+The lesson builds this Global Descriptor Table (entry zero is null):
+
+| Selector | Role | Base | Inclusive limit | Attributes |
+| --- | --- | --- | --- | --- |
+| `0008` | Caller code | `0x10000` | `0x0FFF` | 16-bit executable/readable |
+| `0010` | Callee code | `0x20000` | `0x0FFF` | 16-bit executable/readable |
+| `0018` | Result data | `0x30000` | `0x0FFF` | Read/write |
+| `0020` | Stack | `0x40000` | `0x0FFF` | Read/write, 16-bit SP |
+
+All descriptors are present, privilege level zero, byte-granular, and have
+D/B=0. The descriptor table itself is mapped at `0x50000` and installed through
+GDTR. The helper encoding GDTR uses Unicorn's native x64 `uc_x86_mmr` layout;
+that API buffer is distinct from the guest's eight-byte segment descriptors.
+
+**Engine setup detail:** Unicorn 2.1.3's `UC_MODE_16` initialization and segment
+register writes assume real-mode addressing. This lesson opens `UC_MODE_32`,
+which initializes protected mode, then loads 16-bit code/stack descriptors.
+The descriptor's D/B bit determines the guest instruction/stack width; all
+guest instructions here are 16-bit. `CR0.PE=1` is checked explicitly.
+
+With this setup, `EmuStart` writes its start argument into EIP as an offset,
+but checks the stop address against the linear execution address. The observed
+working call uses start `0`, stop `0x1000B`. These are version-specific API
+details to retain when building a future adapter, not a general claim that all
+emulator addresses use one coordinate system.
+References: [Unicorn x86 register handling](https://github.com/unicorn-engine/unicorn/blob/2.1.3/qemu/target/i386/unicorn.c),
+[execution start](https://github.com/unicorn-engine/unicorn/blob/2.1.3/uc.c),
+and [native register structure](https://github.com/unicorn-engine/unicorn/blob/2.1.3/include/unicorn/x86.h).
+
+Success checks:
+
+- Callee `CS=0010`, captured in `BX`, and in-call `SP=0FFC`, captured in `DX`.
+- Saved IP `0008` at linear `0x40FFC` and saved CS `0008` at `0x40FFE`.
+- Restored `SP=1000`, final `CS:IP=0008:000B`, `DS=0018`, and `SS=0020`.
+- `AX=12` and the guest's store changed result memory at linear `0x30020`
+  from `0xCCCC` to `12`. C# does not write that successful result.
+
+A temporary negative experiment changed the single `RETF` opcode to `RET`.
+The bounded run left CS in the callee segment, SP two bytes short of restoration,
+and result memory unchanged. The assertions rejected it with exit code 1;
+restoring `RETF` restored success. This establishes that checking AX alone would
+have missed a broken return.
+
+This proves the stated descriptor-base and far-call round trip. It does not
+prove limit/access enforcement, privilege transitions, host trap handling,
+host-managed return simulation, or After Dark compatibility.
+
 ## Shared runner
 
 [`ITutorial`](../src/AfterDarker.Tutorials/ITutorial.cs) exposes `Id`, `Title`,
@@ -112,12 +172,13 @@ and `Run()`. [`Program.cs`](../src/AfterDarker.Tutorials/Program.cs) registers
 lesson instances explicitly and invokes the selected instance through that
 interface. There is no reflection or plugin-loading machinery to learn first.
 
-Use `--list` to list lessons, or pass an ID such as `01` or `02`:
+Use `--list` to list lessons, or pass an ID such as `01`, `02`, or `03`:
 
 ```powershell
 dotnet run --project src/AfterDarker.Tutorials --no-launch-profile -- --list
 dotnet run --project src/AfterDarker.Tutorials --no-launch-profile -- 01
 dotnet run --project src/AfterDarker.Tutorials --no-launch-profile -- 02
+dotnet run --project src/AfterDarker.Tutorials --no-launch-profile -- 03
 ```
 
 Add future lessons as separate implementation classes in the same application,
@@ -176,3 +237,8 @@ the automated checks.
 Tutorial 02 was subsequently built and run through its launch profile on the
 same host. All listed stack, return-address, register, and completion checks
 passed with exit code 0. Tutorial 01 still passes through the shared runner.
+
+Tutorial 03 was built and run on Windows x64 with .NET SDK 10.0.401 and the
+same pinned Unicorn 2.1.3 dependencies. Its normal run exits 0; the temporary
+wrong-return probe exits 1. The launch profile is exercised by `dotnet run`;
+interactive Visual Studio F5 remains a manual check.
