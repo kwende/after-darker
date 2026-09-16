@@ -1,13 +1,18 @@
 # Current Status
 
-Last updated: 2026-08-30
+Last updated: 2026-09-15
 
 ## Project phase
 
-After Darker is initialized as a documentation-first research repository. No
-emulator, loader, Win16 shim, or renderer has been implemented here yet.
+After Darker has a C# tutorial console host and one working 16-bit real-mode
+addition experiment using Unicorn 2.1.3. No After Dark runtime, NE loader,
+Win16 shim, or renderer has been implemented here yet.
 
 ## Established evidence
+
+- Tutorial 01 runs `MOV AX, 7; ADD AX, 5` in Unicorn from a native Windows C#
+  host, reads `AX=12` and `IP=0x1006`, and exits successfully. This is a bounded
+  two-instruction real-mode probe, not protected-mode conformance.
 
 - Installed After Dark Windows modules can be 16-bit New Executable (`NE`)
   libraries with `MZ` containers, segment tables, imports, exports, resources,
@@ -64,12 +69,39 @@ explicitly.
 
 ## Next planning point
 
-The next session will define a small bootstrap backlog. The first technical
-milestone should be a generated, redistributable 16-bit conformance program that
-proves segmented far calls and a synthetic host-gateway round trip before a real
-After Dark module is loaded.
+Walk through tutorial 01 together before advancing. The owner wants F5-able
+C# lessons in one console app, with separate implementation classes invoked
+through `ITutorial`. Understanding and explicit readiness govern progression.
+Issue #1 tracks the later protected-mode and host-gateway experiments; those
+remain unimplemented. See [the tutorial guide](tutorials.md).
 
 ## Session log
+
+### 2026-09-15 — tutorial 01: 16-bit addition
+
+- Added one .NET 10 Windows x64 console app, a solution, a launch profile, and
+  an `ITutorial` interface with an explicitly registered addition lesson.
+- Kept the six guest bytes beside their assembly explanation. No private
+  artifacts, hooks, gateway handlers, assembler, or NE parser are involved.
+- Verified the two-instruction result and completion address, with bounded
+  execution and explicit native-engine cleanup.
+- Pinned the upstream .NET binding and native engine to 2.1.3. Automated the
+  missing Windows DLL restore with archive/DLL hash checks.
+- Diagnosed native fail-fast as CFG rejecting Unicorn's `longjmp` return path;
+  `/GUARD:NO` on only the generated tutorial apphost allows successful execution.
+  Recorded this process-level protection tradeoff and dependency licenses in
+  `docs/tutorials.md`; Windows-wide settings are untouched.
+- Automated launch succeeds. Interactive Visual Studio F5 and the owner's
+  tutorial walkthrough remain to be observed; no later lesson has been started.
+
+### 2026-09-15 — local test artifacts
+
+- Designated the root `ad/` directory for private After Dark copies and
+  supporting files used in local testing.
+- Added a directory-wide Git exclusion so all contents, including files without
+  legacy executable extensions, remain excluded from ordinary staging.
+- Verified that no files under `ad/` are tracked or appear in the locally
+  available Git history. This is repository hygiene, not an execution proof.
 
 ### 2026-08-30 — repository bootstrap
 

@@ -47,8 +47,9 @@ entire desktop.
 
 ## Status
 
-The repository is in its architecture and bootstrap phase. It contains no
-working emulator yet.
+The repository is in its bootstrap phase. Its first C# tutorial runs two
+16-bit x86 instructions in Unicorn and reads the result from `AX`. There is no
+After Dark runtime, NE loader, Win16 shim, or renderer yet.
 
 Prior research has established the After Dark lifecycle, inspected several
 real modules, and recovered enough behavior from Spiral Gyra and Stained Glass
@@ -61,6 +62,12 @@ See:
 - [Architecture](docs/architecture.md)
 - [Current status and proof boundary](docs/current-status.md)
 - [Agent collaboration charter](AGENTS.md)
+- [Run and understand the tutorials](docs/tutorials.md)
+
+Open `AfterDarker.sln` in Visual Studio with .NET 10 support and press **F5**.
+The single console project runs tutorial 01 by default and exits after printing
+`AX = 12 (0x000C)`. The first build restores its dependencies automatically.
+See the tutorial guide for prerequisites and the Windows compatibility setting.
 
 ## Guiding principles
 
@@ -74,6 +81,11 @@ See:
   should be explainable.
 - Treat original modules as bring-your-own local inputs. Do not commit or
   redistribute them through this repository.
+
+Local After Dark copies and supporting files for testing belong in the root
+`ad/` directory, which Git ignores in its entirety. These are private,
+bring-your-own inputs; do not force-add or redistribute them. Public tests must
+use self-contained fixtures or artifacts generated from source.
 
 ## Two possible execution strategies
 

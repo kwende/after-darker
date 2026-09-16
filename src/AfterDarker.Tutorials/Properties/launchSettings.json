@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Tutorial 01 - 16-bit addition": {
+      "commandName": "Project",
+      "commandLineArgs": "01"
+    }
+  }
+}
