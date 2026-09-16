@@ -73,6 +73,38 @@ This proves that our Windows C# host can load the native engine, execute this
 selectors, far calls, gateways, NE loading, or original After Dark execution.
 There are no hooks, callbacks, suspension handlers, or Win16 services here.
 
+## Tutorial 02: guest stack and near call
+
+Select the **Tutorial 02 - stack and near call** Visual Studio launch profile
+and press F5, or run:
+
+```powershell
+dotnet run --project src/AfterDarker.Tutorials --launch-profile "Tutorial 02 - stack and near call"
+```
+
+Read
+[`Tutorial02StackCall.cs`](../src/AfterDarker.Tutorials/Lessons/Tutorial02StackCall.cs).
+The stack allocation and register initialization are directly in `Run()`.
+The lesson maps a separate read/write page at `0x8000..0x8FFF`, initializes
+`SS=0` and `SP=0x9000`, and runs the entire guest sequence without callbacks.
+The subroutine copies its in-call `SP` into `DX` for inspection afterward.
+
+Verified state:
+
+| Observation | Expected value |
+| --- | --- |
+| Addition result in `AX` | `12` |
+| Initial `SP` | `0x9000` |
+| In-call `SP`, captured in `DX` | `0x8FFE` |
+| Final `SP` | `0x9000` |
+| Saved return word at `0x8FFE` | `0x1006` |
+| Final `CS:IP` | `0000:100E` |
+| Final `SS` | `0x0000` |
+
+The lesson checks every value above and exits with code 0 on success. It proves
+this real-mode near-call stack round trip. It does not test protected-mode
+descriptors, far calls, a host gateway, or stack overflow protection.
+
 ## Shared runner
 
 [`ITutorial`](../src/AfterDarker.Tutorials/ITutorial.cs) exposes `Id`, `Title`,
@@ -80,11 +112,12 @@ and `Run()`. [`Program.cs`](../src/AfterDarker.Tutorials/Program.cs) registers
 lesson instances explicitly and invokes the selected instance through that
 interface. There is no reflection or plugin-loading machinery to learn first.
 
-Use `--list` to list lessons, or pass an ID such as `01`:
+Use `--list` to list lessons, or pass an ID such as `01` or `02`:
 
 ```powershell
 dotnet run --project src/AfterDarker.Tutorials --no-launch-profile -- --list
 dotnet run --project src/AfterDarker.Tutorials --no-launch-profile -- 01
+dotnet run --project src/AfterDarker.Tutorials --no-launch-profile -- 02
 ```
 
 Add future lessons as separate implementation classes in the same application,
@@ -139,3 +172,7 @@ Windows x64 with .NET SDK 10.0.302. The guest returned `AX=12`, reached
 `IP=0x1006`, and the process exited with code 0. The Visual Studio launch profile
 is included; an interactive Visual Studio F5 session has not been exercised by
 the automated checks.
+
+Tutorial 02 was subsequently built and run through its launch profile on the
+same host. All listed stack, return-address, register, and completion checks
+passed with exit code 0. Tutorial 01 still passes through the shared runner.
