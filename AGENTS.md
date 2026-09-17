@@ -164,6 +164,10 @@ in-process engine remains an architectural option, not a proven decision.
 
 ## Testing and Diagnostics
 
+- For compiler-built Win16 test fixtures, use the pinned setup and reproduction
+  instructions in [docs/watcom-toolchain.md](docs/watcom-toolchain.md).
+  The current installation is `C:\tools\open-watcom\2026-09-01`; do not silently
+  substitute a rolling Watcom build or commit the installed toolchain.
 - Make parser, relocation, selector, ABI, handle, and raster tests deterministic.
 - Prefer tiny hand-authored guest programs for CPU and gateway conformance before
   using a complete `.AD` module.

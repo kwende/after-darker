@@ -115,6 +115,13 @@ explicitly.
 
 ## Next planning point
 
+The active branch is `codex/watcom-win16-test-library`, created from merged
+main (`f3e903c`). Its intended PR milestone is a small, source-built Win16 DLL
+usable in automated tests. The pinned Open Watcom setup is installed and
+[documented for reproduction](watcom-toolchain.md); the project-owned fixture
+and build/test integration have not yet been implemented. The full loader and
+original AD execution remain separate milestones.
+
 The owner requested static analysis to bound the Windows support needed for
 one original screensaver's visuals. Mondrian is the current first candidate;
 fixed host-supplied options are sufficient for the proposed scope, without
@@ -129,6 +136,16 @@ Tutorial 04 implements the narrow host trap; the broader issue is not complete.
 See [the tutorial guide](tutorials.md).
 
 ## Session log
+
+### 2026-09-16 — Watcom fixture branch and installation handoff
+
+- Created `codex/watcom-win16-test-library` from clean, merged main.
+- Recorded exact Open Watcom release/asset, size/SHA-256, portable extraction,
+  per-process environment setup, and the vendor DLL smoke-build commands in
+  `docs/watcom-toolchain.md`; linked it from README and agent instructions.
+- The existing installation at `C:\tools\open-watcom\2026-09-01` builds the
+  supplied vendor DLL as Windows NE. No execution compatibility was tested.
+  A project-owned test DLL remains the branch's intended completion milestone.
 
 ### 2026-09-16 — tutorial 05: typed NE inspection
 

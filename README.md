@@ -70,6 +70,7 @@ See:
 - [Agent collaboration charter](AGENTS.md)
 - [Run and understand the tutorials](docs/tutorials.md)
 - [Run the automated tests](docs/testing.md)
+- [Reproduce the pinned Watcom Win16 toolchain](docs/watcom-toolchain.md)
 
 Open `AfterDarker.sln` in Visual Studio with .NET 10 support and press **F5**.
 The single console project runs tutorial 01 by default and exits after printing
