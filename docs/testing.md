@@ -37,10 +37,12 @@ is verified; an interactive Test Explorer session remains a manual check.
 
 | Category | Cases | What is established |
 | --- | ---: | --- |
-| Unit | 54 | Descriptor/frame layout plus typed NE header, segments, entries, imports, resources, malformed-input rejection, report evidence boundaries, and SDK invocation-plan selection |
+| Unit | 71 | Descriptor/frame layout, NE metadata/reporting/SDK plans, plus loader copies, zero-fill, imported pointer chains, prologue patches, and rejection of malformed or unsupported loading inputs |
 | Conformance | 13 | Actual Unicorn execution: word addition including wraparound, near CALL/RET, protected far CALL/RETF, two gateway stop/resume cycles, signed/custom returns, real guest stores, and handler exception propagation |
 | Tutorial | 5 | Four CPU lessons plus NE inspection through both prompted and explicit paths using generated input |
-| **Total** | **72** | All passing on the current Windows x64 development host |
+| **Default total** | **89** | All passing on the current Windows x64 development host; no Watcom required |
+| Toolchain (opt-in) | 12 | Three real-DLL metadata cases plus nine startup/export/exit execution, ABI, failure, mutation, trace, and console checks |
+| **With Watcom** | **101** | Includes rebuilding the project-owned Win16 fixture |
 
 Conformance tests use the native engine; they are not isolated unit tests or a
 mock of Unicorn. Categories make the distinction explicit. All fixtures are
@@ -65,13 +67,22 @@ dotnet test -p:BuildWin16Fixture=true
 dotnet test -p:BuildWin16Fixture=true --filter "TestCategory=Toolchain"
 ```
 
-This builds the DLL and adds three `Toolchain` cases, for 75 passing cases in
-the combined suite. They check Windows-library startup/data, public code exports
-and resident WEP, and the exact linked import set/resources. They do not execute
-the DLL or assert a runtime return value. The source and build instructions are
-tracked; outputs live in ignored `artifacts/`. Default runs remain compiler-free
-and contain the original 72 cases. Do not pass `--no-build` when changing this
+This builds the DLL and adds 12 `Toolchain` cases, for 101 passing cases in
+the combined suite. Three check metadata; nine exercise tutorial 06, including
+real startup/HELLOWORLD/WEP execution, AX and guest stores, different caller/DLL
+DS, import argument order and cleanup, DX:AX returns, initialization failure,
+bad selector rejection, the error gateway, instruction bounds, and tracing.
+Changing the compiled return constant to 77 produces 77 in both register and
+memory; the host does not manufacture the expected result. The source and build
+instructions are tracked; outputs live in ignored `artifacts/`. Default runs
+remain compiler-free with 89 cases. Do not pass `--no-build` when changing this
 opt-in property, since it changes which tests are compiled.
+
+`NeLoadPlanTests` adds 17 pure unit cases using generated metadata bytes, so
+chain safety and unsupported-input rejection can be tested without an emulator
+or Watcom. The opt-in `Toolchain` category now includes native execution as
+well as file inspection. Its LocalInit behavior is a checked test double; the
+suite does not establish a Windows allocator or MessageBox implementation.
 
 ## Relationship to the lessons
 

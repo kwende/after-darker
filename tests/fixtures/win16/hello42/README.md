@@ -36,10 +36,10 @@ dotnet test -p:BuildWin16Fixture=true -p:WatcomRoot=D:\tools\open-watcom\2026-09
 ```
 
 Opting in builds a fresh DLL, copies it into the test output's `Fixtures`
-directory, and includes three `Toolchain` tests. A missing compiler or failed
-build fails that run. Ordinary `dotnet test` keeps its existing 72 tests without
-requiring Watcom; the opt-in suite has 75. Do not use `--no-build` when enabling
-or disabling the fixture tests.
+directory, and includes 12 `Toolchain` tests (metadata and tutorial 06 execution).
+A missing compiler or failed build fails that run. Ordinary `dotnet test` has
+89 tests without requiring Watcom; the opt-in suite has 101. Do not use
+`--no-build` when enabling or disabling the fixture tests.
 
 ## What the compiler adds
 
@@ -73,9 +73,10 @@ parsing, the expected exports/startup, and the exact import set. Inspection of
 the linked `HELLOWORLD` bytes finds `B8 2A 00` (`MOV AX,42`) and a final `CB`
 (`RETF`), alongside the compiler's prologue, stack check, and epilogue.
 
-Not yet verified: DLL initialization or calling these exports in Unicorn or
-Windows 95. The tests establish metadata contracts, not an observed AX result.
-A future loader must allocate code/data and a stack, bind imports, initialize
-the Win16 startup state, and supply a valid far-call frame. Enter the header
-startup before calling the export; jumping to its file offset alone is not a
-library load.
+[Tutorial 06](../../../../docs/tutorial-06-load-library.md) now initializes and
+executes this DLL in Unicorn: startup returns 1, HELLOWORLD returns/stores 42,
+and WEP returns 1. It assigns code/data/stack descriptors, patches imports and
+export prologues, and uses real guest far calls. Its LocalInit response is a
+checked test double and GetVersion is fixed; it does not implement a Windows
+heap. Execution under Windows 95 remains untested. Read the tutorial guide for
+the exact register setup, trace, tests, and runtime limitations.

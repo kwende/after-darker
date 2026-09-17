@@ -475,3 +475,23 @@ Wine 10.0's [NE header definitions](https://github.com/wine-mirror/wine/blob/win
 and [NE table inspection](https://github.com/wine-mirror/wine/blob/wine-10.0/dlls/krnl386.exe16/ne_module.c).
 The implementation is local C# code; Wine is a layout/reference source, not a
 linked or vendored runtime dependency.
+
+## Tutorial 06: load and execute a Win16 library
+
+This lesson has its own [detailed walkthrough](tutorial-06-load-library.md),
+covering raw-byte loading, selector assignment, import and export-prologue
+patches, every startup register, the guest far-call stack, host exits, and the
+guest-written return value. It uses the same console app and `ITutorial`
+registration as the earlier lessons.
+
+```powershell
+./tools/build-win16-fixture.ps1
+dotnet run --project src/AfterDarker.Tutorials --launch-profile "Tutorial 06 - load Win16 library"
+dotnet run --project src/AfterDarker.Tutorials --launch-profile "Tutorial 06 - instruction trace"
+```
+
+The project-owned DLL's startup returns 1, `HELLOWORLD` returns 42 and the
+caller stores it, then `WEP(1)` returns 1 with the stack restored. The host's
+LocalInit response is a checked test double, not an implemented Windows heap.
+GetVersion is deterministic; MessageBox fails by name if reached. No AD module
+executes in this lesson. See the walkthrough for tests and remaining boundaries.

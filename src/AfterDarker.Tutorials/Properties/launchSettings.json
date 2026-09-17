@@ -19,6 +19,14 @@
     "Tutorial 05 - NE file inspection": {
       "commandName": "Project",
       "commandLineArgs": "05"
+    },
+    "Tutorial 06 - load Win16 library": {
+      "commandName": "Project",
+      "commandLineArgs": "06"
+    },
+    "Tutorial 06 - instruction trace": {
+      "commandName": "Project",
+      "commandLineArgs": "06 --trace"
     }
   }
 }

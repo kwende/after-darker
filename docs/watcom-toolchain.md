@@ -133,8 +133,10 @@ The [Hello42 fixture](../tests/fixtures/win16/hello42/README.md) now supplies
 project-owned C source, conventional DLL initialization and exit routines, a
 `HELLOWORLD` export returning 42, a build script, and opt-in metadata tests.
 Build it with `./tools/build-win16-fixture.ps1`; run the combined suite with
-`dotnet test -p:BuildWin16Fixture=true`. Its generated DLL has been inspected,
-but has not yet been loaded or executed.
+`dotnet test -p:BuildWin16Fixture=true`. Its generated DLL is now inspected and
+executed by [tutorial 06](tutorial-06-load-library.md), which adds a narrow load
+plan and explicitly limited startup host responses. Windows 95 execution and
+a general Win16 loader remain unproven.
 
 Keep the fixture's code and build instructions in the repository, with generated
 objects/DLLs/maps in ignored `artifacts/`. Preserve the existing parser tests
