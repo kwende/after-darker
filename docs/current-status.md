@@ -14,6 +14,12 @@ project covers these mechanisms and the five educational console lessons.
 
 ## Established evidence
 
+- The [Hello42 fixture](../tests/fixtures/win16/hello42/README.md) builds with
+  pinned Watcom into a 1,034-byte Windows NE DLL with header startup,
+  `HELLOWORLD` (returns 42 in source/compiled instructions), and resident `WEP`.
+  Three opt-in metadata tests pass alongside the existing 72 tests. The DLL
+  imports KERNEL GetVersion/LocalInit and USER MessageBox from its runtime.
+  DLL loading, initialization, and an observed return of 42 remain unproven.
 - [Tutorial 05](tutorials.md#tutorial-05-read-a-windows-ne-file) reads a local
   Windows NE file into typed C# records, reports startup/export addresses,
   import identities/fixup heads, resource identifiers/ranges, and an externally
@@ -118,9 +124,10 @@ explicitly.
 The active branch is `codex/watcom-win16-test-library`, created from merged
 main (`f3e903c`). Its intended PR milestone is a small, source-built Win16 DLL
 usable in automated tests. The pinned Open Watcom setup is installed and
-[documented for reproduction](watcom-toolchain.md); the project-owned fixture
-and build/test integration have not yet been implemented. The full loader and
-original AD execution remain separate milestones.
+[documented for reproduction](watcom-toolchain.md); Hello42 source, repeatable
+build, and opt-in parser tests now implement that milestone. The next distinct
+proof is loading/initializing this DLL and observing its returned 42 in the
+guest. A full loader and original AD execution remain separate milestones.
 
 The owner requested static analysis to bound the Windows support needed for
 one original screensaver's visuals. Mondrian is the current first candidate;
@@ -136,6 +143,17 @@ Tutorial 04 implements the narrow host trap; the broader issue is not complete.
 See [the tutorial guide](tutorials.md).
 
 ## Session log
+
+### 2026-09-16 — compiler-built Hello42 fixture
+
+- Added original C source for `HelloWorld`, `LibMain`, and `WEP`, using Watcom's
+  conventional Win16 DLL startup rather than constructing the NE bytes ourselves.
+- Added a scoped build script with process-environment restoration and ignored
+  outputs, plus three optional C# tests against the actual generated DLL.
+- Build has zero compiler/linker warnings. Opt-in suite: 75 passed; default
+  suite: 72 passed without compiling the fixture. Tutorial 05 reads the DLL.
+- Recorded runtime dependencies and the distinction between header startup
+  and named exports. Inspected compiled MOV AX,42/RETF, but did not execute it.
 
 ### 2026-09-16 — Watcom fixture branch and installation handoff
 

@@ -54,6 +54,25 @@ a general Win16 ABI decoder: structures, far pointers, DX:AX results, privilege
 transitions, and wrapping stacks need separate designs and tests when required.
 Descriptor encoding tests establish bytes, not CPU enforcement of limits.
 
+## Optional compiler-built fixture
+
+The [Hello42 Win16 DLL](../tests/fixtures/win16/hello42/README.md) exercises the
+NE reader against real compiler output, independently of the hand-generated
+metadata fixtures. With the [pinned Watcom installation](watcom-toolchain.md):
+
+```powershell
+dotnet test -p:BuildWin16Fixture=true
+dotnet test -p:BuildWin16Fixture=true --filter "TestCategory=Toolchain"
+```
+
+This builds the DLL and adds three `Toolchain` cases, for 75 passing cases in
+the combined suite. They check Windows-library startup/data, public code exports
+and resident WEP, and the exact linked import set/resources. They do not execute
+the DLL or assert a runtime return value. The source and build instructions are
+tracked; outputs live in ignored `artifacts/`. Default runs remain compiler-free
+and contain the original 72 cases. Do not pass `--no-build` when changing this
+opt-in property, since it changes which tests are compiled.
+
 ## Relationship to the lessons
 
 ```text

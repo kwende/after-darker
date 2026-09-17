@@ -13,6 +13,20 @@
     <ProjectReference Include="../../src/AfterDarker.Core/AfterDarker.Core.csproj" />
     <ProjectReference Include="../../src/AfterDarker.Tutorials/AfterDarker.Tutorials.csproj" />
   </ItemGroup>
+  <!-- Opt in so ordinary parser/CPU tests do not require the external compiler. -->
+  <ItemGroup Condition="'$(BuildWin16Fixture)' != 'true'">
+    <Compile Remove="Toolchain/**/*.cs" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(BuildWin16Fixture)' == 'true'">
+    <None Include="../../artifacts/win16/hello42/hello42.dll" Link="Fixtures/hello42.dll" CopyToOutputDirectory="Always" />
+  </ItemGroup>
+  <PropertyGroup>
+    <WatcomRoot Condition="'$(WatcomRoot)' == ''">C:\tools\open-watcom\2026-09-01</WatcomRoot>
+  </PropertyGroup>
+  <Target Name="BuildWin16TestFixture" BeforeTargets="PrepareForBuild"
+          Condition="'$(BuildWin16Fixture)' == 'true' and '$(DesignTimeBuild)' != 'true'">
+    <Exec Command="powershell.exe -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildThisFileDirectory)..\..\tools\build-win16-fixture.ps1&quot; -WatcomRoot &quot;$(WatcomRoot)&quot;" />
+  </Target>
   <Target Name="ConfigureTestAppHost" AfterTargets="Build" Condition="'$(DesignTimeBuild)' != 'true'">
     <Exec Command="powershell.exe -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildThisFileDirectory)..\..\tools\configure-tutorial-apphost.ps1&quot; -ExecutablePath &quot;$(TargetDir)$(AssemblyName).exe&quot;" />
   </Target>

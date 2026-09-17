@@ -1,0 +1,8 @@
+# Keep the normal Watcom Win16 DLL startup rather than hand-writing an NE file.
+system windows dll initinstance memory
+name hello42.dll
+file hello42.obj
+option oneautodata
+option map=hello42.map
+libfile libentry
+export WEP.2 RESIDENT

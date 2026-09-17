@@ -129,8 +129,12 @@ bytes across builds.
 `codex/watcom-win16-test-library` starts from merged main at `f3e903c`.
 The branch's intended PR milestone is a small Win16 DLL built with this
 toolchain from inspectable project-owned source and usable by automated tests.
-At branch creation, only this setup guide and its project references are added;
-that test library and its build/test integration remain to be implemented.
+The [Hello42 fixture](../tests/fixtures/win16/hello42/README.md) now supplies
+project-owned C source, conventional DLL initialization and exit routines, a
+`HELLOWORLD` export returning 42, a build script, and opt-in metadata tests.
+Build it with `./tools/build-win16-fixture.ps1`; run the combined suite with
+`dotnet test -p:BuildWin16Fixture=true`. Its generated DLL has been inspected,
+but has not yet been loaded or executed.
 
 Keep the fixture's code and build instructions in the repository, with generated
 objects/DLLs/maps in ignored `artifacts/`. Preserve the existing parser tests
