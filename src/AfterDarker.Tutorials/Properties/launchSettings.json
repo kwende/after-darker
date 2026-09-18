@@ -27,6 +27,14 @@
     "Tutorial 06 - instruction trace": {
       "commandName": "Project",
       "commandLineArgs": "06 --trace"
+    },
+    "Tutorial 07 - relocation walkthrough": {
+      "commandName": "Project",
+      "commandLineArgs": "07 --step"
+    },
+    "Tutorial 07 - local NE relocations": {
+      "commandName": "Project",
+      "commandLineArgs": "07 --file --step"
     }
   }
 }

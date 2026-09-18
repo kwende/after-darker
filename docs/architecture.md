@@ -100,11 +100,22 @@ Tutorial 06 now implements a deliberately narrow subset in
 `AfterDarker.Core.Ne.NeLoadPlan`: externally assigned segment placements,
 zero-filled allocation, imported non-additive 16:16 pointer chains, and
 recognized shared-data export-prologue patches. It returns prepared byte arrays
-and a patch log; it has no CPU dependency. Internal/additive/selector-only/OS
-fixups and unsupported DLL modes fail explicitly. The lesson copies these
+and a patch log; it has no CPU dependency. The lesson copies these
 arrays into Unicorn, runs the header startup, and calls named exports from
 the project-owned Hello42 DLL. A general dependency/instance loader is still
 design work. See [the complete execution walkthrough](tutorial-06-load-library.md).
+
+Tutorial 07 extends this same load plan with fixed-segment and entry-ordinal
+internal references, plus selector16 and offset16 writes for internal/imported
+targets. `PlaceSegments` assigns a deterministic layout; dictionaries resolve
+segment numbers and entry ordinals. Each `NePatch` records its source record,
+resolved target, saved next link, and before/after bytes; an observer can pause
+after every write. `CreateWithImportResolver` separates address resolution from
+ABI/handler implementation. The console uses non-callable import placeholders,
+whereas tutorial 06 resolves through its handler bindings. Mondrian's five
+segments prepare successfully, including 66 relocation writes, but are not
+executed. Additive/byte/32-bit/OS fixups and unsupported DLL modes still fail.
+See [the relocation walkthrough](tutorial-07-relocations.md).
 
 ### 3.3 CPU engine adapter
 

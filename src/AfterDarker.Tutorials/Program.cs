@@ -13,6 +13,8 @@ ITutorial[] tutorials =
         args is ["06", var fixture] && fixture != "--trace" ? fixture :
         args is ["06", var tracedFixture, "--trace"] ? tracedFixture : null,
         args.Contains("--trace")),
+    new Tutorial07Relocations(args.Length >= 2 && args[0] == "07" && args[1] != "--step" ? args[1] : null,
+        args.Contains("--step")),
 ];
 
 if (args is ["--list"])
@@ -28,11 +30,12 @@ bool validArguments = selectedId switch
 {
     "05" => args.Length <= 2,
     "06" => args is ["06"] or ["06", _] or ["06", _, "--trace"],
+    "07" => args is ["07"] or ["07", _] or ["07", _, "--step"],
     _ => args.Length <= 1,
 };
 if (selected is null || !validArguments)
 {
-    Console.Error.WriteLine("Usage: AfterDarker.Tutorials [01 | 02 | 03 | 04 | 05 [file.ad] | 06 [hello42.dll] [--trace] | --list]");
+    Console.Error.WriteLine("Usage: AfterDarker.Tutorials [01 | 02 | 03 | 04 | 05 [file.ad] | 06 [hello42.dll] [--trace] | 07 [file.ad | --file] [--step] | --list]");
     return 1;
 }
 

@@ -13,16 +13,28 @@ public enum Win16ReturnLayout { WordInAx, DwordInDxAx }
 public sealed record NeImportBinding(NeImport Import, string Name, FarPointer16 Address,
     int ArgumentBytes, Win16ReturnLayout ReturnLayout, string Handler);
 public sealed record PreparedNeSegment(NeSegment Source, NeSegmentPlacement Placement, byte[] Bytes);
-public sealed record NePatch(NeAddress Source, string Reason, byte[] Before, byte[] After);
+public sealed record NePatch(NeAddress Source, string Reason, byte[] Before, byte[] After,
+    NeRelocation? Relocation = null, FarPointer16? Target = null, ushort? NextOffset = null);
 
 /// <summary>
-/// A small, CPU-independent loading step: copy segment bytes, resolve imported
-/// far pointers, and fix single-data export prologues. Nothing executes here.
+/// A CPU-independent loading step: copy segments, reconnect internal/imported
+/// addresses, and fix single-data export prologues. Nothing executes here.
 /// Unsupported relocation forms fail instead of being silently ignored.
 /// </summary>
 public sealed record NeLoadPlan(NeImage Image, IReadOnlyList<PreparedNeSegment> Segments,
     IReadOnlyList<NePatch> Patches)
 {
+    /// <summary>Choose a simple deterministic layout; this assigns addresses, not CPU memory.</summary>
+    public static IReadOnlyList<NeSegmentPlacement> PlaceSegments(NeImage image,
+        ushort firstSelector = 8, uint firstLinearBase = 0x10000)
+    {
+        if (image.Segments.Count is < 1 or > 16 || firstSelector == 0 ||
+            (firstSelector & 7) != 0 || (firstLinearBase & 0xFFFF) != 0)
+            throw new ArgumentException("Use 1-16 segments, an aligned non-null GDT selector, and a 64 KiB aligned base.");
+        return Array.AsReadOnly(image.Segments.Select((s, i) => new NeSegmentPlacement(s.Number,
+            checked((ushort)(firstSelector + i * 8)), checked(firstLinearBase + (uint)i * 65536))).ToArray());
+    }
+
     public FarPointer16 ResolveCode(NeAddress address)
     {
         PreparedNeSegment segment = Segments.Single(s => s.Source.Number == address.SegmentNumber);
@@ -32,7 +44,18 @@ public sealed record NeLoadPlan(NeImage Image, IReadOnlyList<PreparedNeSegment> 
     }
 
     public static NeLoadPlan Create(byte[] file, IReadOnlyList<NeSegmentPlacement> placements,
-        IReadOnlyList<NeImportBinding> bindings)
+        IReadOnlyList<NeImportBinding> bindings) => CreateWithImportResolver(file, placements, import =>
+            bindings.SingleOrDefault(b => SameImport(b.Import, import))?.Address
+            ?? throw new NotSupportedException($"Unbound import {import.Module}!{import.Name ?? $"#{import.Ordinal}"}."));
+
+    // Address resolution is separate from ABI/handler implementation. Tutorial 06
+    // supplies real host bindings; tutorial 07 supplies explicitly non-callable
+    // demonstration addresses. An unresolved import must throw, not become zero.
+    // onPatch observes each completed write to our private copy, useful for a
+    // debugger or an interactive lesson. Failure returns no partial load plan.
+    public static NeLoadPlan CreateWithImportResolver(byte[] file,
+        IReadOnlyList<NeSegmentPlacement> placements, Func<NeImport, FarPointer16> resolveImport,
+        Action<NePatch>? onPatch = null)
     {
         NeImage image = NeReader.Read(file);
         // This milestone uses one shared automatic data segment, not task-local
@@ -69,32 +92,36 @@ public sealed record NeLoadPlan(NeImage Image, IReadOnlyList<PreparedNeSegment> 
             segments.Add(new(source, placement, bytes));
         }
 
+        var byNumber = segments.ToDictionary(s => s.Source.Number);
+        var entries = image.Entries.ToDictionary(e => e.Ordinal);
         var patches = new List<NePatch>();
         var written = new HashSet<(ushort Segment, int Offset)>();
         foreach (NeRelocation relocation in image.Relocations)
         {
-            if (relocation.Kind is not (1 or 2) || relocation.AddressType != 3 || relocation.Additive)
+            if (relocation.Kind == 3 || (relocation.Flags & ~3) != 0 ||
+                relocation.AddressType is not (2 or 3 or 5))
                 throw new NotSupportedException($"S{relocation.SegmentNumber}:{relocation.SourceOffset:X4}: " +
-                    "only non-additive imported 16:16 far-pointer relocations are implemented.");
-            NeImport import = relocation.Import!;
-            NeImportBinding binding = bindings.SingleOrDefault(b => SameImport(b.Import, import))
-                ?? throw new NotSupportedException($"Unbound import {import.Module}!{import.Name ?? $"#{import.Ordinal}"}.");
-            PreparedNeSegment segment = segments.Single(s => s.Source.Number == relocation.SegmentNumber);
+                    "only non-additive internal/imported selector, offset16, and far16:16 relocations are implemented.");
+            (FarPointer16 target, string reason) = ResolveTarget(relocation);
+            PreparedNeSegment segment = byNumber[relocation.SegmentNumber];
+            int width = relocation.AddressType == 3 ? 4 : 2;
 
             // The first WORD at each patch site is a LINK to the next patch site,
             // not yet an instruction operand. Read it BEFORE overwriting it.
             ushort offset = relocation.SourceOffset;
+            if (offset == 0xFFFF) throw new InvalidDataException("NE relocation has no initial patch site.");
             var visited = new HashSet<ushort>();
             while (offset != 0xFFFF)
             {
                 if (!visited.Add(offset)) throw new InvalidDataException("Cyclic NE relocation chain.");
-                if (offset > segment.Source.FileBytes - 4)
-                    throw new InvalidDataException("NE far-pointer fixup lies outside stored segment bytes.");
+                if (offset > segment.Source.FileBytes - width)
+                    throw new InvalidDataException("NE fixup lies outside stored segment bytes.");
                 ushort next = BinaryPrimitives.ReadUInt16LittleEndian(segment.Bytes.AsSpan(offset, 2));
-                byte[] replacement = new byte[4];
-                BinaryPrimitives.WriteUInt16LittleEndian(replacement, binding.Address.Offset);
-                BinaryPrimitives.WriteUInt16LittleEndian(replacement.AsSpan(2), binding.Address.Selector);
-                Patch(segment, offset, replacement, $"import {binding.Name}");
+                byte[] replacement = new byte[width];
+                BinaryPrimitives.WriteUInt16LittleEndian(replacement,
+                    relocation.AddressType == 2 ? target.Selector : target.Offset);
+                if (width == 4) BinaryPrimitives.WriteUInt16LittleEndian(replacement.AsSpan(2), target.Selector);
+                Patch(segment, offset, replacement, reason, relocation, target, next);
                 offset = next;
             }
         }
@@ -117,14 +144,53 @@ public sealed record NeLoadPlan(NeImage Image, IReadOnlyList<PreparedNeSegment> 
         }
         return new(image, segments.AsReadOnly(), patches.AsReadOnly());
 
-        void Patch(PreparedNeSegment segment, ushort offset, byte[] replacement, string reason)
+        (FarPointer16, string) ResolveTarget(NeRelocation relocation)
+        {
+            if (relocation.Kind is 1 or 2)
+            {
+                NeImport import = relocation.Import!;
+                FarPointer16 pointer = resolveImport(import);
+                if (pointer.Selector == 0) throw new InvalidDataException("Import resolver returned a null selector.");
+                return (pointer, $"import {import.Module}!{import.Name ?? $"#{import.Ordinal}"}");
+            }
+
+            NeAddress address;
+            string reason;
+            if (relocation.Target1 == 0xFF)
+            {
+                // A movable reference contains an ENTRY ORDINAL, not a segment
+                // number. Internal entries need not carry the public export flag.
+                if (!entries.TryGetValue(relocation.Target2, out NeEntry? entry) || entry.Address is null)
+                    throw new InvalidDataException($"Internal entry #{relocation.Target2} is missing or constant.");
+                address = entry.Address.Value;
+                reason = $"internal entry #{entry.Ordinal} -> {address}";
+            }
+            else
+            {
+                // Fixed references encode the segment in one byte; the high byte
+                // is reserved. Selector-only references do not consume Target2.
+                if (relocation.Target1 is 0 or > 254)
+                    throw new InvalidDataException("Invalid internal segment number/reserved byte.");
+                address = new(relocation.Target1, relocation.AddressType == 2 ? (ushort)0 : relocation.Target2);
+                reason = $"internal fixed {address}";
+            }
+            if (!byNumber.TryGetValue(address.SegmentNumber, out PreparedNeSegment? destination) ||
+                address.Offset >= destination.Bytes.Length)
+                throw new InvalidDataException($"Internal target {address} is outside allocated segments.");
+            return (new(destination.Placement.Selector, address.Offset), reason);
+        }
+
+        void Patch(PreparedNeSegment segment, ushort offset, byte[] replacement, string reason,
+            NeRelocation? relocation = null, FarPointer16? target = null, ushort? next = null)
         {
             for (int i = 0; i < replacement.Length; i++)
                 if (!written.Add((segment.Source.Number, offset + i)))
                     throw new InvalidDataException("Overlapping NE patches are unsupported.");
             byte[] before = segment.Bytes.AsSpan(offset, replacement.Length).ToArray();
             replacement.CopyTo(segment.Bytes, offset);
-            patches.Add(new(new(segment.Source.Number, offset), reason, before, replacement));
+            var patch = new NePatch(new(segment.Source.Number, offset), reason, before, replacement, relocation, target, next);
+            patches.Add(patch);
+            onPatch?.Invoke(patch);
         }
     }
 

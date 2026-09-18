@@ -38,7 +38,7 @@ dotnet test -p:BuildWin16Fixture=true -p:WatcomRoot=D:\tools\open-watcom\2026-09
 Opting in builds a fresh DLL, copies it into the test output's `Fixtures`
 directory, and includes 12 `Toolchain` tests (metadata and tutorial 06 execution).
 A missing compiler or failed build fails that run. Ordinary `dotnet test` has
-89 tests without requiring Watcom; the opt-in suite has 101. Do not use
+117 tests without requiring Watcom; the opt-in suite has 129. Do not use
 `--no-build` when enabling or disabling the fixture tests.
 
 ## What the compiler adds
