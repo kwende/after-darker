@@ -9,6 +9,10 @@ ITutorial[] tutorials =
     new Tutorial03FarCall(),
     new Tutorial04HostGateway(),
     new Tutorial05NeInspection(args is ["05", var path] ? path : null),
+    new Tutorial06LoadLibrary(
+        args is ["06", var fixture] && fixture != "--trace" ? fixture :
+        args is ["06", var tracedFixture, "--trace"] ? tracedFixture : null,
+        args.Contains("--trace")),
 ];
 
 if (args is ["--list"])
@@ -20,9 +24,15 @@ if (args is ["--list"])
 
 string selectedId = args.Length == 0 ? tutorials[0].Id : args[0];
 ITutorial? selected = tutorials.SingleOrDefault(tutorial => tutorial.Id == selectedId);
-if (selected is null || args.Length > (selectedId == "05" ? 2 : 1))
+bool validArguments = selectedId switch
 {
-    Console.Error.WriteLine("Usage: AfterDarker.Tutorials [01 | 02 | 03 | 04 | 05 [file.ad] | --list]");
+    "05" => args.Length <= 2,
+    "06" => args is ["06"] or ["06", _] or ["06", _, "--trace"],
+    _ => args.Length <= 1,
+};
+if (selected is null || !validArguments)
+{
+    Console.Error.WriteLine("Usage: AfterDarker.Tutorials [01 | 02 | 03 | 04 | 05 [file.ad] | 06 [hello42.dll] [--trace] | --list]");
     return 1;
 }
 

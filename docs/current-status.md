@@ -1,25 +1,34 @@
 # Current Status
 
-Last updated: 2026-09-16
+Last updated: 2026-09-17
 
 ## Project phase
 
 After Darker has a C# tutorial console host with real-mode addition and
 near-call experiments, plus 16-bit protected-mode far-call and synthetic host
-gateway experiments using Unicorn 2.1.3. No After Dark runtime, NE loader,
-Win16 shim, or renderer has been implemented here yet.
+gateway experiments using Unicorn 2.1.3. Tutorial 06 adds a narrow NE load plan
+and executes the project-owned Hello42 DLL with limited startup host responses.
+There is no After Dark runtime, general Win16 API layer, or renderer yet.
 `AfterDarker.Core` contains two extracted binary-layout helpers, a Windows NE
-metadata reader, and a separate After Dark invocation-plan model. The C# MSTest
-project covers these mechanisms and the five educational console lessons.
+metadata reader, a CPU-independent load plan, and a separate After Dark
+invocation-plan model. The C# MSTest project covers these mechanisms and the
+six educational console lessons (lesson 06 requires the optional Watcom fixture).
 
 ## Established evidence
 
+- [Tutorial 06](tutorial-06-load-library.md) copies the compiled DLL's segments,
+  assigns descriptors, patches imported far pointers and shared-data export
+  prologues, then runs real guest far calls. Observed startup AX=1, HELLOWORLD
+  AX=42 and a guest store of 42, then WEP(1) AX=1; SP returns to 1000 each time.
+  HELLOWORLD establishes DLL DS=0010 and restores caller DS=0030. LocalInit
+  is a checked test double, GetVersion is fixed, and MessageBox fails by name.
+  This is fixture execution, not an After Dark or Windows heap implementation.
 - The [Hello42 fixture](../tests/fixtures/win16/hello42/README.md) builds with
   pinned Watcom into a 1,034-byte Windows NE DLL with header startup,
   `HELLOWORLD` (returns 42 in source/compiled instructions), and resident `WEP`.
-  Three opt-in metadata tests pass alongside the existing 72 tests. The DLL
+  Three opt-in metadata tests and nine execution/lesson tests pass. The DLL
   imports KERNEL GetVersion/LocalInit and USER MessageBox from its runtime.
-  DLL loading, initialization, and an observed return of 42 remain unproven.
+  Windows 95 execution and general Win16 compatibility remain unproven.
 - [Tutorial 05](tutorials.md#tutorial-05-read-a-windows-ne-file) reads a local
   Windows NE file into typed C# records, reports startup/export addresses,
   import identities/fixup heads, resource identifiers/ranges, and an externally
@@ -32,8 +41,9 @@ project covers these mechanisms and the five educational console lessons.
   dialogs, or callbacks were found on that path. Clock seeding, tick-based
   pacing, two host memory records, and static rectangle history are identified.
   This is static evidence only; Mondrian has not executed in this runtime.
-- The [C# test suite](testing.md) has 72 passing cases: 54 unit, 13 native-engine
-  conformance, and five tutorial entry-point checks. It uses generated NE
+- The [C# test suite](testing.md) has 89 default passing cases: 71 unit, 13
+  native-engine conformance, and five tutorial entry-point checks. With Watcom,
+  12 additional Toolchain cases bring the total to 101. It uses generated NE
   fixtures and the same guest
   programs as the lessons, with typed observations and independent assertions.
   Temporary omitted-cleanup and wrong-return mutations were rejected. This
@@ -90,8 +100,8 @@ project covers these mechanisms and the five educational console lessons.
   construction.
 - WineVDM/OTVDM is existing evidence that Win16 applications can execute on
   modern 64-bit Windows without booting a complete Windows guest.
-- Tutorial 04 demonstrates the synthetic gateway execution boundary. Mapping
-  real NE imports onto it remains a proposed loader responsibility.
+- Tutorial 04 demonstrates the synthetic gateway execution boundary. Tutorial
+  06 now maps the fixture's real imported far pointers onto that mechanism.
 
 ## Important unproven assumptions
 
@@ -121,13 +131,14 @@ explicitly.
 
 ## Next planning point
 
-The active branch is `codex/watcom-win16-test-library`, created from merged
-main (`f3e903c`). Its intended PR milestone is a small, source-built Win16 DLL
-usable in automated tests. The pinned Open Watcom setup is installed and
-[documented for reproduction](watcom-toolchain.md); Hello42 source, repeatable
-build, and opt-in parser tests now implement that milestone. The next distinct
-proof is loading/initializing this DLL and observing its returned 42 in the
-guest. A full loader and original AD execution remain separate milestones.
+The active branch is `codex/tutorial-06-load-win16-library`, created from merged
+main (`c4bd985`). Tutorial 06 now executes the source-built Hello42 DLL and
+records its real return value. The owner wants to understand this bridge:
+walk through the [detailed lesson](tutorial-06-load-library.md), register table,
+and instruction trace together before widening the loader or Windows API
+surface. Internal relocations and a real heap allocator are still separate
+work; no original AD module has run. The pinned Watcom setup remains
+[documented for reproduction](watcom-toolchain.md).
 
 The owner requested static analysis to bound the Windows support needed for
 one original screensaver's visuals. Mondrian is the current first candidate;
@@ -143,6 +154,33 @@ Tutorial 04 implements the narrow host trap; the broader issue is not complete.
 See [the tutorial guide](tutorials.md).
 
 ## Session log
+
+### 2026-09-17 — tutorial 06: load and call a compiler-built Win16 DLL
+
+- Created `codex/tutorial-06-load-win16-library` from clean main after PR #6.
+- Added a pure loading plan for segment copies/zero-fill, checked imported
+  far-pointer chains, and recognized shared-data export prologues. Unsupported
+  relocation forms and DLL modes fail instead of being silently skipped.
+- Kept memory maps, GDT, register writes, guest callers, hook, host dispatch,
+  return simulation, and observations visible in the new console lesson.
+  Added normal and instruction-trace launch profiles and a detailed walkthrough.
+- Source inspection of pinned Watcom LibEntry established DS/CX/DI/ES:SI inputs;
+  inspecting Wine's loader established the export-prologue fixup. These are
+  references, not vendored dependencies. No DOS services execute on this path.
+- Observed startup -> LocalInit/GetVersion gateway calls -> LibMain -> caller,
+  then HELLOWORLD -> caller store 42, then WEP -> balanced return. The runtime's
+  actual data writes reflect the supplied Windows version. LocalInit remains
+  a checked test double; MessageBox is an error trap.
+- A compiled-byte mutation from 42 to 77 changes both AX and guest memory.
+  Failed initialization leaves export result markers untouched. Tests check
+  stack frames, cleanup, DS transitions, import arguments/returns, bounded
+  failure, invalid selector rejection, and the error gateway.
+- Verified 101 opt-in / 89 default cases and normal/trace CLI launch profiles.
+  Interactive Visual Studio F5 remains a manual check. Generated binaries and
+  the trace remain in ignored artifacts; no new packages or private inputs.
+- Executed fixture SHA-256:
+  `a2904e8332dd5232040b26ccd1ce446a76049dcced368ddce89625702d9c0c12`
+  (1,034 bytes; compiler/fixture source unchanged from PR #6).
 
 ### 2026-09-16 — compiler-built Hello42 fixture
 

@@ -96,6 +96,16 @@ An NE segment is not a PE section mapped into a single flat address space. The
 guest observes `selector:offset` addresses, and the runtime must preserve the
 meaning of code, data, stack, and far-pointer selectors.
 
+Tutorial 06 now implements a deliberately narrow subset in
+`AfterDarker.Core.Ne.NeLoadPlan`: externally assigned segment placements,
+zero-filled allocation, imported non-additive 16:16 pointer chains, and
+recognized shared-data export-prologue patches. It returns prepared byte arrays
+and a patch log; it has no CPU dependency. Internal/additive/selector-only/OS
+fixups and unsupported DLL modes fail explicitly. The lesson copies these
+arrays into Unicorn, runs the header startup, and calls named exports from
+the project-owned Hello42 DLL. A general dependency/instance loader is still
+design work. See [the complete execution walkthrough](tutorial-06-load-library.md).
+
 ### 3.3 CPU engine adapter
 
 The CPU engine owns instruction semantics and register state. After Darker owns
@@ -189,9 +199,17 @@ Tutorial 04 is an observed, lesson-local prototype of this execution boundary:
 `0010:0200` maps to `Tutorial!HostAdd`, which takes two signed 16-bit Pascal
 arguments and returns AX. The hook only records the exit and stops; C# decodes
 the stack, invokes the handler, and restores CS:IP/SP after `EmuStart` returns.
-Two successive calls produce guest stores of `12` and `-2`. The service is
-synthetic: NE import resolution, a general ABI registry, and actual Win16 APIs
-remain design work.
+Two successive calls produce guest stores of `12` and `-2`. That lesson's
+service is synthetic; it does not itself resolve NE imports or implement a
+Windows API. A general ABI registry remains design work.
+
+Tutorial 06 connects that boundary to three real NE imports through typed
+`NeImportBinding` records. GetVersion returns a deterministic DX:AX value;
+LocalInit is a checked test double for Hello42's unused heap reservation;
+MessageBox is a named failure trap. Host dispatch remains outside the native
+hook. This proves imported far-call relocation and return for the fixture,
+not a generally usable Windows heap or UI API. The CPU orchestration remains
+lesson-local rather than introducing a production adapter prematurely.
 
 ### 3.5 Win16 ABI and object model
 

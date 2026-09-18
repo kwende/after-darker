@@ -52,7 +52,10 @@ addition and near calls, a 16-bit protected-mode `CALL FAR`/`RETF` round trip,
 and a synthetic C# host gateway with stop, dispatch, and guest resume in Unicorn.
 Tutorial 05 reads Windows NE files into typed C# metadata and reports their
 entry points, imports, resources, and an assumed After Dark invocation plan.
-There is no After Dark runtime, NE loader, Win16 shim, or renderer yet.
+[Tutorial 06](docs/tutorial-06-load-library.md) now loads the source-built
+Hello42 Win16 DLL, executes its startup through two limited host responses,
+calls its export, and observes the guest store 42. This is a narrow loader
+experiment; there is no After Dark runtime, general Win16 API layer, or renderer.
 
 Prior research has established the After Dark lifecycle, inspected several
 real modules, and recovered enough behavior from Spiral Gyra and Stained Glass
@@ -87,6 +90,12 @@ To supply the path from the command line:
 ```powershell
 dotnet run --project src/AfterDarker.Tutorials --no-launch-profile -- 05 "C:\repos\after-darker\ad\Mondrian.ad"
 ```
+
+For the compiler-built DLL execution lesson, run
+`./tools/build-win16-fixture.ps1` once, then select **Tutorial 06 - load Win16
+library** for F5, or **Tutorial 06 - instruction trace** to see fetched bytes
+and registers. The [detailed walkthrough](docs/tutorial-06-load-library.md)
+explains each memory assignment, register input, loader patch, and return frame.
 
 Run `dotnet test` from the repository root for the C# test suite. The solution
 contains a small shared `AfterDarker.Core` library, the educational console app,
