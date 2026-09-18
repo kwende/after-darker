@@ -2,7 +2,7 @@
   "profiles": {
     "Tutorial 01 - 16-bit addition": {
       "commandName": "Project",
-      "commandLineArgs": "01"
+      "commandLineArgs": "--no-launch-profile -- 06 artifacts/win16/hello42/hello42.dll --trace"
     },
     "Tutorial 02 - stack and near call": {
       "commandName": "Project",

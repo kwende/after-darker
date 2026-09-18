@@ -42,16 +42,25 @@ public sealed class Tutorial06LoadLibrary(string? path = null, bool trace = fals
 
     public void Run()
     {
+		// find the 16-bit DLL. 
         string fixture = path ?? FindFixture();
+
         using FileStream stream = File.OpenRead(fixture);
+
         if (stream.Length > NeReader.MaximumFileBytes) throw new InvalidDataException("Fixture is too large.");
+
         byte[] bytes = new byte[(int)stream.Length];
         stream.ReadExactly(bytes);
+
         Result result = Execute(bytes, Console.Out, trace);
+
         if (!result.Initialized || result.StoredInitialization != 1 || result.Hello?.Ax != 42 || result.StoredHello != 42 ||
             result.Exit?.Ax != 1 || result.StoredExit != 1 || !result.ProtectedMode)
-            throw new InvalidOperationException("The DLL did not initialize, return/store 42, and complete WEP.");
-        Console.WriteLine("PASS: compiled DLL startup returned 1; HELLOWORLD returned 42; guest stored 42; WEP returned 1.");
+		{
+			throw new InvalidOperationException("The DLL did not initialize, return/store 42, and complete WEP.");
+		}
+
+		Console.WriteLine("PASS: compiled DLL startup returned 1; HELLOWORLD returned 42; guest stored 42; WEP returned 1.");
         Console.WriteLine("Scope: Hello42 only. LocalInit is a checked test double, not a Windows heap allocator.");
     }
 
@@ -282,23 +291,38 @@ public sealed class Tutorial06LoadLibrary(string? path = null, bool trace = fals
                     b.Address == new FarPointer16(before.Cs, before.Ip))
                     ?? throw new NotSupportedException($"Unknown gateway {before.Cs:X4}:{before.Ip:X4}.");
                 if (binding.Handler == "FailIfReached")
-                    throw new NotSupportedException($"{binding.Name} reached: compiler runtime error path; no dialog is mocked.");
-                if (trapped != GatewayBase + before.Ip || before.Ss != Stack ||
+				{
+					throw new NotSupportedException($"{binding.Name} reached: compiler runtime error path; no dialog is mocked.");
+				}
+				if (trapped != GatewayBase + before.Ip || before.Ss != Stack ||
                     before.Sp + 4 + binding.ArgumentBytes > InitialSp)
-                    throw new InvalidOperationException($"{binding.Name}: invalid stack or gateway address.");
-                byte[] frameBytes = new byte[4 + binding.ArgumentBytes];
+				{
+					throw new InvalidOperationException($"{binding.Name}: invalid stack or gateway address.");
+				}
+
+				byte[] frameBytes = new byte[4 + binding.ArgumentBytes];
                 emulator.MemRead(StackBase + before.Sp, frameBytes);
+
                 var frame = new FarPascalWordFrame(frameBytes);
                 var arguments = new ushort[frame.ArgumentCount];
+
                 for (int i = 0; i < arguments.Length; i++)
-                    arguments[i] = unchecked((ushort)frame.ReadArgument(i)); // these API words are UNSIGNED
-                var returnAddress = new FarPointer16(frame.ReturnCs, frame.ReturnIp);
+				{
+					arguments[i] = unchecked((ushort)frame.ReadArgument(i)); // these API words are UNSIGNED
+				}
+
+				var returnAddress = new FarPointer16(frame.ReturnCs, frame.ReturnIp);
+
                 PreparedNeSegment returnSegment = plan.Segments.SingleOrDefault(s =>
                     s.Placement.Selector == returnAddress.Selector && !s.Source.IsData)
                     ?? throw new InvalidOperationException("Import return CS is not DLL code.");
+
                 if (frame.ReturnIp >= returnSegment.Source.FileBytes)
-                    throw new InvalidOperationException("Import return IP is outside stored code.");
-                uint returned;
+				{
+					throw new InvalidOperationException("Import return IP is outside stored code.");
+				}
+
+				uint returned;
                 if (binding.Handler == "CheckedHeapTestDouble")
                 {
                     // This fixture never calls LocalAlloc/LocalFree. Validate the
