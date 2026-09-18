@@ -60,6 +60,25 @@ for this exercise, not a program we intend to execute.
 
 ## Pass one: make the destination map
 
+The code separates three sources of numbers. [NeFormat](../src/AfterDarker.Core/Ne/NeFormat.cs)
+names values defined by the file format, such as `Selector16`, `Offset16`,
+`FarPointer16`, and `EndOfRelocationChain`. These are tags and markers, not sizes:
+`FarPointer16` has tag 3 but requires four bytes. Constants in `NeLoadPlan`
+separately name x86 facts (eight-byte GDT descriptors, two-byte words) and our
+layout choices (at most 16 segments, placed in separate 64 KiB slots).
+
+The relocation loop's `switch` shows exactly which part of the resolved address
+gets written. A selector-only field receives the selector, an offset-only field
+receives the offset, and a far-pointer field receives both, offset word first.
+The destination's offset remains relative to its segment; we do not add the
+linear base to it. Later, the CPU uses the selector's descriptor to find that base.
+
+This is the distinction behind “reconnecting”: the NE tables describe the work,
+but `Patch` changes **address fields inside our copied code/data arrays**. It
+does not rewrite the original tables, move methods, or change a CALL opcode.
+The separate export-prologue pass does rewrite recognized instructions to
+establish the DLL's data segment, and is labeled separately for that reason.
+
 The default layout gives each file segment a distinct 64 KiB linear slot and
 a GDT selector. For the three-segment example:
 

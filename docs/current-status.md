@@ -1,6 +1,6 @@
 # Current Status
 
-Last updated: 2026-09-17
+Last updated: 2026-09-18
 
 ## Project phase
 
@@ -18,6 +18,12 @@ seven educational console lessons (lesson 06 requires the optional Watcom fixtur
 
 ## Established evidence
 
+- Loader readability pass: `NeFormat` names the relocation tags, flags, and
+  chain markers; `NeLoadPlan` distinguishes x86 sizes from host layout choices.
+  Its explicit field-writing switch and comments explain destination lookup,
+  chain preservation, and patching copied code/data rather than NE tables.
+  Tutorial 07 uses the same names. Behavior remains unchanged; all 129
+  Watcom-enabled tests pass, including the existing DLL execution checks.
 - [Tutorial 07](tutorial-07-relocations.md) prepares the local Mondrian image:
   five segments, 27 internal + 17 imported relocation records, 66 chained
   relocation writes, and three export-prologue patches. Independent raw-NE

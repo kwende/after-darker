@@ -11,6 +11,14 @@ namespace AfterDarker.Tutorials.Lessons;
 public sealed class Tutorial07Relocations(string? inputPath = null, bool step = false,
     TextReader? input = null, TextWriter? output = null) : ITutorial
 {
+    private const int GdtDescriptorBytes = 8;
+    // Arbitrary demonstration layout: reserve the first 256 bytes, then give
+    // each import a distinct address 16 bytes apart. NE does not mandate this.
+    private const int FirstImportOffset = 0x100;
+    private const int ImportSlotBytes = 16;
+    private const int SegmentAddressSpaceBytes = 1 << 16;
+    private const int MaximumImportSlots = (SegmentAddressSpaceBytes - FirstImportOffset) / ImportSlotBytes;
+
     public string Id => "07";
     public string Title => "Reconnect NE references: segment map -> target lookup -> patched bytes";
 
@@ -65,11 +73,13 @@ public sealed class Tutorial07Relocations(string? inputPath = null, bool step = 
         // A load-only demonstration can assign addresses without claiming to
         // implement the imported methods. No dummy argument count/ABI is invented.
         // A future executor must replace this resolver with actual host bindings.
-        ushort importSelector = checked((ushort)((placements.Count + 1) * 8));
+        // PlaceSegments uses consecutive GDT entries starting after the null
+        // entry. The next entry after the module segments is our import segment.
+        ushort importSelector = checked((ushort)((placements.Count + 1) * GdtDescriptorBytes));
         NeImport[] imports = image.Imports.ToArray();
-        if (imports.Length > 4080) throw new NotSupportedException("Import demonstration slots exceed one 64 KiB segment.");
+        if (imports.Length > MaximumImportSlots) throw new NotSupportedException("Import demonstration slots exceed one 64 KiB segment.");
         var addresses = imports.Select((import, i) => new ImportAddress(import,
-            new(importSelector, checked((ushort)(0x100 + i * 16))))).ToArray();
+            new(importSelector, checked((ushort)(FirstImportOffset + i * ImportSlotBytes))))).ToArray();
         var byImport = addresses.ToDictionary(a => a.Import, a => a.Address);
         writer.WriteLine("IMPORT ADDRESSES ONLY: these slots have NO implementation, ABI, or executable memory");
         foreach (ImportAddress a in addresses)
@@ -84,7 +94,10 @@ public sealed class Tutorial07Relocations(string? inputPath = null, bool step = 
             {
                 string form = patch.Relocation?.AddressType switch
                 {
-                    2 => "selector16", 3 => "far16:16", 5 => "offset16", _ => "export prologue",
+                    NeFormat.AddressTypes.Selector16 => "selector16",
+                    NeFormat.AddressTypes.FarPointer16 => "far16:16",
+                    NeFormat.AddressTypes.Offset16 => "offset16",
+                    _ => "export prologue",
                 };
                 writer.WriteLine($"  Patch {++patchCount}: {patch.Source} [{form}]");
                 NeSegmentPlacement sourcePlacement = placements.Single(p => p.Number == patch.Source.SegmentNumber);
@@ -94,13 +107,14 @@ public sealed class Tutorial07Relocations(string? inputPath = null, bool step = 
                 if (patch.Target is FarPointer16 target)
                     writer.WriteLine($"    Resolved address: {target} (write only the part required by {form})");
                 if (patch.NextOffset is ushort next)
-                    writer.WriteLine($"    Saved chain link BEFORE overwrite: {(next == 0xFFFF ? "FFFF = end" : $"{next:X4} = next source offset")}");
+                    writer.WriteLine($"    Saved chain link BEFORE overwrite: {(next == NeFormat.EndOfRelocationChain ? "FFFF = end" : $"{next:X4} = next source offset")}");
                 writer.WriteLine($"    Before: {Hex(patch.Before)} -> After: {Hex(patch.After)}");
                 afterPatch?.Invoke(patch);
             });
 
-        int internalRecords = image.Relocations.Count(r => r.Kind == 0);
-        int importedRecords = image.Relocations.Count(r => r.Kind is 1 or 2);
+        int internalRecords = image.Relocations.Count(r => r.Kind == NeFormat.RelocationFlags.Internal);
+        int importedRecords = image.Relocations.Count(r => r.Kind is
+            NeFormat.RelocationFlags.ImportByOrdinal or NeFormat.RelocationFlags.ImportByName);
         int relocationWrites = plan.Patches.Count(p => p.Relocation is not null);
         writer.WriteLine($"Prepared {plan.Segments.Count} segments: {internalRecords} internal + " +
             $"{importedRecords} imported records -> {relocationWrites} relocation writes; " +
