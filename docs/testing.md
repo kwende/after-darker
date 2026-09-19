@@ -37,14 +37,14 @@ is verified; an interactive Test Explorer session remains a manual check.
 
 | Category | Cases | What is established |
 | --- | ---: | --- |
-| Unit | 106 | Descriptor/frame layout, NE metadata/SDK plans/relocations, host record fields, lock lifetime, DOS date/time packing, invalid-input rejection, and lossless PNG encoding |
-| Conformance | 42 | Actual Unicorn execution: arithmetic, near/far calls, imported-call marshaling/results/cleanup, guest dereferences of locked blocks, protected-mode DOS interrupt stop/resume, bounded failures, four drawing ABIs, and software rectangles compared with native Windows PatBlt |
+| Unit | 115 | Descriptor/frame layout, NE metadata/SDK plans/relocations, host record fields, lock lifetime, DOS date/time packing, invalid-input rejection, lossless PNG encoding, ring retention, and reusable pixel buffers |
+| Conformance | 43 | Actual Unicorn execution: arithmetic, near/far calls, imported-call marshaling/results/cleanup, guest dereferences of locked blocks, protected-mode DOS interrupt stop/resume, bounded failures, four drawing ABIs, and software rectangles compared with native Windows PatBlt, and bounded interrupt history with per-call budgets |
 | Tutorial | 11 | Four CPU lessons, NE inspection, and six relocation report/step/cancel/file-path checks using generated input |
-| **Default total** | **159** | All passing on the current Windows x64 development host; no Watcom or private file required |
+| **Default total** | **169** | All passing on the current Windows x64 development host; no Watcom or private file required |
 | Toolchain (opt-in) | 12 | Three real-DLL metadata cases plus nine startup/export/exit execution, ABI, failure, mutation, trace, and console checks |
-| **With Watcom** | **171** | Includes rebuilding the project-owned Win16 fixture |
-| LocalModule (opt-in) | 19 | Original initialization plus deterministic 30-frame capture, 180-frame removal path, slower timing gate, capture-budget failure, and eight session lifetime/state/failure cases |
-| **With both opt-ins** | **190** | Requires the pinned compiler and local analyzed Mondrian file |
+| **With Watcom** | **181** | Includes rebuilding the project-owned Win16 fixture |
+| LocalModule (opt-in) | 25 | Original initialization plus deterministic 30-frame capture, 180-frame removal path, slower timing gate, capture-budget failure, eight session lifetime/state/failure cases, and six retention/buffer cases including 5,000 draws |
+| **With both opt-ins** | **206** | Requires the pinned compiler and local analyzed Mondrian file |
 
 Conformance tests use the native engine and a test-only Windows GDI raster oracle; they are not isolated unit tests or a
 mock of Unicorn. Categories make the distinction explicit. All fixtures are
@@ -94,7 +94,7 @@ dotnet test -p:BuildWin16Fixture=true
 dotnet test -p:BuildWin16Fixture=true --filter "TestCategory=Toolchain"
 ```
 
-This builds the DLL and adds 12 `Toolchain` cases, for 171 passing cases in
+This builds the DLL and adds 12 `Toolchain` cases, for 181 passing cases in
 the combined suite. Three check metadata; nine exercise tutorial 06, including
 real startup/HELLOWORLD/WEP execution, AX and guest stores, different caller/DLL
 DS, import argument order and cleanup, DX:AX returns, initialization failure,
@@ -102,7 +102,7 @@ bad selector rejection, the error gateway, instruction bounds, and tracing.
 Changing the compiled return constant to 77 produces 77 in both register and
 memory; the host does not manufacture the expected result. The source and build
 instructions are tracked; outputs live in ignored `artifacts/`. Default runs
-remain compiler-free with 159 cases. Do not pass `--no-build` when changing this
+remain compiler-free with 169 cases. Do not pass `--no-build` when changing this
 opt-in property, since it changes which tests are compiled.
 
 `NeLoadPlanTests` adds 17 pure unit cases using generated metadata bytes, so

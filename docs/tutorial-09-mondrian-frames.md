@@ -67,6 +67,14 @@ Useful breakpoints, in order:
 No RNG or rectangle-generation algorithm is implemented in C#. `PngWriter`
 encodes a completed RGB image; it never decides where Mondrian draws.
 
+The loop allocates two RGB buffers once and calls `session.CopyPixelsTo(current)`.
+After capturing a change it swaps current/previous, reusing the old previous
+array as the next destination. The save callback receives a `ReadOnlySpan<byte>`
+valid only during that call; copy explicitly if you need to retain it. The PNG
+sink consumes it synchronously. Tutorial 09 explicitly requests full diagnostics
+for its bounded run; ordinary sessions default to recent history with lifetime
+totals. See [retention and buffer ownership](mondrian-session.md).
+
 ## The four additional imports
 
 Win16 return types matter here. Do not substitute similarly named Win32

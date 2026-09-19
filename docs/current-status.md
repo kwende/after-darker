@@ -22,6 +22,15 @@ nine educational console lessons (06 needs the optional Watcom fixture;
 
 ## Established evidence
 
+- WPF step 2 bounds default history to 256 import calls, phases and interrupts
+  per kind; lifetime totals and fixed-key import counts remain complete. Full
+  recording is explicit in bounded tutorials. Pixel copying into caller-owned
+  storage allocates no new frame arrays; tutorial 09 swaps two reusable buffers
+  and lends a read-only span to the PNG sink. A 5,000-draw run at 64x48 retains
+  the fixed history size, balances global locks and uses one host pixel buffer.
+  Retention capacities 0/1/8 preserve full-recording guest state, pixels and totals.
+  All 30 default PNGs and report contents match the prior committed step exactly.
+
 - Step 1 of the WPF plan introduces `AfterDarker.Runtime.MondrianSession`:
   explicit load, Initialize, Blank, DrawFrame, snapshots and idempotent Dispose.
   Both console lessons use it; a future window can reference the library without
@@ -95,10 +104,10 @@ nine educational console lessons (06 needs the optional Watcom fixture;
   pacing, two host memory records, and static rectangle history are identified.
   Tutorials 08 and 09 verify initialization and bounded drawing by execution;
   shutdown remains static evidence.
-- The [C# test suite](testing.md) has 159 default passing cases: 106 unit, 42
+- The [C# test suite](testing.md) has 169 default passing cases: 115 unit, 43
   engine/raster conformance, and 11 tutorial entry-point checks. With Watcom,
-  12 additional Toolchain cases bring the total to 171; nineteen optional local
-  Mondrian cases bring the combined total to 190. Public tests use generated NE
+  12 additional Toolchain cases bring the total to 181; twenty-five optional local
+  Mondrian cases bring the combined total to 206. Public tests use generated NE
   fixtures and the same guest
   programs as the lessons, with typed observations and independent assertions.
   Temporary omitted-cleanup and wrong-return mutations were rejected. This
@@ -191,10 +200,10 @@ explicitly.
 The active branch is `codex/mondrian-wpf-session`, created from clean main after
 the frame-capture work was merged. The owner wants the five live-window steps
 implemented as separate commits, with code review before EACH commit and before
-starting the next step. Step 1 is implemented and awaiting review, uncommitted:
-[explicit session lifetime](mondrian-session.md). Steps 2-5 remain pending:
-bounded diagnostics/buffers, live clock/pacing, WPF/worker presentation, and
-orderly cancellation plus original CLOSE/WEP. No WPF host is implemented yet.
+starting the next step. Step 1 was committed by the owner. Step 2 is implemented and awaiting review,
+uncommitted: [bounded diagnostics and reusable buffers](mondrian-session.md).
+Steps 3-5 remain pending: live clock/pacing, WPF/worker presentation, and orderly
+cancellation plus original CLOSE/WEP. No WPF host is implemented yet.
 Watcom remains [documented for reproduction](watcom-toolchain.md).
 
 The owner requested static analysis to bound the Windows support needed for
@@ -211,6 +220,33 @@ Tutorial 04 implements the narrow host trap; the broader issue is not complete.
 See [the tutorial guide](tutorials.md).
 
 ## Session log
+
+### 2026-09-19 - WPF step 2: bounded history and reusable buffers (awaiting review)
+
+- Confirmed the owner's step-1 commit and clean branch before implementing only
+  step 2. No changes to synthetic time, pacing, WPF, threading or CLOSE/WEP.
+- Added DiagnosticOptions/DiagnosticHistory: a default 256-slot ring per record
+  kind, chronological detached snapshots, zero-capacity counters-only mode and
+  explicit full recording for bounded lessons. Session and native interrupt
+  histories use the same policy. Lifetime totals are independent of retention.
+- Instruction, service-history and drawing counters are saturating 64-bit
+  values. Safety budgets use a separate per-invocation instruction counter;
+  servicing an import/interrupt does not reset it. Initialization validation uses
+  total interrupts, not retained records. Per-import counters have fixed keys.
+- Added checked CopyRgbTo/CopyPixelsTo and PixelByteCount. The session never
+  retains or exposes a caller buffer. Tutorial capture reuses two image arrays
+  and swaps after a change. Its synchronous FrameSink now receives a borrowed
+  ReadOnlySpan; retaining consumers must explicitly copy. PNG output is identical.
+  Suppressed repeated string formatting when no diagnostic writer is supplied.
+- Verified 169 default cases and 206 with both opt-ins. New tests cover ring
+  order/wrap/snapshots, zero/full policies, buffer bounds/isolation, allocation-free
+  copies, interrupt budget/retention, exact full-versus-recent results and totals,
+  and a 5,000-draw original-code run with bounded history. Public copy and session
+  copy paths allocate zero bytes during repeated copies into an existing buffer.
+- Regenerated 30 default PNGs and compared their bytes and report contents to
+  step 1: identical, including 11,859 instructions. This does not claim zero
+  allocations throughout the emulator or prove hours-long native memory stability.
+- Changes remain uncommitted for the owner's code review. Steps 3-5 have not begun.
 
 ### 2026-09-19 - WPF step 1: explicit session lifetime (awaiting review)
 

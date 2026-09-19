@@ -1,4 +1,5 @@
 using System.Buffers.Binary;
+using System.Collections.ObjectModel;
 using System.Security.Cryptography;
 using AfterDarker.Core.AfterDark;
 using AfterDarker.Core.Ne;
@@ -36,7 +37,9 @@ public sealed class MondrianSession : IDisposable
     public sealed record Result(NeLoadPlan Plan, MondrianInitialization.State BeforeExecution,
         IReadOnlyList<PhaseResult> Phases, IReadOnlyList<HostCall> Calls,
         IReadOnlyList<SegmentedGuest.InterruptVisit> Interrupts, LocalHeapReservation Heap,
-        int OutstandingLocks, int Instructions, bool ProtectedMode);
+        int OutstandingLocks, long Instructions, bool ProtectedMode, DiagnosticSummary Diagnostics);
+    public sealed record DiagnosticSummary(int? HistoryCapacity, long TotalCalls, long TotalPhases,
+        long TotalInterrupts, IReadOnlyDictionary<string, long> ImportCalls);
 
     private readonly SegmentedGuest guest;
     private readonly TextWriter output;
@@ -49,18 +52,23 @@ public sealed class MondrianSession : IDisposable
     private readonly Win16Api services;
     private readonly PixelSurface? surface;
     private readonly Win16Drawing? drawing;
-    // Kept intact for the educational capture report. Bounded diagnostics and
-    // buffer reuse are the NEXT step, not hidden changes in this lifetime refactor.
-    private readonly List<HostCall> calls = [];
-    private readonly List<PhaseResult> phases = [];
+    private readonly DiagnosticOptions diagnostics;
+    private readonly DiagnosticHistory<HostCall> calls;
+    private readonly DiagnosticHistory<PhaseResult> phases;
+    // Keys come only from the fixed import registry; this cannot grow per frame.
+    private readonly Dictionary<string, long> importCalls = [];
 
     public enum SessionState { Loaded, Initialized, Ready, Faulted, Disposed }
     public SessionState State { get; private set; } = SessionState.Loaded;
 
     /// <summary>Prepare/map a module without executing it. The caller owns this session with using.</summary>
     public MondrianSession(byte[] file, MondrianInitialization.Options? options = null,
-        bool enableDrawing = true, TextWriter? output = null, bool trace = false, int instructionLimit = 50_000)
+        bool enableDrawing = true, TextWriter? output = null, bool trace = false, int instructionLimit = 50_000,
+        DiagnosticOptions? diagnostics = null)
     {
+        this.diagnostics = diagnostics ?? DiagnosticOptions.Recent;
+        calls = new(this.diagnostics);
+        phases = new(this.diagnostics);
         this.output = output ?? TextWriter.Null;
         output = this.output;
         this.options = options ?? new();
@@ -89,7 +97,7 @@ public sealed class MondrianSession : IDisposable
         beforeExecution = MondrianInitialization.Observe(data.Bytes);
         output.WriteLine($"1. PREPARE {hash}: {plan.Segments.Count} segments; {plan.Patches.Count} patches; startup {startup}; MODULE {module}");
 
-        guest = new SegmentedGuest(output, trace, instructionLimit);
+        guest = new SegmentedGuest(output, trace, instructionLimit, this.diagnostics);
         try
         {
             foreach (PreparedNeSegment segment in plan.Segments)
@@ -165,7 +173,8 @@ public sealed class MondrianSession : IDisposable
                 guest.Set(X86.UC_X86_REG_AX, reply.Ax);
                 guest.Set(X86.UC_X86_REG_CX, reply.Cx);
                 guest.Set(X86.UC_X86_REG_DX, reply.Dx);
-                output.WriteLine($"   {guest.Phase}: INT 21h AH={ax >> 8:X2} -> AX={reply.Ax:X4} CX={reply.Cx:X4} DX={reply.Dx:X4}; resume after INT (no RETF/IRET)");
+                if (output != TextWriter.Null)
+                    output.WriteLine($"   {guest.Phase}: INT 21h AH={ax >> 8:X2} -> AX={reply.Ax:X4} CX={reply.Cx:X4} DX={reply.Dx:X4}; resume after INT (no RETF/IRET)");
             };
 
         }
@@ -202,7 +211,7 @@ public sealed class MondrianSession : IDisposable
             if (state.Clear != (options.Clear ? 1 : 0) || state.Threshold != options.ExpectedThreshold || state.Counter != 0 ||
                 state.Rectangles != 0 || state.Tick != Win16ApiState.DefaultInitialTick || state.Seed != (ushort)state.Time ||
                 state.System != new FarPointer16(HostData, SystemOffset) || state.Module != new FarPointer16(HostData, ModuleOffset) ||
-                guest.Interrupts.Count != 3 || services.State.Blocks.OutstandingLocks != 0)
+                guest.InterruptCount != 3 || services.State.Blocks.OutstandingLocks != 0)
                 throw new InvalidOperationException("Original initialization returned but guest state disagrees with the supplied host contract.");
             output.WriteLine($"4. GUEST STATE: compatible={state.Compatibility}, threshold={state.Threshold}, clear={state.Clear}, rectangles={state.Rectangles}");
             output.WriteLine($"   Guest time={state.Time:X8}, RNG seed={state.Seed:X8}, tick={state.Tick:X8}; all global locks released");
@@ -242,6 +251,23 @@ public sealed class MondrianSession : IDisposable
         return surface!.CopyRgb();
     }
 
+    /// <summary>Allocate host buffers once using this tightly packed RGB byte count.</summary>
+    public int PixelByteCount
+    {
+        get { RequireDrawing(); return surface!.RgbByteCount; }
+    }
+
+    /// <summary>
+    /// Copy a completed image into host-owned reusable storage. The host must
+    /// finish consuming it before reusing it; the guest never retains this span.
+    /// </summary>
+    public void CopyPixelsTo(Span<byte> destination)
+    {
+        RequireDrawing();
+        RequireState(SessionState.Ready);
+        surface!.CopyRgbTo(destination);
+    }
+
     public Win16Drawing.Operation? LastDrawingOperation
     {
         get
@@ -256,9 +282,11 @@ public sealed class MondrianSession : IDisposable
     public Result GetResult()
     {
         RequireState(SessionState.Initialized, SessionState.Ready);
-        return new(plan, beforeExecution, Array.AsReadOnly(phases.ToArray()), Array.AsReadOnly(calls.ToArray()),
-            Array.AsReadOnly(guest.Interrupts.ToArray()), services.State.InitializedHeap!,
-            services.State.Blocks.OutstandingLocks, guest.Instructions, (guest.Get(X86.UC_X86_REG_CR0) & 1) != 0);
+        return new(plan, beforeExecution, phases.Snapshot(), calls.Snapshot(),
+            guest.Interrupts, services.State.InitializedHeap!,
+            services.State.Blocks.OutstandingLocks, guest.Instructions, (guest.Get(X86.UC_X86_REG_CR0) & 1) != 0,
+            new(diagnostics.HistoryCapacity, calls.TotalCount, phases.TotalCount, guest.InterruptCount,
+                new ReadOnlyDictionary<string, long>(new Dictionary<string, long>(importCalls))));
     }
 
     private PhaseResult RunDrawingPhase(string name, ushort begin, ushort end)
@@ -276,11 +304,12 @@ public sealed class MondrianSession : IDisposable
         }
     }
 
-    private void RequireState(params SessionState[] allowed)
+    private void RequireState(SessionState allowed, SessionState? alternative = null)
     {
         ObjectDisposedException.ThrowIf(State == SessionState.Disposed, this);
-        if (!allowed.Contains(State))
-            throw new InvalidOperationException($"Mondrian session is {State}; expected {string.Join(" or ", allowed)}.");
+        if (State != allowed && State != alternative)
+            throw new InvalidOperationException($"Mondrian session is {State}; expected {allowed}" +
+                (alternative is null ? "." : $" or {alternative}."));
     }
 
     private void RequireDrawing()
@@ -310,7 +339,8 @@ public sealed class MondrianSession : IDisposable
         var observation = new PhaseResult(name, returned, stored,
             MondrianInitialization.Observe(guest.Read(new(dllData, 0), data.Bytes.Length)));
         phases.Add(observation);
-        output.WriteLine($"   {name} returned to {returned.Pc}; AX={stored:X4} (guest stored); DS={returned.Ds:X4}; SS:SP={returned.Ss:X4}:{returned.Sp:X4}");
+        if (output != TextWriter.Null)
+            output.WriteLine($"   {name} returned to {returned.Pc}; AX={stored:X4} (guest stored); DS={returned.Ds:X4}; SS:SP={returned.Ss:X4}:{returned.Sp:X4}");
         return observation;
     }
 
@@ -318,7 +348,10 @@ public sealed class MondrianSession : IDisposable
     {
         HostCall call = DispatchImport(guest, bindings, services);
         calls.Add(call);
-        output.WriteLine($"   {call.Phase}: {call.Binding.Name}({string.Join(",", call.Arguments.Select(a => a.ToString("X4")))}) -> {call.Returned:X8}; RETF {call.Binding.ArgumentBytes}, resume {call.After.Pc}");
+        long total = importCalls.GetValueOrDefault(call.Binding.Name);
+        importCalls[call.Binding.Name] = total == long.MaxValue ? total : total + 1;
+        if (output != TextWriter.Null)
+            output.WriteLine($"   {call.Phase}: {call.Binding.Name}({string.Join(",", call.Arguments.Select(a => a.ToString("X4")))}) -> {call.Returned:X8}; RETF {call.Binding.ArgumentBytes}, resume {call.After.Pc}");
     }
 
     private static ushort WriteCaller(byte[] callerBytes, ushort begin, FarPointer16 target, ushort resultOffset, ushort? message)

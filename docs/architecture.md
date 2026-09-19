@@ -139,6 +139,14 @@ cancellation remain separate work. The session rejects invalid ordering,
 execution after a fault, and access after disposal. See
 [the lifetime contract](mondrian-session.md).
 
+Sessions now default to bounded recent diagnostics (256 calls, phases and
+interrupts each), with separate saturating 64-bit totals and fixed-key import
+counts. The educational bounded lessons explicitly request full recording.
+CPU instruction limits use independent per-invocation counts. `CopyPixelsTo`
+fills host-owned reusable RGB buffers; tutorial capture compares two arrays and
+passes a borrowed read-only span to its synchronous PNG sink. This implements
+the retention/buffer step without adding clock, scheduling or UI behavior.
+
 ### 3.3 CPU engine adapter
 
 The CPU engine owns instruction semantics and register state. After Darker owns

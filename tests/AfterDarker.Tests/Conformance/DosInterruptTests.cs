@@ -82,4 +82,25 @@ public sealed class DosInterruptTests
         guest.Install(16);
         Assert.Throws<InvalidOperationException>(() => guest.RunUntil("loop", new(8, 0), new(8, 2)));
     }
+
+    [TestMethod]
+    public void InterruptRetentionIsBoundedAndInstructionBudgetResetsIndependentlyOfLifetimeCount()
+    {
+        using var guest = new SegmentedGuest(instructionLimit: 10, diagnostics: new(2));
+        // First entry: one serviced INT. Second entry: a loop that repeatedly
+        // exits to the host, ensuring a trap does not reset the instruction budget.
+        guest.Map(8, 0x10000, [0xCD, 0x21, 0x90, 0xCD, 0x21, 0xEB, 0xFC, 0x90], true);
+        guest.Install(16);
+        guest.DispatchInterrupt = _ => guest.Set(X86.UC_X86_REG_AX, guest.InterruptCount + 1);
+        for (int i = 0; i < 100; i++) guest.RunUntil("repeated INT", new(8, 0), new(8, 2));
+        Assert.AreEqual(100L, guest.Instructions);
+        Assert.AreEqual(100L, guest.InterruptCount);
+        var recent = guest.Interrupts;
+        Assert.AreEqual(2, recent.Count);
+        Assert.AreEqual((ushort)99, recent[0].AfterHandler.Ax);
+        Assert.AreEqual((ushort)100, recent[1].AfterHandler.Ax);
+        Assert.Throws<InvalidOperationException>(() => guest.RunUntil("INT loop", new(8, 3), new(8, 7)));
+        Assert.AreEqual(2, guest.Interrupts.Count);
+        Assert.AreEqual((ushort)100, recent[1].AfterHandler.Ax); // old snapshot remains detached
+    }
 }

@@ -6,7 +6,7 @@ namespace AfterDarker.Core.Rendering;
 /// <summary>Small RGB8 PNG encoder using .NET's zlib; no rendering or image-library dependency.</summary>
 public static class PngWriter
 {
-    public static void Write(Stream destination, int width, int height, byte[] rgb)
+    public static void Write(Stream destination, int width, int height, ReadOnlySpan<byte> rgb)
     {
         if (width is < 1 or > 2048 || height is < 1 or > 2048 || rgb.Length != checked(width * height * 3))
             throw new ArgumentException("Expected bounded, tightly packed RGB pixels.");
@@ -22,7 +22,7 @@ public static class PngWriter
             for (int y = 0; y < height; y++)
             {
                 zlib.WriteByte(0); // PNG filter None: every row is self-contained and inspectable.
-                zlib.Write(rgb, y * width * 3, width * 3);
+                zlib.Write(rgb.Slice(y * width * 3, width * 3));
             }
         }
         Chunk(destination, "IDAT"u8, compressed.ToArray());

@@ -8,6 +8,7 @@ public sealed class PixelSurface
     private readonly byte[] pixels;
     public int Width { get; }
     public int Height { get; }
+    public int RgbByteCount => pixels.Length;
     public long Revision { get; private set; }
     public PixelSurface(int width, int height)
     {
@@ -17,6 +18,13 @@ public sealed class PixelSurface
         pixels = new byte[checked(width * height * 3)];
     }
     public byte[] CopyRgb() => (byte[])pixels.Clone();
+
+    /// <summary>Copy into the host's reusable tightly packed RGB buffer, without allocating a snapshot.</summary>
+    public void CopyRgbTo(Span<byte> destination)
+    {
+        if (destination.Length != pixels.Length) throw new ArgumentException("Destination must match the surface's RGB byte count.", nameof(destination));
+        pixels.AsSpan().CopyTo(destination);
+    }
 
     // Win16 FillRect16/InvertRect16 pass (left, top, right-left, bottom-top)
     // to PatBlt. Our Windows memory-DC oracle demonstrates that, in this
@@ -39,7 +47,7 @@ public sealed class PixelSurface
             for (int channel = 0; channel < 3; channel++)
                 pixels[index + channel] = invert ? (byte)~pixels[index + channel] : (byte)0;
         }
-        if (changed != 0) Revision++;
+        if (changed != 0 && Revision < long.MaxValue) Revision++;
         return changed;
     }
 }

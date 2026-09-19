@@ -34,7 +34,7 @@ public sealed class Tutorial08MondrianInitialize(string? path = null, bool trace
         MondrianInitialization.Options? options = null, int instructionLimit = 50_000)
     {
         using var session = new MondrianSession(file, options, enableDrawing: false,
-            output: output, trace: trace, instructionLimit: instructionLimit);
+            output: output, trace: trace, instructionLimit: instructionLimit, diagnostics: DiagnosticOptions.Full);
         session.Initialize();
         return session.GetResult();
     }

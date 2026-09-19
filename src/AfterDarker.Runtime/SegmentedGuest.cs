@@ -29,12 +29,14 @@ public sealed class SegmentedGuest : IGuestMemory16, IDisposable
     private Exception? hookError;
     private CpuState? beforeSoftwareInterrupt;
     private TimeSpan executionTime;
-    private int exits, phaseStartInstructions;
-    public int Instructions { get; private set; }
+    private int exits, phaseInstructions;
+    public long Instructions { get; private set; }
     public string Phase { get; private set; } = "setup";
     public Action? DispatchGateway { get; set; }
     public Action<int>? DispatchInterrupt { get; set; }
-    public List<InterruptVisit> Interrupts { get; } = [];
+    private readonly DiagnosticHistory<InterruptVisit> interrupts;
+    public IReadOnlyList<InterruptVisit> Interrupts => interrupts.Snapshot();
+    public long InterruptCount => interrupts.TotalCount;
 
     private sealed record Region(uint Base, int Size, bool Code);
     public sealed record CpuState(ushort Cs, ushort Ip, ushort Ax, ushort Bx, ushort Cx, ushort Dx,
@@ -44,9 +46,11 @@ public sealed class SegmentedGuest : IGuestMemory16, IDisposable
     }
     public sealed record InterruptVisit(int Number, CpuState BeforeInstruction, CpuState AtHook, CpuState AfterHandler);
 
-    public SegmentedGuest(TextWriter? output = null, bool trace = false, int instructionLimit = 50_000)
+    public SegmentedGuest(TextWriter? output = null, bool trace = false, int instructionLimit = 50_000,
+        DiagnosticOptions? diagnostics = null)
     {
         if (instructionLimit is < 1 or > 1_000_000) throw new ArgumentOutOfRangeException(nameof(instructionLimit));
+        interrupts = new(diagnostics ?? DiagnosticOptions.Recent);
         engine = new(Common.UC_ARCH_X86, Common.UC_MODE_32);
         this.output = output ?? TextWriter.Null;
         this.trace = trace;
@@ -86,7 +90,8 @@ public sealed class SegmentedGuest : IGuestMemory16, IDisposable
         {
             try
             {
-                if (++Instructions - phaseStartInstructions > instructionLimit) throw new InvalidOperationException("Instruction budget exhausted.");
+                if (Instructions < long.MaxValue) Instructions++;
+                if (++phaseInstructions > instructionLimit) throw new InvalidOperationException("Instruction budget exhausted.");
                 CpuState state = Snapshot();
                 if (state.Cs == gatewaySelector)
                 {
@@ -121,7 +126,9 @@ public sealed class SegmentedGuest : IGuestMemory16, IDisposable
         // Budgets apply to each bounded host invocation. Keeping a lifetime
         // counter is useful diagnostics, but must not kill a healthy animation
         // merely because many completed DRAWFRAME calls preceded this one.
-        phaseStartInstructions = Instructions;
+        // Independent of the lifetime total: even a saturated diagnostic counter
+        // must never disable or shorten the next invocation's safety budget.
+        phaseInstructions = 0;
         exits = 0;
         executionTime = TimeSpan.Zero;
         Phase = phase;
@@ -166,7 +173,7 @@ public sealed class SegmentedGuest : IGuestMemory16, IDisposable
                 CpuState after = Snapshot();
                 if (after.Pc != atHook.Pc || after.Sp != atHook.Sp || after.Ss != atHook.Ss || after.Flags != atHook.Flags)
                     throw new InvalidOperationException("DOS handler changed control flow, stack, or flags.");
-                Interrupts.Add(new(number, before, atHook, after));
+                interrupts.Add(new(number, before, atHook, after));
             }
             else if (gatewayReached)
             {
