@@ -155,6 +155,14 @@ public sealed class Tutorial06LoadLibrary(string? path = null, bool trace = fals
             // 3. OBSERVE EXECUTION. A hook sees instructions BEFORE execution.
             // Only gateway/budget exits stop the engine. Actual API dispatch is
             // below, after EmuStart has unwound back into managed code.
+            int heapStart = Math.Max(data.Source.FileBytes, data.Source.MinimumAllocationBytes);
+            if (data.Bytes.Length != heapStart + plan.Image.Header.HeapBytes)
+                throw new InvalidOperationException("Prepared data does not include the declared heap tail.");
+            // The same API implementation serves lesson 08. This lesson supplies
+            // its own memory adapter and version/failure inputs, not API bodies.
+            var api = new Win16Api(new Win16ApiState(new DllMemory(emulator, data),
+                new(new(DllData, checked((ushort)heapStart)), plan.Image.Header.HeapBytes),
+                windowsVersion: version, localInitSucceeds: localInitSucceeds));
             var calls = new List<HostCall>();
             var visits = new List<EntryVisit>();
             int instructions = 0;
@@ -325,17 +333,14 @@ public sealed class Tutorial06LoadLibrary(string? path = null, bool trace = fals
 				uint returned;
                 if (binding.Handler == "CheckedHeapTestDouble")
                 {
-                    // This fixture never calls LocalAlloc/LocalFree. Validate the
-                    // exact request and reservation, then report success/failure.
-                    // We DO NOT build a Windows heap, manufacture heap handles, or
-                    // claim that returning TRUE implements LocalInit generally.
-                    if (arguments.Length != 3 || arguments[0] != DllData || arguments[1] != 0 ||
-                        arguments[2] != plan.Image.Header.HeapBytes ||
-                        data.Bytes.Length - Math.Max(data.Source.FileBytes, data.Source.MinimumAllocationBytes) != arguments[2])
-                        throw new InvalidOperationException("LocalInit test double received an unsupported heap request.");
-                    returned = localInitSucceeds ? 1u : 0u;
+                    // ABI conversion only. Read the behavior in Win16Api.LocalInit.
+                    try { returned = api.LocalInit(arguments[0], arguments[1], arguments[2]) ? 1u : 0u; }
+                    catch (NotSupportedException error)
+                    {
+                        throw new InvalidOperationException($"LocalInit test double: {error.Message}", error);
+                    }
                 }
-                else if (binding.Handler == "FixedWindowsVersion") returned = version;
+                else if (binding.Handler == "FixedWindowsVersion") returned = api.GetVersion();
                 else throw new NotSupportedException($"No handler for {binding.Name}.");
 
                 output.WriteLine($"   Host exit: {binding.Name}({string.Join(", ", arguments.Select(a => $"0x{a:X4}"))}) " +
@@ -402,6 +407,26 @@ public sealed class Tutorial06LoadLibrary(string? path = null, bool trace = fals
         Registers? Hello, Registers? Exit, ushort StoredInitialization, ushort StoredHello, ushort StoredExit,
         IReadOnlyList<HostCall> Calls, IReadOnlyList<EntryVisit> Entries, int InstructionCount, bool ProtectedMode,
         byte[] DllDataAfterExecution);
+
+    // Adapter for this older lesson's intentionally explicit Unicorn setup.
+    // Shared APIs see checked guest memory, never the native engine or host pointers.
+    private sealed class DllMemory(Unicorn emulator, PreparedNeSegment data) : IGuestMemory16
+    {
+        public byte[] Read(FarPointer16 address, int count)
+        {
+            long linear = Translate(address, count);
+            byte[] bytes = new byte[count];
+            emulator.MemRead(linear, bytes);
+            return bytes;
+        }
+        public void Write(FarPointer16 address, byte[] bytes) => emulator.MemWrite(Translate(address, bytes.Length), bytes);
+        private long Translate(FarPointer16 address, int count)
+        {
+            if (address.Selector != data.Placement.Selector || count < 0 || address.Offset > data.Bytes.Length - count)
+                throw new InvalidOperationException($"Invalid DLL data access at {address}, length {count}.");
+            return data.Placement.LinearBase + address.Offset;
+        }
+    }
 
     private static string FindFixture()
     {

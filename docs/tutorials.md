@@ -513,3 +513,19 @@ patch; `q` cancels. F5 profiles are **Tutorial 07 - relocation walkthrough**
 and **Tutorial 07 - local NE relocations** (prompts for a path). Omit `--step`
 for continuous output. Both paths call the same shared Core loader; no CPU is
 created and no Windows service is invoked.
+
+## Tutorial 08: initialize the original Mondrian module
+
+Select **Tutorial 08 - initialize local Mondrian** for a prompted path, or
+**Tutorial 08 - initialization trace** to see instruction bytes and registers.
+
+```powershell
+dotnet run --project src/AfterDarker.Tutorials --no-launch-profile -- 08 ad/Mondrian.ad
+```
+
+The [complete walkthrough](tutorial-08-mondrian-initialize.md) follows prepared
+segments into Unicorn, the startup register inputs, backed guest handles/records,
+and imported-call versus DOS-interrupt return paths. Original DLL startup,
+PREINITIALIZE, and INITIALIZE run and return; the lesson checks guest state and
+stops before drawing. This version-specific lesson requires the analyzed local
+module, but does not require Watcom. The source file remains unchanged.

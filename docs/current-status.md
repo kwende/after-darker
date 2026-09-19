@@ -1,6 +1,6 @@
 # Current Status
 
-Last updated: 2026-09-18
+Last updated: 2026-09-19
 
 ## Project phase
 
@@ -10,14 +10,33 @@ gateway experiments using Unicorn 2.1.3. Tutorial 06 adds a narrow NE load plan
 and executes the project-owned Hello42 DLL with limited startup host responses.
 Tutorial 07 extends preparation to internal references, entry ordinals, and
 selector/offset/far-pointer patches, with a step-by-step console walkthrough.
-There is no After Dark runtime, general Win16 API layer, or renderer yet.
+Tutorial 08 executes original Mondrian startup and PREINITIALIZE/INITIALIZE
+with a narrowly scoped host environment. There is no drawing runtime, general
+Win16 API layer, or renderer yet.
 `AfterDarker.Core` contains two extracted binary-layout helpers, a Windows NE
 metadata reader, a CPU-independent load plan, and a separate After Dark
 invocation-plan model. The C# MSTest project covers these mechanisms and the
-seven educational console lessons (lesson 06 requires the optional Watcom fixture).
+eight educational console lessons (06 needs the optional Watcom fixture;
+08 needs the analyzed local Mondrian file).
 
 ## Established evidence
 
+- The shared [Win16Api](../src/AfterDarker.Core/Win16/Win16Api.cs) now contains
+  the named Windows implementation methods used by both lessons 06 and 08.
+  Per-guest state lives in `Win16ApiState`; import metadata/ABI conversion lives
+  in static `Win16Imports`. The implementations have no tutorial, NE loader,
+  or emulator dependency. Three additional direct API cases cover independent
+  guest state, configured heap failure, and environment pointer/content checks.
+- [Tutorial 08](tutorial-08-mondrian-initialize.md) executes the original Mondrian
+  DLL startup (AX=1), PREINITIALIZE (compatibility flag=1), and INITIALIZE.
+  Eleven imported service calls and three DOS interrupts complete; real guest
+  pointer dereferences read the host system/module records. Every phase returns
+  with restored caller DS and balanced SS:SP/BP, and releases its global locks.
+  All five supported speeds produce the expected guest-selected thresholds.
+  Public synthetic tests cover import argument/return frames, guest dereferences,
+  and the protected-mode INT boundary; optional private tests cover original
+  initialization. LocalInit remains a checked reservation model, not a Windows
+  allocator. Drawing imports stop by name; no BLANK/DRAWFRAME/CLOSE is invoked.
 - Loader readability pass: `NeFormat` names the relocation tags, flags, and
   chain markers; `NeLoadPlan` distinguishes x86 sizes from host layout choices.
   Its explicit field-writing switch and comments explain destination lookup,
@@ -55,10 +74,12 @@ seven educational console lessons (lesson 06 requires the optional Watcom fixtur
   date/time services (`INT 21h`, AH=2Ah/2Ch). No files, threads, task waits,
   dialogs, or callbacks were found on that path. Clock seeding, tick-based
   pacing, two host memory records, and static rectangle history are identified.
-  This is static evidence only; Mondrian has not executed in this runtime.
-- The [C# test suite](testing.md) has 117 default passing cases: 93 unit, 13
+  The complete visuals path is still static evidence; tutorial 08 now verifies
+  the initialization portion by execution.
+- The [C# test suite](testing.md) has 138 default passing cases: 104 unit, 23
   native-engine conformance, and 11 tutorial entry-point checks. With Watcom,
-  12 additional Toolchain cases bring the total to 129. It uses generated NE
+  12 additional Toolchain cases bring the total to 150; seven optional local
+  Mondrian cases bring the combined total to 157. Public tests use generated NE
   fixtures and the same guest
   programs as the lessons, with typed observations and independent assertions.
   Temporary omitted-cleanup and wrong-return mutations were rejected. This
@@ -125,9 +146,10 @@ seven educational console lessons (lesson 06 requires the optional Watcom fixtur
   overrides, privilege transitions, general pointer translation, and broader
   ABI layouts remain unproven. Two successful host exits/resumes do not establish
   compatibility with arbitrary Win16 guest code.
-- No `.AD` module has executed inside an After Darker-owned compatibility layer.
-- No After Dark system/module structure has been constructed and consumed by
-  original module code in this repository.
+- Original execution is limited to the analyzed Mondrian artifact's startup and
+  initialization; drawing, shutdown, other revisions, and other modules remain unproven.
+- Only the observed system/module fields for that path have been supplied and
+  consumed. A complete After Dark SDK structure schema remains unrecovered.
 - No GDI import has yet crossed an After Darker gateway into an After
   Darker-owned render surface.
 - The permanent engine strategy—WineVDM sidecar, custom in-process runtime, or a
@@ -146,14 +168,14 @@ explicitly.
 
 ## Next planning point
 
-The active branch is `codex/tutorial-07-ne-relocations`, created from merged
-main (`f136b78`). The owner has reviewed the execution/host-dispatch flow and
-asked to watch references being reconnected. Walk through
-[tutorial 07](tutorial-07-relocations.md) before advancing to original-module
-initialization. Non-additive internal selector/offset/far-pointer relocations
-now work; additive and OS fixups, real heap allocation, and original-module
-startup remain separate work. No original AD module has run. Watcom remains
-[documented for reproduction](watcom-toolchain.md).
+The active branch is `codex/tutorial-08-mondrian-initialize`, created from clean
+main after the owner understood relocation chains. The owner authorized exactly
+the initialization lesson and raised the need for valid backing memory behind
+handles. That lesson now runs original code with checked services and records.
+Walk through [tutorial 08](tutorial-08-mondrian-initialize.md) together before
+adding BLANK/DRAWFRAME and a software surface. Real allocation, additive/OS
+fixups, drawing semantics, and guest shutdown remain separate milestones.
+Watcom remains [documented for reproduction](watcom-toolchain.md).
 
 The owner requested static analysis to bound the Windows support needed for
 one original screensaver's visuals. Mondrian is the current first candidate;
@@ -169,6 +191,44 @@ Tutorial 04 implements the narrow host trap; the broader issue is not complete.
 See [the tutorial guide](tutorials.md).
 
 ## Session log
+
+### 2026-09-19 — separate shared Win16 implementations for inspection
+
+- At the owner's request, moved service bodies into `Win16Api`, with one
+  readable method per API. Both Hello42 and Mondrian use that class. Removed
+  the mixed `MondrianServices` class; kept metadata/marshaling in `Win16Imports`.
+- Kept implementations instance-based because handle, heap, and clock state
+  belongs to one guest. Static binding/ABI helpers carry no shared mutable state.
+- Preserved Hello42's configurable version and LocalInit failure path, and
+  Mondrian's backed handles, empty environment, tick policy, and reservation-only
+  heap scope. Direct tests exercise implementations without emulator setup.
+- Verified 138 public cases and 157 combined cases including compiled DLL and
+  original-module regressions. No additional Windows API behavior was added.
+
+### 2026-09-19 — tutorial 08: original Mondrian initialization
+
+- Mapped all five prepared original segments and supplied caller/stack/gateway
+  storage. Added a hash-specific typed host-record/state profile and checked
+  resident global-handle registry. Kept native CPU code separate from services.
+- Ran header startup and MODULE messages 12 and 0. Startup saved its instance;
+  the guest accepted compatibility fields and consumed options through returned
+  far pointers. All three phases returned with balanced frames and locks.
+- Added five scoped Win16 handlers and DOS date/time responses. LocalInit checks
+  the reserved zero-filled tail only; no allocator metadata or allocation API
+  is implemented. All other imported services fail symbolically if reached.
+- Synthetic protected-mode execution proved INT advances IP without a stack
+  frame in Unicorn 2.1.3. The runtime enforces that contract before dispatching
+  DOS requests and resumes without RETF/IRET. DOS 4.0 TIME.ASM and Wine 10.0
+  declarations/global-handle code informed the handlers; no dependencies added.
+- Default input observed time=2C1E2460, seed=00002460, tick=12345678, threshold=30,
+  clear=1, rectangles=0, compatibility=1; 11 imports and three interrupts.
+  Five speed inputs yielded thresholds 140/70/30/0/0 in original guest code.
+- Added 18 public tests and seven opt-in local-module cases. Combined suite with
+  Watcom and local input: 154 passing cases. Public inputs remain generated;
+  local file is read in place and never copied into test outputs. Console
+  path/prompt/trace use is verified; interactive Visual Studio remains manual.
+- Stops after initialization. No original drawing, CLOSE, WEP, device context,
+  or rendered pixels are claimed. Changes remain local for review.
 
 ### 2026-09-17 — tutorial 07: reconnect internal NE references
 

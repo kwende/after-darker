@@ -32,6 +32,14 @@
       "commandName": "Project",
       "commandLineArgs": "07 --step"
     },
+    "Tutorial 08 - initialize local Mondrian": {
+      "commandName": "Project",
+      "commandLineArgs": "08"
+    },
+    "Tutorial 08 - initialization trace": {
+      "commandName": "Project",
+      "commandLineArgs": "08 --trace"
+    },
     "Tutorial 07 - local NE relocations": {
       "commandName": "Project",
       "commandLineArgs": "07 --file --step"

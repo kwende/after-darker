@@ -113,9 +113,21 @@ resolved target, saved next link, and before/after bytes; an observer can pause
 after every write. `CreateWithImportResolver` separates address resolution from
 ABI/handler implementation. The console uses non-callable import placeholders,
 whereas tutorial 06 resolves through its handler bindings. Mondrian's five
-segments prepare successfully, including 66 relocation writes, but are not
-executed. Additive/byte/32-bit/OS fixups and unsupported DLL modes still fail.
+segments prepare successfully, including 66 relocation writes. Tutorial 07
+does not execute them. Additive/byte/32-bit/OS fixups and unsupported DLL modes still fail.
 See [the relocation walkthrough](tutorial-07-relocations.md).
+
+Tutorial 08 now executes Mondrian startup and its PREINITIALIZE/INITIALIZE
+messages. `SegmentedGuest` owns native execution behind checked guest-memory
+operations; shared `Win16Api` methods own the narrow service behavior and
+`Win16ApiState` keeps each guest's state separate. Tutorials 06 and 08 both
+call these methods. `Win16Imports` separates import metadata and ABI conversion
+from implementation; the API class contains no emulator/stack handling. The profile
+supplies two resident global blocks and an empty environment, with separate
+far-call and DOS-interrupt dispatch after the native hooks return. Public
+synthetic programs verify those same boundaries. Hash-specific local tests
+verify original guest state; no drawing or general allocator is implemented.
+See [the initialization walkthrough](tutorial-08-mondrian-initialize.md).
 
 ### 3.3 CPU engine adapter
 

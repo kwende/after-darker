@@ -37,24 +37,45 @@ is verified; an interactive Test Explorer session remains a manual check.
 
 | Category | Cases | What is established |
 | --- | ---: | --- |
-| Unit | 93 | Descriptor/frame layout, NE metadata/reporting/SDK plans, loader copies/zero-fill, internal and imported relocation chains/widths, entry targets, prologues, and malformed/unsupported-input rejection |
-| Conformance | 13 | Actual Unicorn execution: word addition including wraparound, near CALL/RET, protected far CALL/RETF, two gateway stop/resume cycles, signed/custom returns, real guest stores, and handler exception propagation |
+| Unit | 104 | Descriptor/frame layout, NE metadata/SDK plans/relocations, host record fields, lock lifetime, DOS date/time packing, and invalid-input rejection |
+| Conformance | 23 | Actual Unicorn execution: arithmetic, near/far calls, imported-call marshaling/results/cleanup, guest dereferences of locked blocks, protected-mode DOS interrupt stop/resume, and bounded failures |
 | Tutorial | 11 | Four CPU lessons, NE inspection, and six relocation report/step/cancel/file-path checks using generated input |
-| **Default total** | **117** | All passing on the current Windows x64 development host; no Watcom required |
+| **Default total** | **138** | All passing on the current Windows x64 development host; no Watcom or private file required |
 | Toolchain (opt-in) | 12 | Three real-DLL metadata cases plus nine startup/export/exit execution, ABI, failure, mutation, trace, and console checks |
-| **With Watcom** | **129** | Includes rebuilding the project-owned Win16 fixture |
+| **With Watcom** | **150** | Includes rebuilding the project-owned Win16 fixture |
+| LocalModule (opt-in) | 7 | Original Mondrian initialization for five speed choices, instruction limit, and prompted/trace console entry |
+| **With both opt-ins** | **157** | Requires the pinned compiler and local analyzed Mondrian file |
 
 Conformance tests use the native engine; they are not isolated unit tests or a
 mock of Unicorn. Categories make the distinction explicit. All fixtures are
-generated code/bytes. Nothing reads the private `ad/` directory.
+generated code/bytes in the default and Toolchain suites. Only explicitly enabled
+LocalModule tests read the private file supplied by environment variable.
 
 Tests create and close their own engines and run serially for now. Guest runs
 retain their instruction/time limits. No native state is shared between tests.
 
 The decoder supports same-privilege far returns with word arguments. It is not
-a general Win16 ABI decoder: structures, far pointers, DX:AX results, privilege
+a general Win16 ABI decoder: structure/far-pointer arguments, privilege
 transitions, and wrapping stacks need separate designs and tests when required.
+The initialization gateway now tests far-pointer and DWORD returns in DX:AX.
 Descriptor encoding tests establish bytes, not CPU enforcement of limits.
+
+## Optional local Mondrian tests
+
+Original-module initialization is a separate opt-in, independent of Watcom:
+
+```powershell
+$env:AFTER_DARKER_MONDRIAN = (Resolve-Path ad/Mondrian.ad).Path
+dotnet test -p:TestLocalMondrian=true
+dotnet test -p:TestLocalMondrian=true -p:BuildWin16Fixture=true
+```
+
+LocalModule tests are excluded from compilation by default. Opting in requires
+the environment variable and the analyzed file hash; missing inputs fail rather
+than silently skipping. Files are read in place, not copied into build outputs.
+The public `MondrianGatewayTests` and `DosInterruptTests` exercise the same
+handlers and native boundaries with original tiny guest programs. The private
+tests establish actual initialization, not drawing or general Win16 support.
 
 ## Optional compiler-built fixture
 
@@ -67,7 +88,7 @@ dotnet test -p:BuildWin16Fixture=true
 dotnet test -p:BuildWin16Fixture=true --filter "TestCategory=Toolchain"
 ```
 
-This builds the DLL and adds 12 `Toolchain` cases, for 129 passing cases in
+This builds the DLL and adds 12 `Toolchain` cases, for 150 passing cases in
 the combined suite. Three check metadata; nine exercise tutorial 06, including
 real startup/HELLOWORLD/WEP execution, AX and guest stores, different caller/DLL
 DS, import argument order and cleanup, DX:AX returns, initialization failure,
@@ -75,7 +96,7 @@ bad selector rejection, the error gateway, instruction bounds, and tracing.
 Changing the compiled return constant to 77 produces 77 in both register and
 memory; the host does not manufacture the expected result. The source and build
 instructions are tracked; outputs live in ignored `artifacts/`. Default runs
-remain compiler-free with 117 cases. Do not pass `--no-build` when changing this
+remain compiler-free with 138 cases. Do not pass `--no-build` when changing this
 opt-in property, since it changes which tests are compiled.
 
 `NeLoadPlanTests` adds 17 pure unit cases using generated metadata bytes, so
