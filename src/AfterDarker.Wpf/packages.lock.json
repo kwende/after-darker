@@ -1,20 +1,19 @@
 {
   "version": 1,
   "dependencies": {
-    "net10.0": {
+    "net10.0-windows7.0": {
+      "FSharp.Core": {
+        "type": "Transitive",
+        "resolved": "6.0.7",
+        "contentHash": "e6wGrq5smV3Yk2fBE/Y0nBG5oFyF59k5Je0a0QDydUpg6liyaafGjD3xvutciKepCP2knspZ/sWViC/F1OyyQQ=="
+      },
       "UnicornEngine.Unicorn": {
-        "type": "Direct",
-        "requested": "[2.1.3, )",
+        "type": "Transitive",
         "resolved": "2.1.3",
         "contentHash": "lqRLGDUll5TUahWwJUjWAFM6KQNqkaMvIkUAoU0oROqL+Rdrey3OVOOm1QxBONwKHiWlcmxU8lafNxToMSPvOg==",
         "dependencies": {
           "FSharp.Core": "6.0.7"
         }
-      },
-      "FSharp.Core": {
-        "type": "Transitive",
-        "resolved": "6.0.7",
-        "contentHash": "e6wGrq5smV3Yk2fBE/Y0nBG5oFyF59k5Je0a0QDydUpg6liyaafGjD3xvutciKepCP2knspZ/sWViC/F1OyyQQ=="
       },
       "afterdarker.core": {
         "type": "Project"
@@ -27,10 +26,9 @@
         }
       }
     },
-    "net10.0/win-x64": {
+    "net10.0-windows7.0/win-x64": {
       "UnicornEngine.Unicorn": {
-        "type": "Direct",
-        "requested": "[2.1.3, )",
+        "type": "Transitive",
         "resolved": "2.1.3",
         "contentHash": "lqRLGDUll5TUahWwJUjWAFM6KQNqkaMvIkUAoU0oROqL+Rdrey3OVOOm1QxBONwKHiWlcmxU8lafNxToMSPvOg==",
         "dependencies": {

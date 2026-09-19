@@ -14,7 +14,7 @@ public sealed class Win16Drawing
     private readonly Dictionary<ushort, PixelSurface> contexts = [];
     public sealed record Operation(string Name, ushort Hdc, Rectangle16 Rectangle, int ChangedPixels);
     public Operation? LastOperation { get; private set; }
-    public int OperationCount { get; private set; }
+    public long OperationCount { get; private set; }
     public void Register(ushort hdc, PixelSurface surface)
     {
         if (hdc == 0) throw new ArgumentException("A null HDC is not a surface.");
@@ -25,6 +25,6 @@ public sealed class Win16Drawing
         if (!contexts.TryGetValue(hdc, out var surface)) throw new NotSupportedException($"Unknown HDC {hdc:X4}.");
         int changed = surface.Paint(rectangle, invert);
         LastOperation = new(invert ? "InvertRect" : "FillRect", hdc, rectangle, changed);
-        OperationCount++;
+        if (OperationCount < long.MaxValue) OperationCount++;
     }
 }

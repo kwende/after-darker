@@ -28,7 +28,7 @@ data-driven cases. `global.json` selects Microsoft.Testing.Platform for .NET
 10's `dotnet test`; use MTP arguments rather than legacy VSTest switches.
 TRX results are written under the ignored `TestResults/` directory.
 
-In Visual Studio, keep **AfterDarker.Tutorials** as the startup project for F5.
+In Visual Studio, select **AfterDarker.Tutorials** for lessons or **AfterDarker.Wpf** for the live window.
 Use **Test > Test Explorer** for automated tests, with a Visual Studio version
 that supports .NET 10 and Microsoft.Testing.Platform. CLI discovery/execution
 is verified; an interactive Test Explorer session remains a manual check.
@@ -37,14 +37,14 @@ is verified; an interactive Test Explorer session remains a manual check.
 
 | Category | Cases | What is established |
 | --- | ---: | --- |
-| Unit | 106 | Descriptor/frame layout, NE metadata/SDK plans/relocations, host record fields, lock lifetime, DOS date/time packing, invalid-input rejection, and lossless PNG encoding |
-| Conformance | 42 | Actual Unicorn execution: arithmetic, near/far calls, imported-call marshaling/results/cleanup, guest dereferences of locked blocks, protected-mode DOS interrupt stop/resume, bounded failures, four drawing ABIs, and software rectangles compared with native Windows PatBlt |
+| Unit | 121 | Descriptor/frame layout, NE metadata/SDK plans/relocations, host record fields, lock lifetime, DOS date/time packing, invalid-input rejection, lossless PNG encoding, ring retention, reusable pixel buffers, monotonic timing, pacing, and concurrent latest-frame transfer |
+| Conformance | 44 | Actual Unicorn execution: arithmetic, near/far calls, imported-call marshaling/results/cleanup, guest dereferences of locked blocks, protected-mode DOS interrupt stop/resume, bounded failures, four drawing ABIs, and software rectangles compared with native Windows PatBlt, and bounded interrupt history with per-call budgets |
 | Tutorial | 11 | Four CPU lessons, NE inspection, and six relocation report/step/cancel/file-path checks using generated input |
-| **Default total** | **159** | All passing on the current Windows x64 development host; no Watcom or private file required |
+| **Default total** | **176** | All passing on the current Windows x64 development host; no Watcom or private file required |
 | Toolchain (opt-in) | 12 | Three real-DLL metadata cases plus nine startup/export/exit execution, ABI, failure, mutation, trace, and console checks |
-| **With Watcom** | **171** | Includes rebuilding the project-owned Win16 fixture |
-| LocalModule (opt-in) | 11 | Original initialization plus deterministic 30-frame capture, 180-frame removal path, slower timing gate, and capture-budget failure |
-| **With both opt-ins** | **182** | Requires the pinned compiler and local analyzed Mondrian file |
+| **With Watcom** | **188** | Includes rebuilding the project-owned Win16 fixture |
+| LocalModule (opt-in) | 34 | Original initialization plus deterministic 30-frame capture, 180-frame removal path, slower timing gate, capture-budget failure, eight session lifetime/state/failure cases, and six retention/buffer cases including 5,000 draws; live timing, CLOSE/WEP, failure, cancellation and restart |
+| **With both opt-ins** | **222** | Requires the pinned compiler and local analyzed Mondrian file |
 
 Conformance tests use the native engine and a test-only Windows GDI raster oracle; they are not isolated unit tests or a
 mock of Unicorn. Categories make the distinction explicit. All fixtures are
@@ -94,7 +94,7 @@ dotnet test -p:BuildWin16Fixture=true
 dotnet test -p:BuildWin16Fixture=true --filter "TestCategory=Toolchain"
 ```
 
-This builds the DLL and adds 12 `Toolchain` cases, for 171 passing cases in
+This builds the DLL and adds 12 `Toolchain` cases, for 188 passing cases in
 the combined suite. Three check metadata; nine exercise tutorial 06, including
 real startup/HELLOWORLD/WEP execution, AX and guest stores, different caller/DLL
 DS, import argument order and cleanup, DX:AX returns, initialization failure,
@@ -102,7 +102,7 @@ bad selector rejection, the error gateway, instruction bounds, and tracing.
 Changing the compiled return constant to 77 produces 77 in both register and
 memory; the host does not manufacture the expected result. The source and build
 instructions are tracked; outputs live in ignored `artifacts/`. Default runs
-remain compiler-free with 159 cases. Do not pass `--no-build` when changing this
+remain compiler-free with 176 cases. Do not pass `--no-build` when changing this
 opt-in property, since it changes which tests are compiled.
 
 `NeLoadPlanTests` adds 17 pure unit cases using generated metadata bytes, so
@@ -209,3 +209,12 @@ not patch `dotnet.exe`, an installed test host, or Windows policy. This remains
 a process-level compatibility tradeoff, not a resolved distribution strategy.
 Do not run the test DLL with `dotnet AfterDarker.Tests.dll`; that uses the shared
 host whose CFG setting we deliberately leave alone.
+
+## Actual WPF acceptance
+
+The [player guide](wpf-player.md#local-acceptance-run) describes the opt-in
+`--smoke` mode. It drives the real dispatcher/WriteableBitmap and validates RGB
+readback, then Stop, fresh Run and Closing while playback is active. Both guest
+shutdowns must finish CLOSE/WEP with no outstanding locks. Its local PNG/report
+artifacts are ignored and require the private analyzed module. This supplements
+the 222 tests; it is not counted as a unit test or an interactive F5 observation.

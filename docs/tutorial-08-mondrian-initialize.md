@@ -31,9 +31,10 @@ and ignored by Git; the test/build process never copies them into output.
 
 ## Reading order and breakpoints
 
-Start at [MondrianRunner.Execute](../src/AfterDarker.Tutorials/Runtime/MondrianRunner.cs),
-the execution path shared by tutorials 08 and 09. Tutorial 08 delegates to it
-without a drawing continuation. The stages remain visible:
+Start at [MondrianSession](../src/AfterDarker.Runtime/MondrianSession.cs),
+the execution path shared by tutorials 08 and 09. Tutorial 08 constructs an
+initialization-only session, calls `Initialize`, snapshots the result, and
+disposes it. See [session lifetime](mondrian-session.md). The stages remain visible:
 
 1. `NeLoadPlan.CreateWithImportResolver`: prepare and relocate segment arrays.
 2. `guest.Map`: copy the prepared arrays into Unicorn and build descriptors.
@@ -44,7 +45,7 @@ without a drawing continuation. The stages remain visible:
 7. `MondrianInitialization.Observe`: read state produced by the original code.
 
 Follow `guest.RunUntil` into
-[SegmentedGuest](../src/AfterDarker.Tutorials/Runtime/SegmentedGuest.cs) to see the
+[SegmentedGuest](../src/AfterDarker.Runtime/SegmentedGuest.cs) to see the
 execution loop and the two hook boundaries. This helper owns the native CPU;
 it has no knowledge of After Dark records or Windows services.
 

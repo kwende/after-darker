@@ -5,7 +5,7 @@ using AfterDarker.Core.AfterDark;
 using AfterDarker.Core.Ne;
 using AfterDarker.Tutorials.Fixtures;
 using AfterDarker.Tutorials.Lessons;
-using AfterDarker.Tutorials.Runtime;
+using AfterDarker.Runtime;
 using UnicornEngine.Const;
 
 namespace AfterDarker.Tests.Conformance;
@@ -14,8 +14,8 @@ namespace AfterDarker.Tests.Conformance;
 [TestCategory("Conformance")]
 public sealed class MondrianGatewayTests
 {
-    private const ushort Code = MondrianRunner.Caller, Gateway = MondrianRunner.Gateway;
-    private const ushort Data = MondrianRunner.HostData, Stack = MondrianRunner.Stack, DllData = 0x28;
+    private const ushort Code = MondrianSession.Caller, Gateway = MondrianSession.Gateway;
+    private const ushort Data = MondrianSession.HostData, Stack = MondrianSession.Stack, DllData = 0x28;
 
     [TestMethod]
     public void EverySupportedImportReturnsThroughRealFarCallsAndGuestDereferencesLockedBlock()
@@ -175,7 +175,7 @@ public sealed class MondrianGatewayTests
         public SegmentedGuest Guest { get; } = new();
         public Win16Api Services { get; }
         public IReadOnlyList<Win16Imports.ImportEntry> Bindings { get; }
-        public List<MondrianRunner.HostCall> Calls { get; } = [];
+        public List<MondrianSession.HostCall> Calls { get; } = [];
         public PixelSurface Surface { get; } = new(8, 6);
         public Probe(bool drawing = false)
         {
@@ -216,7 +216,7 @@ public sealed class MondrianGatewayTests
             Guest.Set(X86.UC_X86_REG_DS, Data);
             Guest.Set(X86.UC_X86_REG_SS, Stack);
             Guest.Set(X86.UC_X86_REG_SP, 0x1000);
-            Guest.DispatchGateway = () => Calls.Add(MondrianRunner.DispatchImport(Guest, Bindings, Services));
+            Guest.DispatchGateway = () => Calls.Add(MondrianSession.DispatchImport(Guest, Bindings, Services));
             return Guest.RunUntil("synthetic import probe", new(Code, 0), new(Code, end));
         }
         public ushort Word(ushort offset) => BinaryPrimitives.ReadUInt16LittleEndian(Guest.Read(new(Data, offset), 2));

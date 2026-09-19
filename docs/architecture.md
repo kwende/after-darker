@@ -130,6 +130,23 @@ verify original guest state. Tutorial 09 continues the same guest into drawing;
 no general allocator is implemented.
 See [the initialization walkthrough](tutorial-08-mondrian-initialize.md).
 
+`AfterDarker.Runtime.MondrianSession` now owns that persistent execution state
+explicitly. Construction loads/maps; `Initialize` executes startup and the two
+initialization messages; `Blank` and `DrawFrame` each return to the host while
+preserving the guest. The console lessons consume this class library and a WPF
+host can reference it directly. `Dispose` releases the engine; CLOSE/WEP and
+cancellation remain separate work. The session rejects invalid ordering,
+execution after a fault, and access after disposal. See
+[the lifetime contract](mondrian-session.md).
+
+Sessions now default to bounded recent diagnostics (256 calls, phases and
+interrupts each), with separate saturating 64-bit totals and fixed-key import
+counts. The educational bounded lessons explicitly request full recording.
+CPU instruction limits use independent per-invocation counts. `CopyPixelsTo`
+fills host-owned reusable RGB buffers; tutorial capture compares two arrays and
+passes a borrowed read-only span to its synchronous PNG sink. This implements
+the retention/buffer step without adding clock, scheduling or UI behavior.
+
 ### 3.3 CPU engine adapter
 
 The CPU engine owns instruction semantics and register state. After Darker owns
@@ -446,3 +463,14 @@ The runtime must provide:
 - Optional out-of-process isolation for risky or broadly compatible modes.
 
 The most compatible implementation is not automatically the safest one.
+
+## Live WPF host
+
+The [WPF player](wpf-player.md) owns one serialized background playback task.
+The guest renders into its software surface; a one-frame mailbox copies only
+the latest changed image to the UI, which alone touches WriteableBitmap.
+No guest pointer or native handle crosses into WPF. Live pacing uses elapsed
+time while educational captures preserve their deterministic clock.
+The worker cancels at call boundaries, invokes original CLOSE and WEP from a
+healthy stack, then disposes the engine. Faults bypass guest cleanup; native
+resources are still released. UI close asynchronously awaits that worker.

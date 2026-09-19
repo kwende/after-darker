@@ -22,6 +22,46 @@ nine educational console lessons (06 needs the optional Watcom fixture;
 
 ## Established evidence
 
+- The live WPF player now executes the analyzed original Mondrian continuously
+  with elapsed-time pacing, bounded diagnostics and latest-frame presentation.
+  The actual-window acceptance run read back exact published RGB bytes after
+  30 presentations, stopped, restarted, presented again and closed while playing.
+  Both sessions returned from original CLOSE and WEP (AX=1), restored SP=1000
+  and caller DS=0048, and ended with zero global locks before engine disposal.
+  This is bounded runtime evidence, not indefinite endurance or historical fidelity.
+- Step 5 adds explicit, idempotent Shutdown on healthy Ready sessions. Faults
+  prohibit more guest calls; Dispose still releases the engine without executing
+  guest code. CLOSE's 208-service budget accommodates 200 rectangle inversions,
+  blanking and locks; other calls retain 128. Tests cover empty/30/300-draw
+  shutdown, both clearing settings, failure within CLOSE, and restart/cancellation.
+  CLOSE leaves the rectangle count unchanged; optional clear followed by XOR
+  replay explains why shutdown need not leave a black image. No new Win16 API
+  is added. Tutorial captures retain their existing deterministic outputs.
+
+- WPF step 4 adds the F5-runnable live window, serialized background playback,
+  a single pending-frame mailbox and dispatcher-owned WriteableBitmap. Actual
+  WPF acceptance presented 30 images, verified exact bitmap RGB readback and
+  nonblank original-code output, stopped and released the guest with zero locks.
+  Two public tests cover mailbox coalescing, ownership and concurrent coherence.
+  Step 4 still stops without original CLOSE/WEP; step 5 adds that lifecycle.
+
+
+- WPF step 2 bounds default history to 256 import calls, phases and interrupts
+  per kind; lifetime totals and fixed-key import counts remain complete. Full
+  recording is explicit in bounded tutorials. Pixel copying into caller-owned
+  storage allocates no new frame arrays; tutorial 09 swaps two reusable buffers
+  and lends a read-only span to the PNG sink. A 5,000-draw run at 64x48 retains
+  the fixed history size, balances global locks and uses one host pixel buffer.
+  Retention capacities 0/1/8 preserve full-recording guest state, pixels and totals.
+  All 30 default PNGs and report contents match the prior committed step exactly.
+
+- Step 1 of the WPF plan introduces `AfterDarker.Runtime.MondrianSession`:
+  explicit load, Initialize, Blank, DrawFrame, snapshots and idempotent Dispose.
+  Both console lessons use it; a future window can reference the library without
+  depending on the tutorial executable. Eight new private-module cases verify
+  lifecycle order, persistent/independent guests, detached snapshots, disposal
+  and faulted-session rejection. Original frame output remains unchanged.
+
 - [Tutorial 09](tutorial-09-mondrian-frames.md) executed original Mondrian BLANK
   and 30 DRAWFRAME calls, producing 30 distinct 640x480 PNGs in 11,859 total
   instructions. Its four new imports are SetRect, GetStockObject (black brush),
@@ -31,7 +71,7 @@ nine educational console lessons (06 needs the optional Watcom fixture;
   original rectangle removal and exceeded 50,000 lifetime instructions.
   PNGs passed independent CRC/zlib and Pillow checks and visual inspection.
   Negative rectangle extents match measured modern Windows PatBlt behavior;
-  this is not Windows 3.1 pixel-fidelity proof. CLOSE/WEP remain unexecuted.
+  this is not Windows 3.1 pixel-fidelity proof. That bounded tutorial does not invoke CLOSE/WEP; the live host now does.
 
 - The shared [Win16Api](../src/AfterDarker.Core/Win16/Win16Api.cs) now contains
   the named Windows implementation methods used by lessons 06, 08 and 09.
@@ -87,11 +127,11 @@ nine educational console lessons (06 needs the optional Watcom fixture;
   dialogs, or callbacks were found on that path. Clock seeding, tick-based
   pacing, two host memory records, and static rectangle history are identified.
   Tutorials 08 and 09 verify initialization and bounded drawing by execution;
-  shutdown remains static evidence.
-- The [C# test suite](testing.md) has 159 default passing cases: 106 unit, 42
-  engine/raster conformance, and 11 tutorial entry-point checks. With Watcom,
-  12 additional Toolchain cases bring the total to 171; eleven optional local
-  Mondrian cases bring the combined total to 182. Public tests use generated NE
+  shutdown is now also verified by the live-host and session tests.
+- The [C# test suite](testing.md) has 176 default passing cases: 121 unit, 44
+  engine/raster conformance, and 11 tutorial checks. Twelve optional Watcom
+  cases and 34 local Mondrian cases bring the combined total to 222.
+  Public tests use generated NE
   fixtures and the same guest
   programs as the lessons, with typed observations and independent assertions.
   Temporary omitted-cleanup and wrong-return mutations were rejected. This
@@ -159,7 +199,7 @@ nine educational console lessons (06 needs the optional Watcom fixture;
   ABI layouts remain unproven. Two successful host exits/resumes do not establish
   compatibility with arbitrary Win16 guest code.
 - Original execution is limited to the analyzed Mondrian artifact's startup,
-  initialization and bounded drawing; shutdown, other revisions, other modules,
+  initialization, drawing and shutdown; other revisions, other modules,
   and historical visual/pacing fidelity remain unproven.
 - Only the observed system/module fields for that path have been supplied and
   consumed. A complete After Dark SDK structure schema remains unrecovered.
@@ -181,29 +221,103 @@ explicitly.
 
 ## Next planning point
 
-The active branch is `codex/tutorial-09-mondrian-png-frames`, created from the
-clean, committed tutorial-08 branch. The owner authorized original-code image
-capture after reviewing the shared API implementations. Review the four drawing
-methods and [tutorial 09](tutorial-09-mondrian-frames.md), and open the generated
-local viewer. Bounded original animation is now proven. Guest CLOSE/WEP,
-historical reference comparisons, real-time presentation, other modules, real
-allocation, and remaining relocation modes are separate next decisions.
+The active branch is `codex/mondrian-wpf-session`. All five planned steps are
+implemented as separate commits: reusable session, bounded history/buffers,
+live timing/pacing, WPF presentation, and orderly shutdown. The owner approved
+committing step 2 and finishing steps 3-5 without further review pauses.
+The next action is the owner's F5 run of **AfterDarker.Wpf**, then normal branch
+review/merge. The [player guide](wpf-player.md) records launch and proof boundaries.
+No multi-hour endurance run or historical timing comparison has been performed.
 Watcom remains [documented for reproduction](watcom-toolchain.md).
 
-The owner requested static analysis to bound the Windows support needed for
-one original screensaver's visuals. Mondrian is the current first candidate;
-fixed host-supplied options are sufficient for the proposed scope, without
-options dialogs or settings persistence. The owner authorized the typed NE
-inspection tutorial and accompanying tests. Review tutorial 05's parsed values
-and contract-based call plan together before implementing the loader/services.
-The owner wants F5-able
-C# lessons in one console app, with separate implementation classes invoked
-through `ITutorial`. Understanding and explicit readiness govern progression.
+The project keeps one F5-able console app, with separate tutorial classes
+invoked through `ITutorial`, alongside the live WPF host. Future expansion
+remains module-driven and educational; settings dialogs, general Windows APIs
+and additional modules are outside this completed step.
 Issue #1 tracks the broader protected-mode and host-gateway experiments.
 Tutorial 04 implements the narrow host trap; the broader issue is not complete.
 See [the tutorial guide](tutorials.md).
 
 ## Session log
+
+### 2026-09-19 - WPF steps 4 and 5: actual window and original shutdown
+
+- Step 4 committed the WPF host and single-frame transfer as 9f80f16. No guest
+  state is touched from the UI; one sequential background task owns Unicorn.
+- Step 5 executes original MODULE(CLOSE) and WEP(1) before native disposal on
+  healthy Stop/close, and rejects guest cleanup after a fault. Stop cancels the
+  host loop/pacer, allowing an in-flight bounded invocation to return first.
+- Actual WPF smoke artifacts in ignored artifacts/wpf-smoke/step5 show 30 first
+  presentations, exact WriteableBitmap readback, three presentations after Run
+  again, and Closing while active. Both runs completed original shutdown; the
+  last WEP returned AX=1, SP=1000, DS=0048 with zero locks. The window content
+  rendering was visually inspected. These are local proprietary-output artifacts.
+- Public and optional suites pass together (222 cases). Original default frame
+  hashes remain asserted, and the console lessons retain their stopping points.
+  Invalid-input WPF acceptance also failed promptly with the expected hash diagnostic
+  and exit 1. No private inputs or generated images are staged.
+
+### 2026-09-19 - WPF step 3: live timing and pacing
+
+- The owner approved committing step 2 and completing steps 3-5 without further
+  review pauses. Step 2 is committed as 079c8b0.
+- Win16Api now reads an injected IWin16Clock. Existing defaults use the same
+  per-request stepping clock; live timing uses monotonic elapsed milliseconds
+  with DWORD wrap. DOS civil time is captured once at live session creation.
+  Initialization validates the actual returned tick, without reading time again.
+- FramePacer accounts for work time, waits cancellably, and resets late deadlines
+  without catch-up bursts. Its cadence is host adaptation, not historical timing.
+- Clock/pacer tests cover repeated reads, rollover, wall-clock changes, independent
+  deterministic clocks, captured civil time, late deadlines and cancellation.
+  Original code progresses when a manual live clock advances between invocations.
+
+### 2026-09-19 - WPF step 2: bounded history and reusable buffers (awaiting review)
+
+- Confirmed the owner's step-1 commit and clean branch before implementing only
+  step 2. No changes to synthetic time, pacing, WPF, threading or CLOSE/WEP.
+- Added DiagnosticOptions/DiagnosticHistory: a default 256-slot ring per record
+  kind, chronological detached snapshots, zero-capacity counters-only mode and
+  explicit full recording for bounded lessons. Session and native interrupt
+  histories use the same policy. Lifetime totals are independent of retention.
+- Instruction, service-history and drawing counters are saturating 64-bit
+  values. Safety budgets use a separate per-invocation instruction counter;
+  servicing an import/interrupt does not reset it. Initialization validation uses
+  total interrupts, not retained records. Per-import counters have fixed keys.
+- Added checked CopyRgbTo/CopyPixelsTo and PixelByteCount. The session never
+  retains or exposes a caller buffer. Tutorial capture reuses two image arrays
+  and swaps after a change. Its synchronous FrameSink now receives a borrowed
+  ReadOnlySpan; retaining consumers must explicitly copy. PNG output is identical.
+  Suppressed repeated string formatting when no diagnostic writer is supplied.
+- Verified 169 default cases and 206 with both opt-ins. New tests cover ring
+  order/wrap/snapshots, zero/full policies, buffer bounds/isolation, allocation-free
+  copies, interrupt budget/retention, exact full-versus-recent results and totals,
+  and a 5,000-draw original-code run with bounded history. Public copy and session
+  copy paths allocate zero bytes during repeated copies into an existing buffer.
+- Regenerated 30 default PNGs and compared their bytes and report contents to
+  step 1: identical, including 11,859 instructions. This does not claim zero
+  allocations throughout the emulator or prove hours-long native memory stability.
+- Changes remain uncommitted for the owner's code review. Steps 3-5 have not begun.
+
+### 2026-09-19 - WPF step 1: explicit session lifetime (awaiting review)
+
+- Replaced callback-scoped `MondrianRunner.Execute` with a host-owned
+  `MondrianSession`. Constructor prepares/maps only; Initialize runs original
+  startup and initialization; Blank/DrawFrame preserve the same guest between
+  ordinary C# calls. Disposal releases native resources once. Failed setup
+  releases its partial engine, and interrupted lifecycle calls become Faulted.
+- Moved session and existing SegmentedGuest into `AfterDarker.Runtime`, keeping
+  Unicorn out of Core and removing future WPF dependence on the console app.
+  Native asset restore/copy belongs to Runtime; apphost configuration remains
+  per executable. Existing pinned dependencies and API behavior are unchanged.
+- Lessons 08 and 09 now own sessions with using. Initialization-only behavior,
+  clock inputs, pixel generation, captures and reports are preserved. Diagnostic
+  snapshots have detached lists; pixel snapshots remain copies. Unbounded
+  internal history and per-call allocations remain for the separate step 2.
+- Eight new lifetime cases pass, along with existing suites: 159 default and
+  190 combined cases. Verified fresh host output/native asset propagation and
+  compared all 30 generated PNGs and the report with the pre-refactor capture.
+- No clock/pacing, WPF/threading, cancellation or guest CLOSE/WEP work is included.
+  No commit or push; stop for the owner's code review before proceeding.
 
 ### 2026-09-19 - tutorial 09: original Mondrian PNG capture
 

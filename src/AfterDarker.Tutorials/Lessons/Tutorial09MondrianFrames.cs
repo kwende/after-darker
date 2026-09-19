@@ -4,7 +4,7 @@ using AfterDarker.Core.AfterDark;
 using AfterDarker.Core.Ne;
 using AfterDarker.Core.Rendering;
 using AfterDarker.Core.Win16;
-using AfterDarker.Tutorials.Runtime;
+using AfterDarker.Runtime;
 
 namespace AfterDarker.Tutorials.Lessons;
 
@@ -21,7 +21,10 @@ public sealed class Tutorial09MondrianFrames(string? path = null, string? frameC
 
     public sealed record Frame(int Number, int DrawCall, string FileName, string RgbSha256,
         int ChangedPixels, Win16Drawing.Operation? LastOperation, MondrianInitialization.State GuestState);
-    public sealed record CaptureResult(MondrianRunner.Result Execution, IReadOnlyList<Frame> Frames, int DrawCalls);
+    public sealed record CaptureResult(MondrianSession.Result Execution, IReadOnlyList<Frame> Frames, int DrawCalls);
+    // Borrowed only for this synchronous call. A consumer that needs to retain
+    // pixels must explicitly copy them; the capture loop reuses its two arrays.
+    public delegate void FrameSink(Frame frame, ReadOnlySpan<byte> pixels);
 
     public void Run()
     {
@@ -56,13 +59,13 @@ public sealed class Tutorial09MondrianFrames(string? path = null, string? frameC
             WriteJson("report.json", new
             {
                 Status = "complete", ModuleSha256 = MondrianInitialization.Sha256,
-                Options = options, CivilTime = MondrianRunner.CivilTime,
+                Options = options, CivilTime = MondrianSession.CivilTime,
                 InitialTick = Win16ApiState.DefaultInitialTick, TickStepPerRequest = Win16ApiState.DefaultTickStep,
                 ClockPolicy = "deterministic synthetic milliseconds per GetTickCount request; not wall-clock playback",
                 RasterPolicy = "RGB8 identity coordinates; full-surface clip; black brush; Windows PatBlt-tested rectangle bounds",
                 Shutdown = "bounded capture; guest disposed without CLOSE or WEP",
                 result.DrawCalls, result.Execution.Instructions, result.Execution.ProtectedMode, result.Execution.OutstandingLocks,
-                Imports = result.Execution.Calls.GroupBy(c => c.Binding.Name).Select(g => new { Name = g.Key, Calls = g.Count() }),
+                Imports = result.Execution.Diagnostics.ImportCalls.Select(pair => new { Name = pair.Key, Calls = pair.Value }),
                 Frames = result.Frames
             });
             WriteGallery(directory, result.Frames);
@@ -80,45 +83,45 @@ public sealed class Tutorial09MondrianFrames(string? path = null, string? frameC
 
     /// <summary>
     /// A bounded experiment, also usable by local integration tests without disk
-    /// output. One callback per changed image; the supplied pixel array is a copy.
+    /// output. One callback per changed image; pixels are borrowed for that call only.
     /// </summary>
     public static CaptureResult Capture(byte[] file, int frameCount = 30,
         MondrianInitialization.Options? options = null, int maximumDrawCalls = 10_000,
-        Action<Frame, byte[]>? save = null)
+        FrameSink? save = null)
     {
         ValidateCount(frameCount);
         if (maximumDrawCalls is < 1 or > 10_000) throw new ArgumentOutOfRangeException(nameof(maximumDrawCalls));
         options ??= new(Speed: 100);
         options.Validate();
-        var surface = new PixelSurface(options.Width, options.Height);
-        var drawing = new Win16Drawing();
-        drawing.Register(MondrianInitialization.ReservedHdc, surface);
+        // The host owns the session lifetime explicitly. Each method returns
+        // normally to C#; the guest's registers, memory and pixels stay alive.
+        using var session = new MondrianSession(file, options, diagnostics: DiagnosticOptions.Full);
+        session.Initialize();
+        session.Blank();
         var frames = new List<Frame>();
         int draws = 0;
-        var execution = MondrianRunner.Execute(file, options: options, drawing: drawing, afterInitialization: callModule =>
+        byte[] previous = new byte[session.PixelByteCount];
+        byte[] current = new byte[session.PixelByteCount];
+        session.CopyPixelsTo(previous);
+        // A call can pass a timing gate without drawing, or touch pixels
+        // without changing the final image. Count actual changed snapshots.
+        while (frames.Count < frameCount && draws < maximumDrawCalls)
         {
-            callModule(MondrianRunner.BlankMessage);
-            byte[] previous = surface.CopyRgb();
-            // A call can pass a timing gate without drawing, or touch pixels
-            // without changing the final image. Count actual changed snapshots.
-            while (frames.Count < frameCount && draws < maximumDrawCalls)
-            {
-                var returned = callModule(MondrianRunner.DrawFrameMessage);
-                draws++;
-                byte[] pixels = surface.CopyRgb();
-                int changed = CountChangedPixels(previous, pixels);
-                if (changed == 0) continue;
-                int number = frames.Count + 1;
-                var frame = new Frame(number, draws, $"frame-{number:D4}.png", Convert.ToHexString(SHA256.HashData(pixels)),
-                    changed, drawing.LastOperation, returned.State);
-                save?.Invoke(frame, pixels);
-                frames.Add(frame);
-                previous = pixels;
-            }
-            if (frames.Count != frameCount)
-                throw new InvalidOperationException($"Capture budget exhausted: {frames.Count}/{frameCount} changed images after {draws} DRAWFRAME calls.");
-        });
-        return new(execution, frames.AsReadOnly(), draws);
+            var returned = session.DrawFrame();
+            draws++;
+            session.CopyPixelsTo(current);
+            int changed = CountChangedPixels(previous, current);
+            if (changed == 0) continue;
+            int number = frames.Count + 1;
+            var frame = new Frame(number, draws, $"frame-{number:D4}.png", Convert.ToHexString(SHA256.HashData(current)),
+                changed, session.LastDrawingOperation, returned.State);
+            save?.Invoke(frame, current);
+            frames.Add(frame);
+            (previous, current) = (current, previous); // Recycle the old image as the next destination.
+        }
+        if (frames.Count != frameCount)
+            throw new InvalidOperationException($"Capture budget exhausted: {frames.Count}/{frameCount} changed images after {draws} DRAWFRAME calls.");
+        return new(session.GetResult(), frames.AsReadOnly(), draws);
     }
 
     private static int CountChangedPixels(byte[] before, byte[] after)

@@ -95,10 +95,18 @@
       "afterdarker.core": {
         "type": "Project"
       },
+      "afterdarker.runtime": {
+        "type": "Project",
+        "dependencies": {
+          "AfterDarker.Core": "[1.0.0, )",
+          "UnicornEngine.Unicorn": "[2.1.3, )"
+        }
+      },
       "afterdarker.tutorials": {
         "type": "Project",
         "dependencies": {
           "AfterDarker.Core": "[1.0.0, )",
+          "AfterDarker.Runtime": "[1.0.0, )",
           "UnicornEngine.Unicorn": "[2.1.3, )"
         }
       }

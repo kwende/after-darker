@@ -1,10 +1,10 @@
 using AfterDarker.Core.AfterDark;
 using AfterDarker.Core.Ne;
-using AfterDarker.Tutorials.Runtime;
+using AfterDarker.Runtime;
 
 namespace AfterDarker.Tutorials.Lessons;
 
-/// <summary>Lesson 08 stops after initialization; step into MondrianRunner.Execute to follow the mechanism.</summary>
+/// <summary>Lesson 08 stops after initialization; step into MondrianSession.Initialize to follow the mechanism.</summary>
 public sealed class Tutorial08MondrianInitialize(string? path = null, bool trace = false,
     TextReader? input = null, TextWriter? output = null) : ITutorial
 {
@@ -30,7 +30,12 @@ public sealed class Tutorial08MondrianInitialize(string? path = null, bool trace
         writer.WriteLine("Stops before BLANK/DRAWFRAME. No pixels, settings dialogs, or general Windows heap implementation.");
     }
 
-    public static MondrianRunner.Result Execute(byte[] file, TextWriter? output = null, bool trace = false,
+    public static MondrianSession.Result Execute(byte[] file, TextWriter? output = null, bool trace = false,
         MondrianInitialization.Options? options = null, int instructionLimit = 50_000)
-        => MondrianRunner.Execute(file, output, trace, options, instructionLimit);
+    {
+        using var session = new MondrianSession(file, options, enableDrawing: false,
+            output: output, trace: trace, instructionLimit: instructionLimit, diagnostics: DiagnosticOptions.Full);
+        session.Initialize();
+        return session.GetResult();
+    }
 }

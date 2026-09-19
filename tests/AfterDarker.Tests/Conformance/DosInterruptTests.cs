@@ -1,6 +1,6 @@
 using System.Buffers.Binary;
 using AfterDarker.Core.Win16;
-using AfterDarker.Tutorials.Runtime;
+using AfterDarker.Runtime;
 using UnicornEngine.Const;
 
 namespace AfterDarker.Tests.Conformance;
@@ -9,6 +9,25 @@ namespace AfterDarker.Tests.Conformance;
 [TestCategory("Conformance")]
 public sealed class DosInterruptTests
 {
+    [TestMethod]
+    public void LargerCleanupServiceBudgetIsExplicitAndStillBoundsDispatch()
+    {
+        // 200 independent INTs stand in for a cleanup loop's 200 host services.
+        // This tests the generic execution budget without a copyrighted input.
+        byte[] code = Enumerable.Range(0, 200).SelectMany(_ => new byte[] { 0xCD, 0x21 }).Append((byte)0x90).ToArray();
+        foreach (int limit in new[] { 128, 200 })
+        {
+            using var guest = new SegmentedGuest();
+            guest.Map(8, 0x10000, code, true); guest.Install(16);
+            int dispatched = 0;
+            guest.DispatchInterrupt = _ => dispatched++;
+            if (limit == 128)
+                Assert.Throws<InvalidOperationException>(() => guest.RunUntil("cleanup", new(8, 0), new(8, 400), limit));
+            else guest.RunUntil("cleanup", new(8, 0), new(8, 400), limit);
+            Assert.AreEqual(limit, dispatched);
+        }
+    }
+
     [TestMethod]
     public void ProtectedModeInterruptStopsAfterIntWithoutFrameAndResumesGuestStores()
     {
@@ -81,5 +100,26 @@ public sealed class DosInterruptTests
         guest.Map(8, 0x10000, [0xEB, 0xFE, 0x90], true); // JMP to self
         guest.Install(16);
         Assert.Throws<InvalidOperationException>(() => guest.RunUntil("loop", new(8, 0), new(8, 2)));
+    }
+
+    [TestMethod]
+    public void InterruptRetentionIsBoundedAndInstructionBudgetResetsIndependentlyOfLifetimeCount()
+    {
+        using var guest = new SegmentedGuest(instructionLimit: 10, diagnostics: new(2));
+        // First entry: one serviced INT. Second entry: a loop that repeatedly
+        // exits to the host, ensuring a trap does not reset the instruction budget.
+        guest.Map(8, 0x10000, [0xCD, 0x21, 0x90, 0xCD, 0x21, 0xEB, 0xFC, 0x90], true);
+        guest.Install(16);
+        guest.DispatchInterrupt = _ => guest.Set(X86.UC_X86_REG_AX, guest.InterruptCount + 1);
+        for (int i = 0; i < 100; i++) guest.RunUntil("repeated INT", new(8, 0), new(8, 2));
+        Assert.AreEqual(100L, guest.Instructions);
+        Assert.AreEqual(100L, guest.InterruptCount);
+        var recent = guest.Interrupts;
+        Assert.AreEqual(2, recent.Count);
+        Assert.AreEqual((ushort)99, recent[0].AfterHandler.Ax);
+        Assert.AreEqual((ushort)100, recent[1].AfterHandler.Ax);
+        Assert.Throws<InvalidOperationException>(() => guest.RunUntil("INT loop", new(8, 3), new(8, 7)));
+        Assert.AreEqual(2, guest.Interrupts.Count);
+        Assert.AreEqual((ushort)100, recent[1].AfterHandler.Ax); // old snapshot remains detached
     }
 }

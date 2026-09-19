@@ -6,10 +6,10 @@ using AfterDarker.Core.X86;
 using UnicornEngine;
 using UnicornEngine.Const;
 
-namespace AfterDarker.Tutorials.Runtime;
+namespace AfterDarker.Runtime;
 
 /// <summary>
-/// The small execution mechanism used by lesson 08 and its synthetic CPU tests.
+/// The small execution mechanism owned by a session and exercised by synthetic CPU tests.
 /// No After Dark fields or Windows handlers live here. Read RunUntil to see the
 /// stop -> managed dispatch -> resume loop; neither kind of hook runs a service.
 /// </summary>
@@ -29,12 +29,14 @@ public sealed class SegmentedGuest : IGuestMemory16, IDisposable
     private Exception? hookError;
     private CpuState? beforeSoftwareInterrupt;
     private TimeSpan executionTime;
-    private int exits, phaseStartInstructions;
-    public int Instructions { get; private set; }
+    private int exits, phaseInstructions;
+    public long Instructions { get; private set; }
     public string Phase { get; private set; } = "setup";
     public Action? DispatchGateway { get; set; }
     public Action<int>? DispatchInterrupt { get; set; }
-    public List<InterruptVisit> Interrupts { get; } = [];
+    private readonly DiagnosticHistory<InterruptVisit> interrupts;
+    public IReadOnlyList<InterruptVisit> Interrupts => interrupts.Snapshot();
+    public long InterruptCount => interrupts.TotalCount;
 
     private sealed record Region(uint Base, int Size, bool Code);
     public sealed record CpuState(ushort Cs, ushort Ip, ushort Ax, ushort Bx, ushort Cx, ushort Dx,
@@ -44,9 +46,11 @@ public sealed class SegmentedGuest : IGuestMemory16, IDisposable
     }
     public sealed record InterruptVisit(int Number, CpuState BeforeInstruction, CpuState AtHook, CpuState AfterHandler);
 
-    public SegmentedGuest(TextWriter? output = null, bool trace = false, int instructionLimit = 50_000)
+    public SegmentedGuest(TextWriter? output = null, bool trace = false, int instructionLimit = 50_000,
+        DiagnosticOptions? diagnostics = null)
     {
         if (instructionLimit is < 1 or > 1_000_000) throw new ArgumentOutOfRangeException(nameof(instructionLimit));
+        interrupts = new(diagnostics ?? DiagnosticOptions.Recent);
         engine = new(Common.UC_ARCH_X86, Common.UC_MODE_32);
         this.output = output ?? TextWriter.Null;
         this.trace = trace;
@@ -86,7 +90,8 @@ public sealed class SegmentedGuest : IGuestMemory16, IDisposable
         {
             try
             {
-                if (++Instructions - phaseStartInstructions > instructionLimit) throw new InvalidOperationException("Instruction budget exhausted.");
+                if (Instructions < long.MaxValue) Instructions++;
+                if (++phaseInstructions > instructionLimit) throw new InvalidOperationException("Instruction budget exhausted.");
                 CpuState state = Snapshot();
                 if (state.Cs == gatewaySelector)
                 {
@@ -116,12 +121,18 @@ public sealed class SegmentedGuest : IGuestMemory16, IDisposable
         installed = true;
     }
 
-    public CpuState RunUntil(string phase, FarPointer16 start, FarPointer16 end)
+    public const int DefaultServiceExitLimit = 128;
+
+    public CpuState RunUntil(string phase, FarPointer16 start, FarPointer16 end,
+        int serviceExitLimit = DefaultServiceExitLimit)
     {
+        if (serviceExitLimit is < 1 or > 1024) throw new ArgumentOutOfRangeException(nameof(serviceExitLimit));
         // Budgets apply to each bounded host invocation. Keeping a lifetime
         // counter is useful diagnostics, but must not kill a healthy animation
         // merely because many completed DRAWFRAME calls preceded this one.
-        phaseStartInstructions = Instructions;
+        // Independent of the lifetime total: even a saturated diagnostic counter
+        // must never disable or shorten the next invocation's safety budget.
+        phaseInstructions = 0;
         exits = 0;
         executionTime = TimeSpan.Zero;
         Phase = phase;
@@ -131,7 +142,7 @@ public sealed class SegmentedGuest : IGuestMemory16, IDisposable
         long resume = start.Offset;
         while (true)
         {
-            if (exits > 128 || executionTime > TimeSpan.FromSeconds(5))
+            if (executionTime > TimeSpan.FromSeconds(5))
                 throw new InvalidOperationException($"{Phase}: service/time budget exhausted.");
             gatewayReached = false;
             interrupt = null;
@@ -148,10 +159,11 @@ public sealed class SegmentedGuest : IGuestMemory16, IDisposable
             }
             finally { executionTime += Stopwatch.GetElapsedTime(began); }
             if (hookError is not null) throw new InvalidOperationException($"{Phase} at {Snapshot().Pc}: {hookError.Message}", hookError);
+            if ((interrupt is not null || gatewayReached) && ++exits > serviceExitLimit)
+                throw new InvalidOperationException($"{Phase}: service budget ({serviceExitLimit}) exhausted.");
 
             if (interrupt is int number)
             {
-                exits++;
                 CpuState atHook = Snapshot();
                 CpuState before = beforeSoftwareInterrupt ?? throw new InvalidOperationException(
                     $"{Phase}: CPU exception/unsupported interrupt {number:X2} at {atHook.Pc}.");
@@ -166,11 +178,10 @@ public sealed class SegmentedGuest : IGuestMemory16, IDisposable
                 CpuState after = Snapshot();
                 if (after.Pc != atHook.Pc || after.Sp != atHook.Sp || after.Ss != atHook.Ss || after.Flags != atHook.Flags)
                     throw new InvalidOperationException("DOS handler changed control flow, stack, or flags.");
-                Interrupts.Add(new(number, before, atHook, after));
+                interrupts.Add(new(number, before, atHook, after));
             }
             else if (gatewayReached)
             {
-                exits++;
                 (DispatchGateway ?? throw new NotSupportedException("No import handler installed."))();
             }
             else

@@ -93,13 +93,11 @@ public sealed class Win16Api(Win16ApiState state)
         return address;
     }
 
-    /// <summary>Return and advance the host's deterministic millisecond clock.</summary>
+    /// <summary>Return the configured guest clock, deterministic or live.</summary>
     public uint GetTickCount()
     {
-        // A constant clock can prevent a guest's timing gates from opening.
-        // Advancing once per request is our test policy, not real elapsed time.
-        uint result = State.NextTick;
-        State.NextTick = unchecked(result + State.TickStep);
+        uint result = State.Clock.GetTickCount();
+        State.LastReturnedTick = result; // Observe the actual reply without reading/advancing time again.
         return result;
     }
 }

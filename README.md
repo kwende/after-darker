@@ -45,9 +45,15 @@ Win16 actually used by target modules, then translate their HDC operations into
 modern pixels. We do not need to boot DOS, install Windows 3.1, or reproduce an
 entire desktop.
 
+## Run the live window
+
+Set **AfterDarker.Wpf** as the startup project and press F5. It finds your local
+`ad/Mondrian.ad` automatically. See the [WPF player guide](docs/wpf-player.md)
+for controls, command-line launch and the original-code execution boundary.
+
 ## Status
 
-The repository is in its bootstrap phase. Its C# tutorials run real-mode
+The repository now runs original Mondrian in a live WPF window. Its C# tutorials run real-mode
 addition and near calls, a 16-bit protected-mode `CALL FAR`/`RETF` round trip,
 and a synthetic C# host gateway with stop, dispatch, and guest resume in Unicorn.
 Tutorial 05 reads Windows NE files into typed C# metadata and reports their
@@ -86,7 +92,8 @@ See:
 - [Run the automated tests](docs/testing.md)
 - [Reproduce the pinned Watcom Win16 toolchain](docs/watcom-toolchain.md)
 
-Open `AfterDarker.sln` in Visual Studio with .NET 10 support and press **F5**.
+For lessons, open `AfterDarker.sln` in Visual Studio with .NET 10 support,
+select **AfterDarker.Tutorials** as the startup project, and press **F5**.
 The single console project runs tutorial 01 by default and exits after printing
 `AX = 12 (0x000C)`. The first build restores its dependencies automatically.
 See the tutorial guide for prerequisites and the Windows compatibility setting.
@@ -133,8 +140,9 @@ these named C# methods, also used by tutorial 09. Import binding and register/st
 each guest has its own service state. See [the implementation guide](docs/win16-implementations.md).
 
 Run `dotnet test` from the repository root for the C# test suite. The solution
-contains a small shared `AfterDarker.Core` library, the educational console app,
-and `AfterDarker.Tests`. Keep `AfterDarker.Tutorials` as the startup project for
+contains the engine-independent `AfterDarker.Core` library, the reusable
+`AfterDarker.Runtime` session library, the educational console app, and
+`AfterDarker.Tests`. See [explicit session lifetime](docs/mondrian-session.md). Keep `AfterDarker.Tutorials` as the startup project for
 F5; automated tests are available separately through Test Explorer.
 
 ## Guiding principles
