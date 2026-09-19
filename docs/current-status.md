@@ -22,6 +22,14 @@ nine educational console lessons (06 needs the optional Watcom fixture;
 
 ## Established evidence
 
+- WPF step 4 adds the F5-runnable live window, serialized background playback,
+  a single pending-frame mailbox and dispatcher-owned WriteableBitmap. Actual
+  WPF acceptance presented 30 images, verified exact bitmap RGB readback and
+  nonblank original-code output, stopped and released the guest with zero locks.
+  Two public tests cover mailbox coalescing, ownership and concurrent coherence.
+  Step 4 still stops without original CLOSE/WEP; step 5 adds that lifecycle.
+
+
 - WPF step 2 bounds default history to 256 import calls, phases and interrupts
   per kind; lifetime totals and fixed-key import counts remain complete. Full
   recording is explicit in bounded tutorials. Pixel copying into caller-owned

@@ -45,6 +45,12 @@ Win16 actually used by target modules, then translate their HDC operations into
 modern pixels. We do not need to boot DOS, install Windows 3.1, or reproduce an
 entire desktop.
 
+## Run the live window
+
+Set **AfterDarker.Wpf** as the startup project and press F5. It finds your local
+`ad/Mondrian.ad` automatically. See the [WPF player guide](docs/wpf-player.md)
+for controls, command-line launch and the original-code execution boundary.
+
 ## Status
 
 The repository is in its bootstrap phase. Its C# tutorials run real-mode

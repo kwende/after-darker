@@ -10,12 +10,13 @@ $executable = (Resolve-Path -LiteralPath $ExecutablePath).Path
 $allowedOutputs = @{
     'AfterDarker.Tutorials.exe' = '../src/AfterDarker.Tutorials/bin/'
     'AfterDarker.Tests.exe' = '../tests/AfterDarker.Tests/bin/'
+    'AfterDarker.Wpf.exe' = '../src/AfterDarker.Wpf/bin/'
 }
 $outputDirectory = $allowedOutputs[[IO.Path]::GetFileName($executable)]
 if (-not $outputDirectory -or -not $executable.StartsWith(
         [IO.Path]::GetFullPath((Join-Path $PSScriptRoot $outputDirectory)),
         [StringComparison]::OrdinalIgnoreCase)) {
-    throw 'Only the tutorial or test executable inside its own bin directory may be configured.'
+    throw 'Only a named After Darker executable inside its own bin directory may be configured.'
 }
 
 $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio/Installer/vswhere.exe'

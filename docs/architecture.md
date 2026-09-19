@@ -463,3 +463,12 @@ The runtime must provide:
 - Optional out-of-process isolation for risky or broadly compatible modes.
 
 The most compatible implementation is not automatically the safest one.
+
+## Live WPF host
+
+The [WPF player](wpf-player.md) owns one serialized background playback task.
+The guest renders into its software surface; a one-frame mailbox copies only
+the latest changed image to the UI, which alone touches WriteableBitmap.
+No guest pointer or native handle crosses into WPF. Live pacing uses elapsed
+time while educational captures preserve their deterministic clock.
+
