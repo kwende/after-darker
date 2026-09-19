@@ -126,7 +126,8 @@ from implementation; the API class contains no emulator/stack handling. The prof
 supplies two resident global blocks and an empty environment, with separate
 far-call and DOS-interrupt dispatch after the native hooks return. Public
 synthetic programs verify those same boundaries. Hash-specific local tests
-verify original guest state; no drawing or general allocator is implemented.
+verify original guest state. Tutorial 09 continues the same guest into drawing;
+no general allocator is implemented.
 See [the initialization walkthrough](tutorial-08-mondrian-initialize.md).
 
 ### 3.3 CPU engine adapter
@@ -284,7 +285,17 @@ viewport/window origins when required
 selected bitmap, palette, or font when required
 ```
 
-The first backend should be a deterministic software surface. Pixel-exact tests
+The first backend is now `PixelSurface`, a deterministic RGB8 software surface.
+`Win16Drawing` registers guest HDC identities with persistent surfaces, identity
+coordinates and a full-surface clip. Shared `Win16Api` supplies SetRect,
+GetStockObject (black brush only), FillRect and InvertRect. `PngWriter` uses
+.NET zlib and a small RGB8 PNG encoder; no image dependency or native rendering
+API is used in production. Modern Windows PatBlt is a test-only raster oracle.
+Tutorial 09 runs original Mondrian BLANK/DRAWFRAME into this backend; broader
+DC state listed above is introduced only when required. See the
+[drawing proof and limits](tutorial-09-mondrian-frames.md).
+
+A deterministic software surface remains the preferred backend. Pixel-exact tests
 are easier when antialiasing, GPU drivers, DPI, and presentation timing are not
 part of the result.
 

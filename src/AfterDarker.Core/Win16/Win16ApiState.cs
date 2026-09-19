@@ -18,6 +18,7 @@ public sealed class Win16ApiState
     public bool LocalInitSucceeds { get; }
     public uint TickStep { get; }
     public uint NextTick { get; internal set; }
+    public Win16Drawing? Drawing { get; init; }
 
     public Win16ApiState(IGuestMemory16 memory, LocalHeapReservation reservedHeap,
         FarPointer16? environment = null, uint windowsVersion = DefaultWindowsVersion,

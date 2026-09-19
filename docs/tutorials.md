@@ -529,3 +529,14 @@ and imported-call versus DOS-interrupt return paths. Original DLL startup,
 PREINITIALIZE, and INITIALIZE run and return; the lesson checks guest state and
 stops before drawing. This version-specific lesson requires the analyzed local
 module, but does not require Watcom. The source file remains unchanged.
+
+
+## Tutorial 09: capture original Mondrian frames
+
+Select **Tutorial 09 - capture Mondrian PNG frames** and supply your local module
+path, or run `dotnet run --project src/AfterDarker.Tutorials --no-launch-profile -- 09 ad/Mondrian.ad`.
+The optional final argument selects the number of changed images (default 30).
+The [drawing walkthrough](tutorial-09-mondrian-frames.md) follows original code
+through the four additional APIs into a persistent software surface, then PNG
+capture. Each run writes an ignored output directory with a play/step viewer and
+JSON evidence. Synthetic clocks and presentation cadence are explicit host choices.

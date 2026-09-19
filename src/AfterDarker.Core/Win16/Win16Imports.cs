@@ -5,16 +5,16 @@ namespace AfterDarker.Core.Win16;
 /// <summary>
 /// Import identities and ABI metadata, separate from Win16Api implementations.
 /// This is the currently supported subset, not a complete Windows registry.
-/// Drawing/error imports still resolve to addresses, but fail by name if reached.
+/// Drawing is opt-in; unsupported imports fail by name if reached.
 /// </summary>
 public static class Win16Imports
 {
-    public enum Handler { Unsupported, LocalInitReservation, GlobalLock, GlobalUnlock, Environment, Ticks }
+    public enum Handler { Unsupported, LocalInitReservation, GlobalLock, GlobalUnlock, Environment, Ticks, SetRect, GetStockObject, FillRect, InvertRect }
     public sealed record ImportEntry(NeImport Import, string Name, FarPointer16 Address,
         Handler Implementation, int? ArgumentBytes, Win16ReturnLayout? ReturnLayout);
     public sealed record Reply(uint Value, ushort? Cx = null);
 
-    public static IReadOnlyList<ImportEntry> BindImports(NeImage image, ushort gateway)
+    public static IReadOnlyList<ImportEntry> BindImports(NeImage image, ushort gateway, bool enableDrawing = false)
     {
         // Ordinals/signatures: Wine 10.0 krnl386.exe16.spec and user.exe16.spec.
         // Each synthetic address is OUR choice; its selector is a code gateway.
@@ -33,11 +33,11 @@ public static class Win16Imports
             ("GDI", 2, "SetBkMode", Handler.Unsupported, null, null),
             ("GDI", 9, "SetTextColor", Handler.Unsupported, null, null),
             ("GDI", 33, "TextOut", Handler.Unsupported, null, null),
-            ("GDI", 87, "GetStockObject", Handler.Unsupported, null, null),
+            ("GDI", 87, "GetStockObject", enableDrawing ? Handler.GetStockObject : Handler.Unsupported, 2, Win16ReturnLayout.WordInAx),
             ("GDI", 346, "SetTextAlign", Handler.Unsupported, null, null),
-            ("USER", 72, "SetRect", Handler.Unsupported, null, null),
-            ("USER", 81, "FillRect", Handler.Unsupported, null, null),
-            ("USER", 82, "InvertRect", Handler.Unsupported, null, null),
+            ("USER", 72, "SetRect", enableDrawing ? Handler.SetRect : Handler.Unsupported, 12, Win16ReturnLayout.Void),
+            ("USER", 81, "FillRect", enableDrawing ? Handler.FillRect : Handler.Unsupported, 8, Win16ReturnLayout.WordInAx),
+            ("USER", 82, "InvertRect", enableDrawing ? Handler.InvertRect : Handler.Unsupported, 6, Win16ReturnLayout.Void),
         };
         const int firstGatewayOffset = 0x100, gatewaySpacing = 0x10;
         return Array.AsReadOnly(image.Imports.Select(import =>
@@ -70,6 +70,17 @@ public static class Win16Imports
             case Handler.GlobalUnlock: return new(api.GlobalUnlock(arguments[0]));
             case Handler.Environment: return new(Pack(api.GetDOSEnvironment()));
             case Handler.Ticks: return new(api.GetTickCount());
+            // Pascal pushes source arguments left-to-right. A far pointer is
+            // pushed selector then offset; these are WORDS, not two parameters.
+            case Handler.SetRect:
+                api.SetRect(new(arguments[0], arguments[1]), unchecked((short)arguments[2]),
+                    unchecked((short)arguments[3]), unchecked((short)arguments[4]), unchecked((short)arguments[5]));
+                return new(0); // Void: dispatcher preserves return registers.
+            case Handler.GetStockObject: return new(api.GetStockObject(unchecked((short)arguments[0])));
+            case Handler.FillRect: return new(unchecked((ushort)api.FillRect(arguments[0], new(arguments[1], arguments[2]), arguments[3])));
+            case Handler.InvertRect:
+                api.InvertRect(arguments[0], new(arguments[1], arguments[2]));
+                return new(0);
             default: throw new NotSupportedException(entry.Name);
         }
     }

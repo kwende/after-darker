@@ -29,7 +29,7 @@ public sealed class SegmentedGuest : IGuestMemory16, IDisposable
     private Exception? hookError;
     private CpuState? beforeSoftwareInterrupt;
     private TimeSpan executionTime;
-    private int exits;
+    private int exits, phaseStartInstructions;
     public int Instructions { get; private set; }
     public string Phase { get; private set; } = "setup";
     public Action? DispatchGateway { get; set; }
@@ -86,7 +86,7 @@ public sealed class SegmentedGuest : IGuestMemory16, IDisposable
         {
             try
             {
-                if (++Instructions > instructionLimit) throw new InvalidOperationException("Instruction budget exhausted.");
+                if (++Instructions - phaseStartInstructions > instructionLimit) throw new InvalidOperationException("Instruction budget exhausted.");
                 CpuState state = Snapshot();
                 if (state.Cs == gatewaySelector)
                 {
@@ -118,6 +118,12 @@ public sealed class SegmentedGuest : IGuestMemory16, IDisposable
 
     public CpuState RunUntil(string phase, FarPointer16 start, FarPointer16 end)
     {
+        // Budgets apply to each bounded host invocation. Keeping a lifetime
+        // counter is useful diagnostics, but must not kill a healthy animation
+        // merely because many completed DRAWFRAME calls preceded this one.
+        phaseStartInstructions = Instructions;
+        exits = 0;
+        executionTime = TimeSpan.Zero;
         Phase = phase;
         RequireCode(start, 1);
         RequireCode(end, 1);

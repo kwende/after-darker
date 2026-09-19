@@ -9,7 +9,7 @@ public readonly record struct FarPointer16(ushort Selector, ushort Offset)
 }
 
 public sealed record NeSegmentPlacement(ushort Number, ushort Selector, uint LinearBase);
-public enum Win16ReturnLayout { WordInAx, DwordInDxAx }
+public enum Win16ReturnLayout { WordInAx, DwordInDxAx, Void }
 public sealed record NeImportBinding(NeImport Import, string Name, FarPointer16 Address,
     int ArgumentBytes, Win16ReturnLayout ReturnLayout, string Handler);
 public sealed record PreparedNeSegment(NeSegment Source, NeSegmentPlacement Placement, byte[] Bytes);
