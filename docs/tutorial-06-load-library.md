@@ -348,9 +348,10 @@ Run the execution and metadata tests with:
 dotnet test -p:BuildWin16Fixture=true
 ```
 
-The combined suite has **101 passing cases**, including 17 new compiler-free
-loader cases and nine new fixture execution/lesson cases. Default `dotnet test`
-has 89 cases and does not require Watcom. The opt-in property rebuilds and
+At the tutorial 06 milestone, the combined suite had **101 passing cases**, including 17 new compiler-free
+loader cases and nine new fixture execution/lesson cases. Its default suite
+had 89 cases without Watcom. See [testing](testing.md) for the current totals.
+The opt-in property rebuilds and
 copies the DLL; avoid `--no-build` when changing it.
 
 The discriminating checks include:
@@ -380,3 +381,7 @@ No AD module, GDI operation, resource rendering, general DLL dependency loader,
 internal relocation support, or full Windows allocator is proven by this
 lesson. The fixture's startup and export code run; the broader Windows
 environment remains deliberately incomplete.
+
+Follow-on: [tutorial 07](tutorial-07-relocations.md) now extends the shared
+loader with internal relocations and selector/offset writes. Its preparation
+of a real AD module is separate from the execution proof described here.

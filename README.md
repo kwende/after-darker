@@ -56,6 +56,9 @@ entry points, imports, resources, and an assumed After Dark invocation plan.
 Hello42 Win16 DLL, executes its startup through two limited host responses,
 calls its export, and observes the guest store 42. This is a narrow loader
 experiment; there is no After Dark runtime, general Win16 API layer, or renderer.
+[Tutorial 07](docs/tutorial-07-relocations.md) adds an interactive relocation
+walkthrough: internal targets, entry ordinals, selector/offset/far-pointer
+patches, and source chains. It prepares a local module without executing it.
 
 Prior research has established the After Dark lifecycle, inspected several
 real modules, and recovered enough behavior from Spiral Gyra and Stained Glass
@@ -96,6 +99,11 @@ For the compiler-built DLL execution lesson, run
 library** for F5, or **Tutorial 06 - instruction trace** to see fetched bytes
 and registers. The [detailed walkthrough](docs/tutorial-06-load-library.md)
 explains each memory assignment, register input, loader patch, and return frame.
+
+Select **Tutorial 07 - relocation walkthrough** for a built-in example that
+pauses after every patch, or **Tutorial 07 - local NE relocations** to supply
+your own module path. The built-in example needs neither Watcom nor private
+files. See [the relocation guide](docs/tutorial-07-relocations.md).
 
 Run `dotnet test` from the repository root for the C# test suite. The solution
 contains a small shared `AfterDarker.Core` library, the educational console app,

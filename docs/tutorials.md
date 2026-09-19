@@ -495,3 +495,21 @@ caller stores it, then `WEP(1)` returns 1 with the stack restored. The host's
 LocalInit response is a checked test double, not an implemented Windows heap.
 GetVersion is deterministic; MessageBox fails by name if reached. No AD module
 executes in this lesson. See the walkthrough for tests and remaining boundaries.
+
+## Tutorial 07: reconnect references without executing the module
+
+The [relocation walkthrough](tutorial-07-relocations.md) explains the two-pass
+loader, fixed versus entry-ordinal targets, chain links, field widths, typed
+patch records, and the distinction between an import address and its implementation.
+
+```powershell
+dotnet run --project src/AfterDarker.Tutorials --no-launch-profile -- 07 --step
+dotnet run --project src/AfterDarker.Tutorials --no-launch-profile -- 07 ad/Mondrian.ad --step
+```
+
+The first command uses original generated NE metadata and works without private
+files or Watcom. The second uses a local module. Enter advances after each
+patch; `q` cancels. F5 profiles are **Tutorial 07 - relocation walkthrough**
+and **Tutorial 07 - local NE relocations** (prompts for a path). Omit `--step`
+for continuous output. Both paths call the same shared Core loader; no CPU is
+created and no Windows service is invoked.

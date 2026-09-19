@@ -11,7 +11,7 @@ public sealed record NeHeader(int FileOffset, ushort Flags, byte TargetOs,
     ushort StackBytes, NeAddress? Startup, ushort StackSegment, ushort StackPointer,
     ushort SegmentAlignmentShift)
 {
-    public bool IsLibrary => (Flags & 0x8000) != 0;
+    public bool IsLibrary => (Flags & NeFormat.HeaderFlags.Library) != 0;
 }
 
 public sealed record NeSegment(ushort Number, int? FileOffset, int FileBytes,
@@ -38,8 +38,8 @@ public sealed record NeRelocation(ushort SegmentNumber, int RecordFileOffset,
     byte AddressType, byte Flags, ushort SourceOffset, ushort Target1, ushort Target2,
     NeImport? Import)
 {
-    public int Kind => Flags & 3;
-    public bool Additive => (Flags & 4) != 0;
+    public int Kind => Flags & NeFormat.RelocationFlags.KindMask;
+    public bool Additive => (Flags & NeFormat.RelocationFlags.Additive) != 0;
 }
 
 public sealed record NeResourceIdentifier(ushort? Number, string? Name);

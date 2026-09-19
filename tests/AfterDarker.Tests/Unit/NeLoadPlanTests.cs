@@ -93,8 +93,8 @@ public sealed class NeLoadPlanTests
 
     [TestMethod]
     [DataRow(3, 5)] // additive imported pointer
-    [DataRow(2, 1)] // selector-only relocation
-    [DataRow(3, 0)] // internal relocation (separate milestone)
+    [DataRow(13, 1)] // offset32 relocation
+    [DataRow(3, 3)] // OS fixup
     public void UnsupportedFixupsFailExplicitly(int addressType, int flags)
     {
         byte[] file = FileBytes();

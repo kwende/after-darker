@@ -1,6 +1,6 @@
 # Current Status
 
-Last updated: 2026-09-17
+Last updated: 2026-09-18
 
 ## Project phase
 
@@ -8,14 +8,29 @@ After Darker has a C# tutorial console host with real-mode addition and
 near-call experiments, plus 16-bit protected-mode far-call and synthetic host
 gateway experiments using Unicorn 2.1.3. Tutorial 06 adds a narrow NE load plan
 and executes the project-owned Hello42 DLL with limited startup host responses.
+Tutorial 07 extends preparation to internal references, entry ordinals, and
+selector/offset/far-pointer patches, with a step-by-step console walkthrough.
 There is no After Dark runtime, general Win16 API layer, or renderer yet.
 `AfterDarker.Core` contains two extracted binary-layout helpers, a Windows NE
 metadata reader, a CPU-independent load plan, and a separate After Dark
 invocation-plan model. The C# MSTest project covers these mechanisms and the
-six educational console lessons (lesson 06 requires the optional Watcom fixture).
+seven educational console lessons (lesson 06 requires the optional Watcom fixture).
 
 ## Established evidence
 
+- Loader readability pass: `NeFormat` names the relocation tags, flags, and
+  chain markers; `NeLoadPlan` distinguishes x86 sizes from host layout choices.
+  Its explicit field-writing switch and comments explain destination lookup,
+  chain preservation, and patching copied code/data rather than NE tables.
+  Tutorial 07 uses the same names. Behavior remains unchanged; all 129
+  Watcom-enabled tests pass, including the existing DLL execution checks.
+- [Tutorial 07](tutorial-07-relocations.md) prepares the local Mondrian image:
+  five segments, 27 internal + 17 imported relocation records, 66 chained
+  relocation writes, and three export-prologue patches. Independent raw-NE
+  inspection agrees with all 66 destination fields and replacement values.
+  A built-in original metadata example demonstrates the same algorithm without
+  private files. Import addresses are explicitly non-callable placeholders;
+  no AD code or API executes. Source files remain read-only.
 - [Tutorial 06](tutorial-06-load-library.md) copies the compiled DLL's segments,
   assigns descriptors, patches imported far pointers and shared-data export
   prologues, then runs real guest far calls. Observed startup AX=1, HELLOWORLD
@@ -41,9 +56,9 @@ six educational console lessons (lesson 06 requires the optional Watcom fixture)
   dialogs, or callbacks were found on that path. Clock seeding, tick-based
   pacing, two host memory records, and static rectangle history are identified.
   This is static evidence only; Mondrian has not executed in this runtime.
-- The [C# test suite](testing.md) has 89 default passing cases: 71 unit, 13
-  native-engine conformance, and five tutorial entry-point checks. With Watcom,
-  12 additional Toolchain cases bring the total to 101. It uses generated NE
+- The [C# test suite](testing.md) has 117 default passing cases: 93 unit, 13
+  native-engine conformance, and 11 tutorial entry-point checks. With Watcom,
+  12 additional Toolchain cases bring the total to 129. It uses generated NE
   fixtures and the same guest
   programs as the lessons, with typed observations and independent assertions.
   Temporary omitted-cleanup and wrong-return mutations were rejected. This
@@ -131,13 +146,13 @@ explicitly.
 
 ## Next planning point
 
-The active branch is `codex/tutorial-06-load-win16-library`, created from merged
-main (`c4bd985`). Tutorial 06 now executes the source-built Hello42 DLL and
-records its real return value. The owner wants to understand this bridge:
-walk through the [detailed lesson](tutorial-06-load-library.md), register table,
-and instruction trace together before widening the loader or Windows API
-surface. Internal relocations and a real heap allocator are still separate
-work; no original AD module has run. The pinned Watcom setup remains
+The active branch is `codex/tutorial-07-ne-relocations`, created from merged
+main (`f136b78`). The owner has reviewed the execution/host-dispatch flow and
+asked to watch references being reconnected. Walk through
+[tutorial 07](tutorial-07-relocations.md) before advancing to original-module
+initialization. Non-additive internal selector/offset/far-pointer relocations
+now work; additive and OS fixups, real heap allocation, and original-module
+startup remain separate work. No original AD module has run. Watcom remains
 [documented for reproduction](watcom-toolchain.md).
 
 The owner requested static analysis to bound the Windows support needed for
@@ -154,6 +169,28 @@ Tutorial 04 implements the narrow host trap; the broader issue is not complete.
 See [the tutorial guide](tutorials.md).
 
 ## Session log
+
+### 2026-09-17 — tutorial 07: reconnect internal NE references
+
+- Branched from merged tutorial 06. Extended the existing Core loader rather
+  than adding another console app or an independent relocation implementation.
+- Added deterministic segment placements, fixed and entry-ordinal target
+  lookup, selector16/offset16/far16:16 chain writes, and typed per-write evidence
+  with an observer callback. Tutorial 06 uses the same code through its binding
+  adapter; no invented ABI is required for load-only import placeholders.
+- Added an original three-segment NE metadata example and default/path/prompted
+  modes with Enter-to-advance and explicit cancellation. The walkthrough
+  explains source versus target versus next-chain addresses and debugger points.
+- Verified Mondrian hash
+  `781979da1a6a6fdf99eebec4dab67e7a645bfc8787be1671e20f13a8ca6b1aed`:
+  44 relocation records become 66 writes, plus three export-prologue patches.
+  An independent Python decoder agrees on all relocation replacements.
+  Reports and original input stay ignored; no private bytes were added to tests.
+- Added 22 unit and six tutorial cases. Default suite: 117 passed; Watcom suite:
+  129 passed. Existing compiled-DLL execution remains a regression check.
+- Normal output, step mode, and local-file preparation are verified. Interactive
+  Visual Studio debugger use remains a manual check. This is preparation in
+  managed arrays, not installed guest memory or original-module execution.
 
 ### 2026-09-17 — tutorial 06: load and call a compiler-built Win16 DLL
 
