@@ -83,6 +83,7 @@ and broader Win16 behavior still require conformance experiments.
 
 See:
 
+- [Where to look in the runtime: stack, registers, mocked calls, and drawing](docs/runtime-code-map.md)
 - [Architecture](docs/architecture.md)
 - [Current status and proof boundary](docs/current-status.md)
 - [Local module import/API census](docs/research/ad-import-census.md)

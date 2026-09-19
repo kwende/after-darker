@@ -116,6 +116,13 @@ documentation in the same pull request.
 
 ## Architecture Rules
 
+- Prefer readable, discoverable mechanisms over compact or optimized code.
+  Separate startup register conventions, import dispatch, stack returns, API
+  behavior, and rendering into purpose-named methods/types. Use descriptive
+  variable names and one responsibility per file where practical. Add meaningful
+  XML documentation for types and members, explain invariants in comments, and
+  link code to the relevant Markdown guide. Update `docs/runtime-code-map.md`
+  when moving a responsibility. Keep early tutorial duplication explicit.
 - Keep the NE parser independent from the CPU engine, Win16 shims, and renderer.
 - Keep the CPU engine behind a small interface so an initial engine can be
   replaced without rewriting the loader or host.

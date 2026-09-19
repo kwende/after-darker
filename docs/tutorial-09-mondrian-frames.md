@@ -59,7 +59,7 @@ before execution and perform real `CALL FAR` instructions into MODULE.
 Useful breakpoints, in order:
 
 1. `Capture`: `session.DrawFrame()`.
-2. [MondrianSession.DispatchImport](../src/AfterDarker.Runtime/MondrianSession.cs): the actual guest frame and decoded words.
+2. [Win16ImportGateway.Dispatch](../src/AfterDarker.Runtime/Calls/Win16ImportGateway.cs): the actual guest frame and decoded words.
 3. [Win16Api.SetRect / InvertRect](../src/AfterDarker.Core/Win16/Win16Api.cs): ordinary typed API bodies.
 4. [PixelSurface.Paint](../src/AfterDarker.Core/Rendering/PixelSurface.cs): clipping and RGB changes.
 5. `Capture`: the returned guest state and comparison before PNG encoding.

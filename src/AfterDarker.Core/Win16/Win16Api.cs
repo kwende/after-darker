@@ -13,12 +13,18 @@ namespace AfterDarker.Core.Win16;
 /// </summary>
 public sealed class Win16Api(Win16ApiState state)
 {
+    /// <summary>Per-guest Windows state; never shared across simultaneously loaded modules.</summary>
     public Win16ApiState State { get; } = state;
 
+    /// <summary>Create a supported solid pen; color is a Win16 COLORREF, not an ARGB pixel.</summary>
     public ushort CreatePen(short style, short width, uint color) => Drawing.CreatePen(style, width, color);
+    /// <summary>Select a pen into a guest HDC and return the previous pen handle.</summary>
     public ushort SelectObject(ushort hdc, ushort handle) => Drawing.SelectObject(hdc, handle);
+    /// <summary>Delete an unselected owned pen; stock objects remain host-owned.</summary>
     public bool DeleteObject(ushort handle) => Drawing.DeleteObject(handle);
+    /// <summary>Move the HDC current point; return its previous coordinates packed as Y:X.</summary>
     public uint MoveTo(ushort hdc, short x, short y) => Drawing.MoveTo(hdc, x, y);
+    /// <summary>Draw a line with the selected pen and advance the HDC current point.</summary>
     public bool LineTo(ushort hdc, short x, short y) => Drawing.LineTo(hdc, x, y);
 
     /// <summary>Return the Windows version configured by the host.</summary>
@@ -28,12 +34,14 @@ public sealed class Win16Api(Win16ApiState state)
     public void SetRect(FarPointer16 destination, short left, short top, short right, short bottom)
         => State.Memory.Write(destination, new Rectangle16(left, top, right, bottom).Encode());
 
+    /// <summary>Return the supported stock black brush; reject unknown stock-object indices.</summary>
     public ushort GetStockObject(short index)
     {
         if (index != Win16Drawing.BlackBrushIndex) throw new NotSupportedException($"Unsupported stock object {index}.");
         return Win16Drawing.BlackBrushHandle;
     }
 
+    /// <summary>Read a guest RECT, fill it using the supported black brush, and return success.</summary>
     public short FillRect(ushort hdc, FarPointer16 rectangle, ushort brush)
     {
         if (brush != Win16Drawing.BlackBrushHandle) throw new NotSupportedException($"Unknown brush {brush:X4}.");

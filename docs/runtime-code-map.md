@@ -1,0 +1,156 @@
+# Where to look in the runtime
+
+The host owns a guest machine. Original x86 code owns its animation state.
+When that code calls a Windows import, our gateway temporarily takes control,
+reads the arguments, calls an ordinary C# method, and completes the return
+that Windows would have performed. Execution then continues in the DLL.
+
+For lifecycle ordering, see [session lifetime](mondrian-session.md). For the
+larger boundaries and proof requirements, see [architecture](architecture.md).
+
+## Where do I look?
+
+| Question | Start here |
+| --- | --- |
+| Where is a mocked call coordinated? | [Win16ImportGateway.Dispatch](../src/AfterDarker.Runtime/Calls/Win16ImportGateway.cs) |
+| Who reads arguments and removes the return frame? | [Win16Stack](../src/AfterDarker.Runtime/Calls/Win16Stack.cs) |
+| What is the stack's byte layout? | [FarPascalWordFrame](../src/AfterDarker.Core/Win16/FarPascalWordFrame.cs) |
+| Why are DS, DI, CX, or AX assigned? | [Win16RegisterConvention](../src/AfterDarker.Runtime/Calls/Win16RegisterConvention.cs) and [LibraryStartupContext](../src/AfterDarker.Runtime/Calls/LibraryStartupContext.cs) |
+| Which import corresponds to this ordinal and signature? | [Win16Imports](../src/AfterDarker.Core/Win16/Win16Imports.cs) |
+| How do words become handles, signed coordinates, or pointers? | [Win16ApiDispatcher](../src/AfterDarker.Core/Win16/Win16ApiDispatcher.cs) and [Win16ArgumentReader](../src/AfterDarker.Core/Win16/Win16ArgumentReader.cs) |
+| What does the Windows method actually do? | [Win16Api](../src/AfterDarker.Core/Win16/Win16Api.cs) and [its implementation guide](win16-implementations.md) |
+| Who runs and resumes machine code? | [SegmentedGuest.RunUntil](../src/AfterDarker.Runtime/SegmentedGuest.cs) |
+| What do the register snapshots mean? | [SegmentedGuest diagnostics](../src/AfterDarker.Runtime/SegmentedGuest.Diagnostics.cs) |
+| How do we make the initial call into the DLL? | [GuestCallerBuilder](../src/AfterDarker.Runtime/Calls/GuestCallerBuilder.cs) |
+| How does a DOS interrupt differ from an imported call? | [DosInterruptDispatcher](../src/AfterDarker.Runtime/Calls/DosInterruptDispatcher.cs) and [DOS source reference](research/dos-source-reference.md) |
+| Who chooses host-record and stack addresses? | [SessionMemoryLayout](../src/AfterDarker.Runtime/SessionMemoryLayout.cs) |
+| Who sequences startup, frames, and shutdown? | [AfterDarkSession](../src/AfterDarker.Runtime/AfterDarkSession.cs) and [its diagnostic types](../src/AfterDarker.Runtime/AfterDarkSession.Diagnostics.cs) |
+| Which module versions can run? | [SupportedModules](../src/AfterDarker.Runtime/SupportedModules.cs) |
+| What differs between the two modules? | [ModuleProfile](../src/AfterDarker.Runtime/Modules/ModuleProfile.cs), [MondrianProfile](../src/AfterDarker.Runtime/Modules/MondrianProfile.cs), [SpiralGyraProfile](../src/AfterDarker.Runtime/Modules/SpiralGyraProfile.cs) |
+| What may a UI call? | [IAnimationSession](../src/AfterDarker.Runtime/IAnimationSession.cs), [PlaybackOptions](../src/AfterDarker.Runtime/PlaybackOptions.cs), [PlaybackResult](../src/AfterDarker.Runtime/PlaybackResult.cs) |
+| Who paces frames and owns the background guest? | [AfterDarkPlayback](../src/AfterDarker.Runtime/AfterDarkPlayback.cs) and [WPF guide](wpf-player.md) |
+| Where are selected pens and the current point stored? | [Win16Drawing](../src/AfterDarker.Core/Win16/Win16Drawing.cs) and [Win16DeviceContext](../src/AfterDarker.Core/Win16/Win16DeviceContext.cs) |
+| Where do operations become pixels? | [PixelSurface](../src/AfterDarker.Core/Rendering/PixelSurface.cs) and [CosmeticLineRasterizer](../src/AfterDarker.Core/Rendering/CosmeticLineRasterizer.cs) |
+
+Folders group responsibilities; new runtime files retain the `AfterDarker.Runtime`
+namespace. The `.Diagnostics.cs` files hold nested types on partial classes so
+existing tutorial type names remain usable. Import traces now use the independent
+`Win16CallTrace` type. The former session-level `DispatchImport` helper has moved
+to `Win16ImportGateway.Dispatch`.
+
+## Following one mocked call
+
+```mermaid
+flowchart TD
+    A[Guest CALL FAR] --> B[CPU hook stops at gateway]
+    B --> C[RunUntil regains managed control]
+    C --> D[Win16ImportGateway resolves binding]
+    D --> E[Win16Stack.ReadCallFrame]
+    E --> F[Win16ApiDispatcher reads typed arguments]
+    F --> G[Win16Api performs service]
+    G --> H[Win16RegisterConvention.WriteReturnRegisters]
+    H --> I[Win16Stack.ReturnToCaller]
+    I --> J[RunUntil resumes at restored CS:IP]
+```
+
+`EmuStop` ends the current blocking engine run. It neither destroys the CPU nor
+returns from the guest procedure. The gateway completes that guest return
+after managed execution regains control.
+
+For a three-word Pascal call, the stack at the gateway is:
+
+```text
+Increasing addresses within SS:
+SP + 0   saved IP              <- next instruction after CALL FAR
+SP + 2   saved CS
+SP + 4   third argument        <- pushed last
+SP + 6   second argument
+SP + 8   first argument        <- pushed first
+
+after return: SP = old SP + 4 + 6; IP = saved IP; CS = saved CS
+```
+
+The CPU made this frame. `ReadCallFrame` validates SS, bounds, whole-word
+arguments and an executable return address before any service side effect.
+It leaves registers unchanged and returns words in source order.
+`ReturnToCaller` models `RETF 6`: restore CS:IP and advance SP past the frame
+and arguments. It does not erase memory. AX/DX results are a separate concern,
+handled first by `WriteReturnRegisters`. Void functions preserve those registers.
+
+The source-ordered words still need interpretation: a far pointer is selector
+then offset; a DWORD is high word then low word. `Win16ArgumentReader` groups
+each pair as one parameter and interprets signed coordinates without changing
+their bits.
+
+## Register assignments have different reasons
+
+`SetUpPrologRegisters` means host preparation before NE startup. It does not
+replace the DLL's compiler-generated function prologue, nor run before every
+mocked API. The DLL's own instructions still execute.
+
+| Assignment | Purpose |
+| --- | --- |
+| Startup DS = automatic-data selector | Address the DLL's globals. |
+| Startup DI = instance token | Our narrow loader uses the same selector as the instance identity. |
+| Startup CX = NE heap size | Report the local heap reservation to the compiler runtime. |
+| Startup ES:SI = 0:0 | Supply a null optional command-line pointer. |
+| Startup SS:SP = stack selector and empty offset | Supply storage for CALL, PUSH and stack frames. |
+| Startup BP = 0 | Terminate the initial frame chain. |
+| Before MODULE, DS = host-data selector | Exercise the DLL export prologue's DS setup and restoration. |
+| API word result: AX | Return a word value to the guest. |
+| API DWORD/far pointer result: DX:AX | Return high and low words in their prescribed registers. |
+| GlobalLock also sets CX | Supply its additional selector result. |
+| Far return: CS, IP, SP | Restore control flow and remove arguments. |
+
+AX is not assigned fabricated success before DLL startup. The original DLL
+returns it. `GuestCallerBuilder` emits a real CALL FAR and memory store of the
+returned AX; the host later compares the register and stored values.
+
+DOS INT 21h is different. Unicorn advances IP without pushing an interrupt
+frame; `SegmentedGuest` verifies that observed contract. `DosInterruptDispatcher`
+updates date/time result registers without RETF or IRET. Separate conformance
+tests preserve this distinction.
+
+## Drawing state and pixels
+
+An HDC identifies `Win16DeviceContext`, retaining the selected pen and current
+position. `Win16Drawing` owns the HDC/pen registries and object lifetimes.
+`PixelSurface` owns bytes, clipping and change counts. `CosmeticLineRasterizer`
+names the longer-axis step and shorter-axis rounding separately. Clipping
+follows pixel generation so an off-screen start cannot change rounding phase.
+
+The raster is compared with modern native GDI in 1,500 line cases. This is a
+measured compatibility result, not complete historical Win3.1 fidelity.
+
+## Tutorials and contribution style
+
+Lessons 01–04 keep tiny CPU experiments local. Lesson 06 also retains an
+explicit loader/caller/gateway walkthrough. That duplication is intentional
+teaching material, now identified in comments. Extend the shared runtime for
+new player behavior; use those lessons to understand its foundations. Lessons
+08/09 already use the shared session.
+
+Prefer purpose-named types, descriptive variables and ordinary control flow.
+A method such as preparing startup inputs or returning to a caller should
+locate the mechanism and keep its register writes visible. Avoid generic
+frameworks that make readers chase indirection to discover intent.
+
+XML summaries, parameter descriptions and `see` references supply IntelliSense.
+Core and Runtime emit XML documentation beside their assemblies for library
+consumers. Older undocumented APIs remain incremental work: missing-comment
+warnings are suppressed, while malformed XML and unresolved references remain
+compiler diagnostics. Local variables use descriptive names and ordinary
+comments; C# does not attach XML member documentation to local-variable tooltips.
+
+The recovered SDK supplies real structure names, but this pass does not expand
+the narrow guest allocations or explain the two extra compatibility words.
+See [SDK findings](research/after-dark-sdk.md).
+
+## Verification
+
+[Win16CallingConventionTests](../tests/AfterDarker.Tests/Conformance/Win16CallingConventionTests.cs)
+check startup inputs, non-mutating frame reads, cleanup and invalid-frame
+rejection. Import-gateway tests execute real tiny far calls through the shared
+gateway, checking signedness, pointer translation, results and stack cleanup.
+Original-module tests cover lifecycle, state, deterministic pixels, budgets
+and shutdown. See [testing](testing.md) for the default and opt-in commands.

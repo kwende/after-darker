@@ -12,7 +12,7 @@ namespace AfterDarker.Tests.Conformance;
 
 [TestClass]
 [TestCategory("Conformance")]
-public sealed class MondrianGatewayTests
+public sealed class Win16ImportGatewayTests
 {
     private const ushort Code = MondrianSession.Caller, Gateway = MondrianSession.Gateway;
     private const ushort Data = MondrianSession.HostData, Stack = MondrianSession.Stack, DllData = 0x28;
@@ -146,7 +146,7 @@ public sealed class MondrianGatewayTests
         setup.EmitCall(code, "InvertRect");
         var error = Assert.Throws<NotSupportedException>(() => setup.Run(code));
         StringAssert.Contains(error.Message, "USER!InvertRect");
-        StringAssert.Contains(error.Message, "initialization-only");
+        StringAssert.Contains(error.Message, "service is not enabled");
     }
 
     [TestMethod]
@@ -219,7 +219,7 @@ public sealed class MondrianGatewayTests
         public SegmentedGuest Guest { get; } = new();
         public Win16Api Services { get; }
         public IReadOnlyList<Win16Imports.ImportEntry> Bindings { get; }
-        public List<MondrianSession.HostCall> Calls { get; } = [];
+        public List<Win16CallTrace> Calls { get; } = [];
         public PixelSurface Surface { get; } = new(8, 6);
         public Probe(bool drawing = false)
         {
@@ -243,7 +243,7 @@ public sealed class MondrianGatewayTests
             var contexts = new Win16Drawing();
             contexts.Register(0x103, Surface);
             Services = new(new Win16ApiState(Guest, new(new(DllData, 64), 1024), new(Data, 0x300))
-                { Drawing = drawing ? contexts : null });
+            { Drawing = drawing ? contexts : null });
             Services.State.Blocks.Register(0x102, new(Data, 0x200), records.Module.Length);
         }
         public void EmitCall(List<byte> code, string name, params ushort[] args)
@@ -261,7 +261,9 @@ public sealed class MondrianGatewayTests
             Guest.Set(X86.UC_X86_REG_DS, Data);
             Guest.Set(X86.UC_X86_REG_SS, Stack);
             Guest.Set(X86.UC_X86_REG_SP, 0x1000);
-            Guest.DispatchGateway = () => Calls.Add(MondrianSession.DispatchImport(Guest, Bindings, Services));
+            var stack = new Win16Stack(Guest, MondrianSession.Stack, MondrianSession.InitialSp);
+            var gateway = new Win16ImportGateway(Guest, Bindings, Services, stack);
+            Guest.DispatchGateway = () => Calls.Add(gateway.Dispatch());
             return Guest.RunUntil("synthetic import probe", new(Code, 0), new(Code, end));
         }
         public ushort Word(ushort offset) => BinaryPrimitives.ReadUInt16LittleEndian(Guest.Read(new(Data, offset), 2));

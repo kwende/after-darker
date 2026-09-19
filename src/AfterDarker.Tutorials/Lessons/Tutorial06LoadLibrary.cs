@@ -8,6 +8,11 @@ using UnicornEngine.Const;
 
 namespace AfterDarker.Tutorials.Lessons;
 
+// This lesson intentionally keeps its CPU/ABI mechanics local for a step-through explanation.
+// The reusable player path is Runtime/Calls/Win16ImportGateway.cs, Win16Stack.cs and
+// Win16RegisterConvention.cs. See docs/runtime-code-map.md before extending production behavior.
+
+
 /// <summary>
 /// Read this lesson from Execute downward. The numbered stages follow the guide
 /// docs/tutorial-06-load-library.md. Our loader prepares bytes; Unicorn executes
@@ -42,7 +47,7 @@ public sealed class Tutorial06LoadLibrary(string? path = null, bool trace = fals
 
     public void Run()
     {
-		// find the 16-bit DLL. 
+        // find the 16-bit DLL.
         string fixture = path ?? FindFixture();
 
         using FileStream stream = File.OpenRead(fixture);
@@ -56,11 +61,11 @@ public sealed class Tutorial06LoadLibrary(string? path = null, bool trace = fals
 
         if (!result.Initialized || result.StoredInitialization != 1 || result.Hello?.Ax != 42 || result.StoredHello != 42 ||
             result.Exit?.Ax != 1 || result.StoredExit != 1 || !result.ProtectedMode)
-		{
-			throw new InvalidOperationException("The DLL did not initialize, return/store 42, and complete WEP.");
-		}
+        {
+            throw new InvalidOperationException("The DLL did not initialize, return/store 42, and complete WEP.");
+        }
 
-		Console.WriteLine("PASS: compiled DLL startup returned 1; HELLOWORLD returned 42; guest stored 42; WEP returned 1.");
+        Console.WriteLine("PASS: compiled DLL startup returned 1; HELLOWORLD returned 42; guest stored 42; WEP returned 1.");
         Console.WriteLine("Scope: Hello42 only. LocalInit is a checked test double, not a Windows heap allocator.");
     }
 
@@ -299,38 +304,38 @@ public sealed class Tutorial06LoadLibrary(string? path = null, bool trace = fals
                     b.Address == new FarPointer16(before.Cs, before.Ip))
                     ?? throw new NotSupportedException($"Unknown gateway {before.Cs:X4}:{before.Ip:X4}.");
                 if (binding.Handler == "FailIfReached")
-				{
-					throw new NotSupportedException($"{binding.Name} reached: compiler runtime error path; no dialog is mocked.");
-				}
-				if (trapped != GatewayBase + before.Ip || before.Ss != Stack ||
+                {
+                    throw new NotSupportedException($"{binding.Name} reached: compiler runtime error path; no dialog is mocked.");
+                }
+                if (trapped != GatewayBase + before.Ip || before.Ss != Stack ||
                     before.Sp + 4 + binding.ArgumentBytes > InitialSp)
-				{
-					throw new InvalidOperationException($"{binding.Name}: invalid stack or gateway address.");
-				}
+                {
+                    throw new InvalidOperationException($"{binding.Name}: invalid stack or gateway address.");
+                }
 
-				byte[] frameBytes = new byte[4 + binding.ArgumentBytes];
+                byte[] frameBytes = new byte[4 + binding.ArgumentBytes];
                 emulator.MemRead(StackBase + before.Sp, frameBytes);
 
                 var frame = new FarPascalWordFrame(frameBytes);
                 var arguments = new ushort[frame.ArgumentCount];
 
                 for (int i = 0; i < arguments.Length; i++)
-				{
-					arguments[i] = unchecked((ushort)frame.ReadArgument(i)); // these API words are UNSIGNED
-				}
+                {
+                    arguments[i] = unchecked((ushort)frame.ReadArgument(i)); // these API words are UNSIGNED
+                }
 
-				var returnAddress = new FarPointer16(frame.ReturnCs, frame.ReturnIp);
+                var returnAddress = new FarPointer16(frame.ReturnCs, frame.ReturnIp);
 
                 PreparedNeSegment returnSegment = plan.Segments.SingleOrDefault(s =>
                     s.Placement.Selector == returnAddress.Selector && !s.Source.IsData)
                     ?? throw new InvalidOperationException("Import return CS is not DLL code.");
 
                 if (frame.ReturnIp >= returnSegment.Source.FileBytes)
-				{
-					throw new InvalidOperationException("Import return IP is outside stored code.");
-				}
+                {
+                    throw new InvalidOperationException("Import return IP is outside stored code.");
+                }
 
-				uint returned;
+                uint returned;
                 if (binding.Handler == "CheckedHeapTestDouble")
                 {
                     // ABI conversion only. Read the behavior in Win16Api.LocalInit.

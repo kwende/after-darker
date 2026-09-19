@@ -24,6 +24,14 @@ nine educational console lessons (06 needs the optional Watcom fixture;
 
 ## Established evidence
 
+- **Readable runtime boundaries:** startup register conventions, imported-call
+  stack management, typed ABI conversion, service dispatch, caller-code emission
+  and DOS interrupts now have purpose-named classes. Module profiles and host
+  contracts have separate files; GDI context state and line stepping are also
+  isolated. The [runtime code map](runtime-code-map.md) gives direct navigation
+  and a worked stack example. XML comments accompany the new boundaries and
+  library builds emit IntelliSense documentation. No new Windows APIs or SDK
+  allocation changes are introduced.
 - **Windows SDK recovered:** the original Windows 3.0 SDK header and Windows
   2.0 programmer manual establish shared `AD_SYSTEM` / `AD_MODULE` layouts,
   including four module-interpreted control values. Control resource layouts
@@ -267,6 +275,31 @@ Tutorial 04 implements the narrow host trap; the broader issue is not complete.
 See [the tutorial guide](tutorials.md).
 
 ## Session log
+
+### 2026-09-19 - runtime readability and contribution map
+
+- Created `codex/readable-runtime`, then fast-forwarded it to merged PR #12.
+- Moved the production import path out of the session into `Win16ImportGateway`,
+  `Win16Stack`, `Win16RegisterConvention`, and `Win16ApiDispatcher`. Startup uses
+  `LibraryStartupContext` and `SetUpPrologRegisters`; DOS interrupt responses
+  remain a separate no-frame boundary. Service implementations remain CPU-free.
+- Split profiles, playback contracts, trace types, and memory-layout policy into
+  named files. Expanded compact argument/raster logic into descriptive steps.
+  Kept tutorial 04/06 mechanics local and linked them to the reusable path.
+- Added a navigation guide, register-purpose table, stack example, IntelliSense
+  documentation, and contributor readability guidance. Extra SDK compatibility
+  words remain unexplained; guest records and supported API scope are unchanged.
+- All 237 tests passed with Watcom and both local modules, including three new
+  startup/frame checks and the existing native-GDI and original-code checks.
+  The first run exposed one obsolete diagnostic-text expectation; it now checks
+  the shared gateway's accurate service-disabled diagnostic.
+- The default 184-test suite also passes. WPF builds with zero warnings/errors.
+  Core/Runtime XML documentation parses successfully, including descriptions on
+  synthesized record properties; checked guide links resolve and diff whitespace
+  checks pass. Interactive IDE hover and a new WPF UI run were not performed.
+- The imported-call trace type and dispatcher moved from session-level types to
+  explicit shared types; repository callers were migrated. This is a source API
+  organization change, not a claim of backward compatibility for external users.
 
 ### 2026-09-19 - Spiral Gyra and the AD load menu
 

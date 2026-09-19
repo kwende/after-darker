@@ -6,49 +6,62 @@ namespace AfterDarker.Core.Rendering;
 public sealed class PixelSurface
 {
     private readonly byte[] pixels;
+    /// <summary>Surface width in guest pixels.</summary>
     public int Width { get; }
+    /// <summary>Surface height in guest pixels.</summary>
     public int Height { get; }
+    /// <summary>Required size of a tightly packed RGB copy buffer.</summary>
     public int RgbByteCount => pixels.Length;
+    /// <summary>Saturating counter incremented once per operation that changes at least one pixel.</summary>
     public long Revision { get; private set; }
+    /// <summary>Allocate a bounded black RGB surface.</summary>
     public PixelSurface(int width, int height)
     {
         if (width is < 1 or > 2048 || height is < 1 or > 2048)
             throw new ArgumentOutOfRangeException(nameof(width), "Surface dimensions must be 1..2048.");
-        Width = width; Height = height;
+        Width = width;
+        Height = height;
         pixels = new byte[checked(width * height * 3)];
     }
+    /// <summary>Create a detached RGB snapshot owned by the caller.</summary>
     public byte[] CopyRgb() => (byte[])pixels.Clone();
 
-    /// <summary>One-pixel solid line, endpoint excluded, clipped to the surface.
-    /// Integer major-axis stepping preserves the original line's error phase when clipped.</summary>
-    public int Line(short x0, short y0, short x1, short y1, uint color)
+    /// <summary>Draw a solid COLORREF line, excluding its endpoint and clipping only the generated pixels.</summary>
+    /// <returns>The count of pixels whose RGB value changed.</returns>
+    public int Line(short startX, short startY, short endX, short endY, uint color)
     {
-        int dx = Math.Abs((int)x1 - x0), dy = Math.Abs((int)y1 - y0);
-        int sx = x1 >= x0 ? 1 : -1, sy = y1 >= y0 ? 1 : -1;
-        int major = Math.Max(dx, dy), changed = 0;
-        // Windows cosmetic lines resolve exact half-pixel ties toward the top/left.
-        // Signed endpoints bound this loop to 65,535 steps, even far outside the clip.
-        for (int step = 0; step < major; step++)
+        // COLORREF is 0x00BBGGRR. The surface stores the channels in RGB byte order.
+        byte red = (byte)color;
+        byte green = (byte)(color >> 8);
+        byte blue = (byte)(color >> 16);
+        int changedPixels = 0;
+
+        foreach (var pixel in CosmeticLineRasterizer.EnumeratePixels(startX, startY, endX, endY))
         {
-            int x, y;
-            if (dx >= dy)
+            if (pixel.X < 0 || pixel.X >= Width || pixel.Y < 0 || pixel.Y >= Height)
             {
-                x = x0 + sx * step;
-                y = y0 + sy * (int)(((long)step * dy + (dx - (sy > 0 ? 1 : 0)) / 2) / dx);
+                continue;
             }
-            else
+
+            int pixelByteOffset = (pixel.Y * Width + pixel.X) * 3;
+            bool alreadySameColor = pixels[pixelByteOffset] == red &&
+                pixels[pixelByteOffset + 1] == green && pixels[pixelByteOffset + 2] == blue;
+            if (alreadySameColor)
             {
-                y = y0 + sy * step;
-                x = x0 + sx * (int)(((long)step * dx + (dy - (sx > 0 ? 1 : 0)) / 2) / dy);
+                continue;
             }
-            if (x < 0 || x >= Width || y < 0 || y >= Height) continue;
-            int index = (y * Width + x) * 3;
-            byte r = (byte)color, g = (byte)(color >> 8), b = (byte)(color >> 16);
-            if (pixels[index] == r && pixels[index + 1] == g && pixels[index + 2] == b) continue;
-            pixels[index] = r; pixels[index + 1] = g; pixels[index + 2] = b; changed++;
+
+            pixels[pixelByteOffset] = red;
+            pixels[pixelByteOffset + 1] = green;
+            pixels[pixelByteOffset + 2] = blue;
+            changedPixels++;
         }
-        if (changed != 0 && Revision < long.MaxValue) Revision++;
-        return changed;
+
+        if (changedPixels != 0 && Revision < long.MaxValue)
+        {
+            Revision++;
+        }
+        return changedPixels;
     }
 
     /// <summary>Copy into the host's reusable tightly packed RGB buffer, without allocating a snapshot.</summary>
@@ -63,22 +76,28 @@ public sealed class PixelSurface
     // identity-coordinate mode, backwards extents cover the sorted half-open
     // interval. Preserve the guest RECT; derive raster bounds only here.
     // This is a tested modern GDI compatibility choice, not Win3.1 fidelity proof.
+    /// <summary>Fill black or invert a clipped rectangle using the tested half-open GDI bounds.</summary>
     public int Paint(Rectangle16 rectangle, bool invert)
     {
-        int left = rectangle.Left, right = rectangle.Right, top = rectangle.Top, bottom = rectangle.Bottom;
+        int left = rectangle.Left;
+        int right = rectangle.Right;
+        int top = rectangle.Top;
+        int bottom = rectangle.Bottom;
         if (left > right) (left, right) = (right, left);
         if (top > bottom) (top, bottom) = (bottom, top);
-        left = Math.Clamp(left, 0, Width); right = Math.Clamp(right, 0, Width);
-        top = Math.Clamp(top, 0, Height); bottom = Math.Clamp(bottom, 0, Height);
+        left = Math.Clamp(left, 0, Width);
+        right = Math.Clamp(right, 0, Width);
+        top = Math.Clamp(top, 0, Height);
+        bottom = Math.Clamp(bottom, 0, Height);
         int changed = 0;
         for (int y = top; y < bottom; y++)
-        for (int x = left; x < right; x++)
-        {
-            int index = (y * Width + x) * 3;
-            if (invert || pixels[index] != 0 || pixels[index + 1] != 0 || pixels[index + 2] != 0) changed++;
-            for (int channel = 0; channel < 3; channel++)
-                pixels[index + channel] = invert ? (byte)~pixels[index + channel] : (byte)0;
-        }
+            for (int x = left; x < right; x++)
+            {
+                int index = (y * Width + x) * 3;
+                if (invert || pixels[index] != 0 || pixels[index + 1] != 0 || pixels[index + 2] != 0) changed++;
+                for (int channel = 0; channel < 3; channel++)
+                    pixels[index + channel] = invert ? (byte)~pixels[index + channel] : (byte)0;
+            }
         if (changed != 0 && Revision < long.MaxValue) Revision++;
         return changed;
     }
