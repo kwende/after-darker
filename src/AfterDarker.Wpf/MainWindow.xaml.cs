@@ -7,7 +7,6 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
-using AfterDarker.Core.AfterDark;
 using AfterDarker.Core.Ne;
 using AfterDarker.Runtime;
 using Microsoft.Win32;
@@ -22,12 +21,13 @@ public partial class MainWindow : Window
     private readonly DispatcherTimer presenter = new() { Interval = TimeSpan.FromSeconds(1.0 / 60) };
     private LatestFrameMailbox? mailbox;
     private CancellationTokenSource? stop;
-    private Task<MondrianSession.Result>? running;
-    private MondrianSession.Result? lastResult;
+    private Task<PlaybackResult>? running;
+    private PlaybackResult? lastResult;
     private Exception? runError;
     private readonly TaskCompletionSource windowClosed = new(TaskCreationOptions.RunContinuationsAsynchronously);
-    private bool closeAllowed, closing, smokeFinishing;
+    private bool closeAllowed, closing, smokeFinishing, loading;
     private readonly string? smokeDirectory;
+    private readonly string? smokeSwitchPath;
     private int presented;
     private FrameInfo? latest;
 
@@ -38,10 +38,11 @@ public partial class MainWindow : Window
         foreach (ushort speed in new ushort[] { 0, 25, 50, 75, 100 })
             Speed.Items.Add(new ComboBoxItem { Content = $"Speed {speed}", Tag = speed });
         Speed.SelectedIndex = 4;
-        if (args is ["--smoke", var module, var destination])
+        if (args.Length is 3 or 4 && args[0] == "--smoke")
         {
-            ModulePath.Text = module;
-            smokeDirectory = Path.GetFullPath(destination);
+            ModulePath.Text = args[1];
+            smokeDirectory = Path.GetFullPath(args[2]);
+            smokeSwitchPath = args.Length == 4 ? args[3] : null;
             Application.Current.ShutdownMode = ShutdownMode.OnExplicitShutdown;
         }
         else ModulePath.Text = args.Length == 1 ? args[0] : FindLocalModule();
@@ -55,15 +56,18 @@ public partial class MainWindow : Window
         };
     }
 
-    private void Browse_Click(object sender, RoutedEventArgs e)
+    private async void Browse_Click(object sender, RoutedEventArgs e)
     {
-        var dialog = new OpenFileDialog { Filter = "After Dark module (*.ad)|*.ad|All files (*.*)|*.*", Title = "Select your local Mondrian module" };
-        if (dialog.ShowDialog(this) == true) ModulePath.Text = dialog.FileName;
+        var dialog = new OpenFileDialog { Filter = "After Dark module (*.ad)|*.ad|All files (*.*)|*.*", Title = "Load AD file — Mondrian or Spiral Gyra" };
+        if (dialog.ShowDialog(this) != true) return;
+        try { await LoadModuleAsync(dialog.FileName); }
+        catch (Exception error) { MessageBox.Show(this, error.Message, "Unable to load AD file", MessageBoxButton.OK, MessageBoxImage.Information); }
     }
+    private void Exit_Click(object sender, RoutedEventArgs e) => Close();
     private async void Run_Click(object sender, RoutedEventArgs e) => await StartAsync();
     private async void Stop_Click(object sender, RoutedEventArgs e) => await StopAsync();
 
-    private async Task StartAsync()
+    private async Task StartAsync(byte[]? prepared = null)
     {
         if (running is not null) return;
         stop = new CancellationTokenSource();
@@ -72,10 +76,10 @@ public partial class MainWindow : Window
         Array.Clear(display);
         bitmap.WritePixels(new Int32Rect(0, 0, PixelWidth, PixelHeight), display, Stride, 0, 0);
         SetBusy(true);
-        Status.Text = "Loading original Mondrian…";
+        Status.Text = "Loading AD module…";
         string path = ModulePath.Text.Trim().Trim('"');
         ushort speed = (ushort)((ComboBoxItem)Speed.SelectedItem).Tag;
-        running = LoadAndRunAsync(path, new(PixelWidth, PixelHeight, speed), mailbox, stop.Token);
+        running = LoadAndRunAsync(path, new(PixelWidth, PixelHeight, speed), mailbox, stop.Token, prepared);
         presenter.Start();
         try
         {
@@ -98,17 +102,48 @@ public partial class MainWindow : Window
         }
     }
 
-    private static async Task<MondrianSession.Result> LoadAndRunAsync(string path, MondrianInitialization.Options options,
-        LatestFrameMailbox frames, CancellationToken cancellationToken)
+    private async Task<PlaybackResult> LoadAndRunAsync(string path, PlaybackOptions options,
+        LatestFrameMailbox frames, CancellationToken cancellationToken, byte[]? prepared)
     {
-        byte[] file;
-        using (var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, useAsync: true))
+        byte[] file = prepared ?? await ReadSupportedFileAsync(path, cancellationToken);
+        string name = SupportedModules.Identify(file);
+        Title = $"After Darker — {name}";
+        ModuleTitle.Text = name.ToUpperInvariant();
+        return await AfterDarkPlayback.RunAsync(file, options, frames, cancellationToken);
+    }
+
+    private static async Task<byte[]> ReadSupportedFileAsync(string path, CancellationToken cancellationToken)
+    {
+        using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, useAsync: true);
+        if (stream.Length > NeReader.MaximumFileBytes) throw new InvalidDataException("Module exceeds the NE input limit.");
+        byte[] bytes = new byte[(int)stream.Length];
+        await stream.ReadExactlyAsync(bytes, cancellationToken);
+        SupportedModules.Identify(bytes); // reject unsupported versions BEFORE creating a guest
+        return bytes;
+    }
+
+    private async Task LoadModuleAsync(string path)
+    {
+        if (loading || closing) return;
+        loading = true; LoadMenu.IsEnabled = false;
+        SetBusy(running is not null);
+        try
         {
-            if (stream.Length > NeReader.MaximumFileBytes) throw new InvalidDataException("Module exceeds the NE input limit.");
-            file = new byte[(int)stream.Length];
-            await stream.ReadExactlyAsync(file, cancellationToken);
+            // Validation precedes stopping: a mistaken selection leaves the
+            // existing screensaver alive. The new guest is created only after
+            // the old worker has run CLOSE/WEP and released its native engine.
+            byte[] bytes = await ReadSupportedFileAsync(path, CancellationToken.None);
+            await StopAsync();
+            await Dispatcher.Yield(DispatcherPriority.Background);
+            if (closing || windowClosed.Task.IsCompleted) return;
+            ModulePath.Text = path;
+            _ = StartAsync(bytes);
         }
-        return await MondrianPlayback.RunAsync(file, options, frames, cancellationToken);
+        finally
+        {
+            loading = false; LoadMenu.IsEnabled = !closing;
+            if (!closing) SetBusy(running is not null);
+        }
     }
 
     private async Task StopAsync()
@@ -134,13 +169,13 @@ public partial class MainWindow : Window
         bitmap.WritePixels(new Int32Rect(0, 0, PixelWidth, PixelHeight), display, Stride, 0, 0);
         latest = frame;
         if (presented < int.MaxValue) presented++;
-        Status.Text = $"Running · 640 × 480 · {frame!.ChangedFrames:N0} image changes · {frame.DrawCalls:N0} guest calls · {frame.Rectangles} rectangles";
+        Status.Text = $"Running · 640 × 480 · {frame!.ChangedFrames:N0} image changes · {frame.DrawCalls:N0} guest calls";
         if (smokeDirectory is not null && presented >= 30 && frame.ChangedFrames > 0) _ = FinishSmokeAsync(null);
     }
 
     private void SetBusy(bool busy)
     {
-        ModulePath.IsEnabled = BrowseButton.IsEnabled = RunButton.IsEnabled = Speed.IsEnabled = !busy;
+        ModulePath.IsEnabled = BrowseButton.IsEnabled = RunButton.IsEnabled = Speed.IsEnabled = !busy && !loading && !closing;
         StopButton.IsEnabled = busy;
     }
     private async void OnClosing(object? sender, CancelEventArgs e)
@@ -149,7 +184,7 @@ public partial class MainWindow : Window
         e.Cancel = true;
         if (closing) return;
         closing = true;
-        SetBusy(true); StopButton.IsEnabled = false;
+        SetBusy(true); StopButton.IsEnabled = false; LoadMenu.IsEnabled = false;
         await StopAsync();
         closeAllowed = true;
         Close();
@@ -178,11 +213,22 @@ public partial class MainWindow : Window
         int firstPresented = presented;
         FrameInfo? firstFrame = latest;
         string firstHash = Convert.ToHexString(SHA256.HashData(display));
+        string? switchedFrom = null;
         try
         {
             Directory.CreateDirectory(smokeDirectory!);
             if (error is null)
             {
+                // Exercise the same load path as the menu while a guest is
+                // active. Unsupported content must leave that worker untouched.
+                string unsupported = Path.Combine(smokeDirectory!, "unsupported.ad");
+                File.WriteAllBytes(unsupported, []);
+                var originalWorker = running;
+                bool rejected = false;
+                try { await LoadModuleAsync(unsupported); }
+                catch (NotSupportedException) { rejected = true; }
+                if (!rejected || running != originalWorker || running is null || running.IsCompleted)
+                    throw new InvalidOperationException("Unsupported selection disturbed the running guest.");
                 byte[] readback = new byte[display.Length];
                 bitmap.CopyPixels(readback, Stride, 0);
                 if (!readback.AsSpan().SequenceEqual(display) || !readback.Any(b => b != 0))
@@ -219,6 +265,19 @@ public partial class MainWindow : Window
                     await Task.Delay(10, deadline.Token);
                 }
                 if (running is null) throw new InvalidOperationException("Restart did not retain a running guest.");
+                if (smokeSwitchPath is not null)
+                {
+                    var previousWorker = running;
+                    await LoadModuleAsync(smokeSwitchPath);
+                    var previousResult = await previousWorker;
+                    VerifyShutdown(previousResult);
+                    switchedFrom = previousResult.ModuleName;
+                    while (presented < 3)
+                    {
+                        if (runError is not null) throw new InvalidOperationException("Module switch failed.", runError);
+                        await Task.Delay(10, deadline.Token);
+                    }
+                }
                 Close(); // exercise the actual Closing handler while playback is active
                 await windowClosed.Task.WaitAsync(TimeSpan.FromSeconds(10));
                 VerifyShutdown();
@@ -229,7 +288,8 @@ public partial class MainWindow : Window
                 Presented = firstPresented, Frame = firstFrame, RgbSha256 = firstHash,
                 RestartPresented = presented, ClosedWhilePlaying = windowClosed.Task.IsCompletedSuccessfully,
                 ShutdownPhases = lastResult?.Phases.TakeLast(2).Select(p => new { p.Name, p.StoredAx, p.Registers.Sp, p.Registers.Ds }),
-                Instructions = lastResult?.Instructions, OutstandingLocks = lastResult?.OutstandingLocks,
+                Module = lastResult?.ModuleName, SwitchedFrom = switchedFrom, Instructions = lastResult?.Instructions, OutstandingLocks = lastResult?.OutstandingLocks,
+                LivePens = lastResult?.LivePens, PeakPens = lastResult?.PeakPens,
                 UiThread = Environment.CurrentManagedThreadId
             }, new JsonSerializerOptions { WriteIndented = true }));
         }
@@ -249,11 +309,12 @@ public partial class MainWindow : Window
             var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(source));
             using var stream = File.Create(Path.Combine(smokeDirectory!, name)); encoder.Save(stream);
         }
-        void VerifyShutdown()
+        void VerifyShutdown(PlaybackResult? completed = null)
         {
             if (runError is not null) throw new InvalidOperationException("Playback failed during shutdown.", runError);
-            if (lastResult is null || lastResult.Phases.Count < 2 || lastResult.Phases[^2].Name != "CLOSE" ||
-                lastResult.Phases[^1].Name != "WEP" || lastResult.Phases[^1].StoredAx != 1 || lastResult.OutstandingLocks != 0)
+            var result = completed ?? lastResult;
+            if (result is null || result.Phases.Count < 2 || result.Phases[^2].Name != "CLOSE" ||
+                result.Phases[^1].Name != "WEP" || result.Phases[^1].StoredAx != 1 || result.OutstandingLocks != 0 || result.LivePens != 0)
                 throw new InvalidOperationException("Original guest shutdown did not complete with WEP success and balanced locks.");
         }
     }

@@ -18,6 +18,50 @@ public sealed class MondrianGatewayTests
     private const ushort Data = MondrianSession.HostData, Stack = MondrianSession.Stack, DllData = 0x28;
 
     [TestMethod]
+    public void PenAndLineImportsRoundTripColorsSignedCoordinatesHandlesAndReturnRegisters()
+    {
+        using var setup = new Probe(drawing: true);
+        var code = new List<byte>();
+        setup.EmitCall(code, "CreatePen", 0, 1, 0x0200, 0x3322); // PALETTERGB: red=22 green=33 blue=00
+        code.AddRange([0x89, 0xC3]); // MOV BX,AX; use the guest-returned pen handle
+        code.AddRange([0x68, 0x03, 0x01, 0x53]); // PUSH HDC; PUSH BX
+        setup.EmitCall(code, "SelectObject");
+        setup.EmitCall(code, "MoveTo", 0x103, 0xFFFE, 0xFFFF);
+        setup.EmitCall(code, "MoveTo", 0x103, 1, 1);
+        code.AddRange([0xA3, 0x20, 0, 0x89, 0x16, 0x22, 0]); // guest stores signed previous point
+        setup.EmitCall(code, "LineTo", 0x103, 5, 1);
+        code.Add(0x53); setup.EmitCall(code, "DeleteObject"); // selected object: FALSE
+        setup.EmitCall(code, "SelectObject", 0x103, Win16Drawing.BlackPenHandle);
+        code.Add(0x53); setup.EmitCall(code, "DeleteObject"); // deselected object: TRUE
+        var final = setup.Run(code);
+        Assert.AreEqual((ushort)0xFFFE, setup.Word(0x20));
+        Assert.AreEqual((ushort)0xFFFF, setup.Word(0x22));
+        Assert.AreEqual(Win16Drawing.BlackPenHandle, setup.Calls[1].After.Ax);
+        Assert.AreEqual((ushort)1, setup.Calls[4].After.Ax);
+        Assert.AreEqual((ushort)0, setup.Calls[5].After.Ax);
+        Assert.AreEqual((ushort)1, final.Ax);
+        Assert.AreEqual(0, setup.Services.State.Drawing!.LivePenCount);
+        CollectionAssert.AreEqual(new ushort[] { 0, 1, 0x0200, 0x3322 }, setup.Calls[0].Arguments.ToArray());
+        byte[] pixels = setup.Surface.CopyRgb();
+        for (int x = 0; x < 8; x++)
+        {
+            int offset = (8 + x) * 3;
+            Assert.AreEqual(x is >= 1 and < 5 ? (byte)0x22 : (byte)0, pixels[offset]);
+            Assert.AreEqual(x is >= 1 and < 5 ? (byte)0x33 : (byte)0, pixels[offset + 1]);
+            Assert.AreEqual((byte)0, pixels[offset + 2]);
+        }
+        foreach (var call in setup.Calls)
+        {
+            Assert.AreEqual(call.Before.Sp + 4 + call.Binding.ArgumentBytes, (int?)call.After.Sp);
+            Assert.AreEqual(Code, call.After.Cs);
+            Assert.AreEqual(Data, call.After.Ds);
+            Assert.AreEqual(call.Before.Es, call.After.Es);
+            Assert.AreEqual(call.Before.Bp, call.After.Bp);
+        }
+        Assert.AreEqual((ushort)0x1000, final.Sp);
+    }
+
+    [TestMethod]
     public void EverySupportedImportReturnsThroughRealFarCallsAndGuestDereferencesLockedBlock()
     {
         using var setup = new Probe();
@@ -180,7 +224,8 @@ public sealed class MondrianGatewayTests
         public Probe(bool drawing = false)
         {
             var imports = new[] { new NeImport("KERNEL", 4, null), new("KERNEL", 18, null), new("KERNEL", 19, null),
-                new("KERNEL", 131, null), new("USER", 13, null), new("USER", 82, null), new("USER", 72, null), new("USER", 81, null), new("GDI", 87, null) };
+                new("KERNEL", 131, null), new("USER", 13, null), new("USER", 82, null), new("USER", 72, null), new("USER", 81, null), new("GDI", 87, null),
+                new("GDI", 61, null), new("GDI", 45, null), new("GDI", 69, null), new("GDI", 20, null), new("GDI", 19, null) };
             var image = NeReader.Read(RelocationDemo.Create()) with
             {
                 Relocations = imports.Select(i => new NeRelocation(1, 0, 3, 1, 0, 0, 0, i)).ToArray()

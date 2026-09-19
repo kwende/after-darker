@@ -474,3 +474,22 @@ time while educational captures preserve their deterministic clock.
 The worker cancels at call boundaries, invokes original CLOSE and WEP from a
 healthy stack, then disposes the engine. Faults bypass guest cleanup; native
 resources are still released. UI close asynchronously awaits that worker.
+
+## Shared module sessions
+
+The second executable target, [Spiral Gyra](research/spiral-gyra-execution.md),
+shares `AfterDarkSession<TState>` with Mondrian. The generic runner owns segment
+placement, native execution, import dispatch and lifecycle; typed profiles hold
+artifact identity, host records and observations. Host slots are placed after
+all loaded segments, preserving Mondrian's map while accommodating Spiral's
+sixth segment. Profiles retain explicit per-invocation service budgets.
+
+`SupportedModules` validates known hashes before guest creation. The WPF load
+menu validates a selection before stopping the current worker, then awaits its
+CLOSE/WEP/disposal before starting the new module through `IAnimationSession`.
+Frame transport contains generic counters, not Mondrian rectangle counts.
+
+GDI now models a selected solid pen and current point per HDC, with bounded,
+reusable guest pen handles. `MoveTo` returns the previous packed position;
+`LineTo` renders through the same deterministic software surface. This adds
+five Win16 imports without introducing a module-specific drawing backend.

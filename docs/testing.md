@@ -37,14 +37,16 @@ is verified; an interactive Test Explorer session remains a manual check.
 
 | Category | Cases | What is established |
 | --- | ---: | --- |
-| Unit | 121 | Descriptor/frame layout, NE metadata/SDK plans/relocations, host record fields, lock lifetime, DOS date/time packing, invalid-input rejection, lossless PNG encoding, ring retention, reusable pixel buffers, monotonic timing, pacing, and concurrent latest-frame transfer |
-| Conformance | 44 | Actual Unicorn execution: arithmetic, near/far calls, imported-call marshaling/results/cleanup, guest dereferences of locked blocks, protected-mode DOS interrupt stop/resume, bounded failures, four drawing ABIs, and software rectangles compared with native Windows PatBlt, and bounded interrupt history with per-call budgets |
+| Unit | 124 | Descriptor/frame layout, NE metadata/SDK plans/relocations, host record fields, lock lifetime, DOS date/time packing, invalid-input rejection, lossless PNG encoding, ring retention, reusable pixel buffers, monotonic timing, pacing, concurrent latest-frame transfer, pen ownership/capacity and supported-file rejection |
+| Conformance | 46 | Actual Unicorn execution: arithmetic, near/far calls, imported-call marshaling/results/cleanup, guest dereferences of locked blocks, protected-mode DOS interrupt stop/resume, bounded failures, rectangle and pen/line ABIs, and software rectangles compared with native Windows PatBlt, bounded interrupt history with per-call budgets, and 1,500 line cases compared with native GDI |
 | Tutorial | 11 | Four CPU lessons, NE inspection, and six relocation report/step/cancel/file-path checks using generated input |
-| **Default total** | **176** | All passing on the current Windows x64 development host; no Watcom or private file required |
+| **Default total** | **181** | All passing on the current Windows x64 development host; no Watcom or private file required |
 | Toolchain (opt-in) | 12 | Three real-DLL metadata cases plus nine startup/export/exit execution, ABI, failure, mutation, trace, and console checks |
-| **With Watcom** | **188** | Includes rebuilding the project-owned Win16 fixture |
+| **With Watcom** | **193** | Includes rebuilding the project-owned Win16 fixture |
 | LocalModule (opt-in) | 34 | Original initialization plus deterministic 30-frame capture, 180-frame removal path, slower timing gate, capture-budget failure, eight session lifetime/state/failure cases, and six retention/buffer cases including 5,000 draws; live timing, CLOSE/WEP, failure, cancellation and restart |
-| **With both opt-ins** | **222** | Requires the pinned compiler and local analyzed Mondrian file |
+| **With Watcom + Mondrian** | **227** | Requires the pinned compiler and local analyzed Mondrian file |
+| LocalSpiralGyra (opt-in) | 7 | Original colored line rendering, five speeds, independent deterministic guests, pen reuse and CLOSE/WEP |
+| **With all three opt-ins** | **234** | Requires the compiler and both supported private modules |
 
 Conformance tests use the native engine and a test-only Windows GDI raster oracle; they are not isolated unit tests or a
 mock of Unicorn. Categories make the distinction explicit. All fixtures are
@@ -94,7 +96,7 @@ dotnet test -p:BuildWin16Fixture=true
 dotnet test -p:BuildWin16Fixture=true --filter "TestCategory=Toolchain"
 ```
 
-This builds the DLL and adds 12 `Toolchain` cases, for 188 passing cases in
+This builds the DLL and adds 12 `Toolchain` cases, for 193 passing cases in
 the combined suite. Three check metadata; nine exercise tutorial 06, including
 real startup/HELLOWORLD/WEP execution, AX and guest stores, different caller/DLL
 DS, import argument order and cleanup, DX:AX returns, initialization failure,
@@ -102,7 +104,7 @@ bad selector rejection, the error gateway, instruction bounds, and tracing.
 Changing the compiled return constant to 77 produces 77 in both register and
 memory; the host does not manufacture the expected result. The source and build
 instructions are tracked; outputs live in ignored `artifacts/`. Default runs
-remain compiler-free with 176 cases. Do not pass `--no-build` when changing this
+remain compiler-free with 181 cases. Do not pass `--no-build` when changing this
 opt-in property, since it changes which tests are compiled.
 
 `NeLoadPlanTests` adds 17 pure unit cases using generated metadata bytes, so
@@ -217,4 +219,20 @@ The [player guide](wpf-player.md#local-acceptance-run) describes the opt-in
 readback, then Stop, fresh Run and Closing while playback is active. Both guest
 shutdowns must finish CLOSE/WEP with no outstanding locks. Its local PNG/report
 artifacts are ignored and require the private analyzed module. This supplements
-the 222 tests; it is not counted as a unit test or an interactive F5 observation.
+the 234 tests; it is not counted as a unit test or an interactive F5 observation.
+
+## Optional local Spiral Gyra tests
+
+```powershell
+$env:AFTER_DARKER_SPIRAL_GYRA = (Resolve-Path 'ad/Spiral Gyra.ad').Path
+dotnet test -p:TestLocalSpiralGyra=true
+# All optional suites together (234 cases):
+$env:AFTER_DARKER_MONDRIAN = (Resolve-Path ad/Mondrian.ad).Path
+dotnet test -p:TestLocalSpiralGyra=true -p:TestLocalMondrian=true -p:BuildWin16Fixture=true
+```
+
+Spiral tests are excluded unless explicitly enabled and never copy the original
+file into outputs. A missing/wrong artifact fails rather than silently skipping.
+The WPF smoke mode also accepts a final optional second-module path to test
+switching during playback; it always tests rejection of unsupported content
+without stopping the active guest. The native file picker remains a manual check.
