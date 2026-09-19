@@ -133,8 +133,9 @@ these named C# methods, also used by tutorial 09. Import binding and register/st
 each guest has its own service state. See [the implementation guide](docs/win16-implementations.md).
 
 Run `dotnet test` from the repository root for the C# test suite. The solution
-contains a small shared `AfterDarker.Core` library, the educational console app,
-and `AfterDarker.Tests`. Keep `AfterDarker.Tutorials` as the startup project for
+contains the engine-independent `AfterDarker.Core` library, the reusable
+`AfterDarker.Runtime` session library, the educational console app, and
+`AfterDarker.Tests`. See [explicit session lifetime](docs/mondrian-session.md). Keep `AfterDarker.Tutorials` as the startup project for
 F5; automated tests are available separately through Test Explorer.
 
 ## Guiding principles

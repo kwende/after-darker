@@ -25,6 +25,7 @@ public sealed class MondrianFrameTests
         Assert.IsTrue(first.Frames.All(f => f.ChangedPixels > 0));
         Assert.AreEqual((ushort)30, first.Frames[^1].GuestState.Rectangles);
         Assert.AreEqual("3259528906BA8AF2F8E56ECC66CE6CC9A4A55D151A7516C4E024037C5E0F91E3", first.Frames[0].RgbSha256);
+        Assert.AreEqual("66D8954D3F8D6BD5BA311662C2D958E91CC614BEA8199C22A689A9791950EE59", first.Frames[^1].RgbSha256);
         Assert.AreEqual(new AfterDarker.Core.Win16.Rectangle16(367, 430, 307, 284), first.Frames[0].LastOperation!.Rectangle);
         Assert.AreEqual(31, first.Execution.Calls.Count(c => c.Binding.Name.Contains("!SetRect ")));
         Assert.AreEqual(30, first.Execution.Calls.Count(c => c.Binding.Name.Contains("!InvertRect ")));

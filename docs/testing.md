@@ -43,8 +43,8 @@ is verified; an interactive Test Explorer session remains a manual check.
 | **Default total** | **159** | All passing on the current Windows x64 development host; no Watcom or private file required |
 | Toolchain (opt-in) | 12 | Three real-DLL metadata cases plus nine startup/export/exit execution, ABI, failure, mutation, trace, and console checks |
 | **With Watcom** | **171** | Includes rebuilding the project-owned Win16 fixture |
-| LocalModule (opt-in) | 11 | Original initialization plus deterministic 30-frame capture, 180-frame removal path, slower timing gate, and capture-budget failure |
-| **With both opt-ins** | **182** | Requires the pinned compiler and local analyzed Mondrian file |
+| LocalModule (opt-in) | 19 | Original initialization plus deterministic 30-frame capture, 180-frame removal path, slower timing gate, capture-budget failure, and eight session lifetime/state/failure cases |
+| **With both opt-ins** | **190** | Requires the pinned compiler and local analyzed Mondrian file |
 
 Conformance tests use the native engine and a test-only Windows GDI raster oracle; they are not isolated unit tests or a
 mock of Unicorn. Categories make the distinction explicit. All fixtures are

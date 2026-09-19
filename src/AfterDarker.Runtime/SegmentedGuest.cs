@@ -6,10 +6,10 @@ using AfterDarker.Core.X86;
 using UnicornEngine;
 using UnicornEngine.Const;
 
-namespace AfterDarker.Tutorials.Runtime;
+namespace AfterDarker.Runtime;
 
 /// <summary>
-/// The small execution mechanism used by lesson 08 and its synthetic CPU tests.
+/// The small execution mechanism owned by a session and exercised by synthetic CPU tests.
 /// No After Dark fields or Windows handlers live here. Read RunUntil to see the
 /// stop -> managed dispatch -> resume loop; neither kind of hook runs a service.
 /// </summary>

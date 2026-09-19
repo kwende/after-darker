@@ -36,7 +36,7 @@ The loop is deliberately small:
 
 ```text
 create one surface and register guest HDC 0103
-    → load/initialize one guest with MondrianRunner
+    → load/initialize one guest with MondrianSession
     → MODULE(BLANK): fill the surface black
     → MODULE(DRAWFRAME): execute original x86
         → guest SetRect writes coordinates into its own RECT16 storage
@@ -49,15 +49,17 @@ create one surface and register guest HDC 0103
 ```
 
 The **same** guest and surface survive every call. Reinitializing between frames
-would discard the DLL's animation state. `MondrianRunner` is the shared
-initialization/execution path extracted from tutorial 08; that earlier lesson
-still stops after INITIALIZE. The small machine-code callers are prepared
+would discard the DLL's animation state. `MondrianSession` is the shared
+initialization/execution path shared with tutorial 08; that earlier lesson
+still stops after INITIALIZE. The host owns the session with `using` and calls
+`Initialize`, `Blank`, and `DrawFrame` explicitly. See the
+[session lifetime walkthrough](mondrian-session.md). The small machine-code callers are prepared
 before execution and perform real `CALL FAR` instructions into MODULE.
 
 Useful breakpoints, in order:
 
-1. `Capture`: `callModule(MondrianRunner.DrawFrameMessage)`.
-2. [MondrianRunner.DispatchImport](../src/AfterDarker.Tutorials/Runtime/MondrianRunner.cs): the actual guest frame and decoded words.
+1. `Capture`: `session.DrawFrame()`.
+2. [MondrianSession.DispatchImport](../src/AfterDarker.Runtime/MondrianSession.cs): the actual guest frame and decoded words.
 3. [Win16Api.SetRect / InvertRect](../src/AfterDarker.Core/Win16/Win16Api.cs): ordinary typed API bodies.
 4. [PixelSurface.Paint](../src/AfterDarker.Core/Rendering/PixelSurface.cs): clipping and RGB changes.
 5. `Capture`: the returned guest state and comparison before PNG encoding.

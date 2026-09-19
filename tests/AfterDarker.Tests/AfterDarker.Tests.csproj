@@ -11,6 +11,7 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../../src/AfterDarker.Core/AfterDarker.Core.csproj" />
+    <ProjectReference Include="../../src/AfterDarker.Runtime/AfterDarker.Runtime.csproj" />
     <ProjectReference Include="../../src/AfterDarker.Tutorials/AfterDarker.Tutorials.csproj" />
   </ItemGroup>
   <!-- Opt in so ordinary parser/CPU tests do not require the external compiler. -->

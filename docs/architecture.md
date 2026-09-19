@@ -130,6 +130,15 @@ verify original guest state. Tutorial 09 continues the same guest into drawing;
 no general allocator is implemented.
 See [the initialization walkthrough](tutorial-08-mondrian-initialize.md).
 
+`AfterDarker.Runtime.MondrianSession` now owns that persistent execution state
+explicitly. Construction loads/maps; `Initialize` executes startup and the two
+initialization messages; `Blank` and `DrawFrame` each return to the host while
+preserving the guest. The console lessons consume this class library and a WPF
+host can reference it directly. `Dispose` releases the engine; CLOSE/WEP and
+cancellation remain separate work. The session rejects invalid ordering,
+execution after a fault, and access after disposal. See
+[the lifetime contract](mondrian-session.md).
+
 ### 3.3 CPU engine adapter
 
 The CPU engine owns instruction semantics and register state. After Darker owns

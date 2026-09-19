@@ -1,6 +1,6 @@
 using System.Buffers.Binary;
 using AfterDarker.Core.Win16;
-using AfterDarker.Tutorials.Runtime;
+using AfterDarker.Runtime;
 using UnicornEngine.Const;
 
 namespace AfterDarker.Tests.Conformance;

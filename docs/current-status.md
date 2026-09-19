@@ -22,6 +22,13 @@ nine educational console lessons (06 needs the optional Watcom fixture;
 
 ## Established evidence
 
+- Step 1 of the WPF plan introduces `AfterDarker.Runtime.MondrianSession`:
+  explicit load, Initialize, Blank, DrawFrame, snapshots and idempotent Dispose.
+  Both console lessons use it; a future window can reference the library without
+  depending on the tutorial executable. Eight new private-module cases verify
+  lifecycle order, persistent/independent guests, detached snapshots, disposal
+  and faulted-session rejection. Original frame output remains unchanged.
+
 - [Tutorial 09](tutorial-09-mondrian-frames.md) executed original Mondrian BLANK
   and 30 DRAWFRAME calls, producing 30 distinct 640x480 PNGs in 11,859 total
   instructions. Its four new imports are SetRect, GetStockObject (black brush),
@@ -90,8 +97,8 @@ nine educational console lessons (06 needs the optional Watcom fixture;
   shutdown remains static evidence.
 - The [C# test suite](testing.md) has 159 default passing cases: 106 unit, 42
   engine/raster conformance, and 11 tutorial entry-point checks. With Watcom,
-  12 additional Toolchain cases bring the total to 171; eleven optional local
-  Mondrian cases bring the combined total to 182. Public tests use generated NE
+  12 additional Toolchain cases bring the total to 171; nineteen optional local
+  Mondrian cases bring the combined total to 190. Public tests use generated NE
   fixtures and the same guest
   programs as the lessons, with typed observations and independent assertions.
   Temporary omitted-cleanup and wrong-return mutations were rejected. This
@@ -181,13 +188,13 @@ explicitly.
 
 ## Next planning point
 
-The active branch is `codex/tutorial-09-mondrian-png-frames`, created from the
-clean, committed tutorial-08 branch. The owner authorized original-code image
-capture after reviewing the shared API implementations. Review the four drawing
-methods and [tutorial 09](tutorial-09-mondrian-frames.md), and open the generated
-local viewer. Bounded original animation is now proven. Guest CLOSE/WEP,
-historical reference comparisons, real-time presentation, other modules, real
-allocation, and remaining relocation modes are separate next decisions.
+The active branch is `codex/mondrian-wpf-session`, created from clean main after
+the frame-capture work was merged. The owner wants the five live-window steps
+implemented as separate commits, with code review before EACH commit and before
+starting the next step. Step 1 is implemented and awaiting review, uncommitted:
+[explicit session lifetime](mondrian-session.md). Steps 2-5 remain pending:
+bounded diagnostics/buffers, live clock/pacing, WPF/worker presentation, and
+orderly cancellation plus original CLOSE/WEP. No WPF host is implemented yet.
 Watcom remains [documented for reproduction](watcom-toolchain.md).
 
 The owner requested static analysis to bound the Windows support needed for
@@ -204,6 +211,27 @@ Tutorial 04 implements the narrow host trap; the broader issue is not complete.
 See [the tutorial guide](tutorials.md).
 
 ## Session log
+
+### 2026-09-19 - WPF step 1: explicit session lifetime (awaiting review)
+
+- Replaced callback-scoped `MondrianRunner.Execute` with a host-owned
+  `MondrianSession`. Constructor prepares/maps only; Initialize runs original
+  startup and initialization; Blank/DrawFrame preserve the same guest between
+  ordinary C# calls. Disposal releases native resources once. Failed setup
+  releases its partial engine, and interrupted lifecycle calls become Faulted.
+- Moved session and existing SegmentedGuest into `AfterDarker.Runtime`, keeping
+  Unicorn out of Core and removing future WPF dependence on the console app.
+  Native asset restore/copy belongs to Runtime; apphost configuration remains
+  per executable. Existing pinned dependencies and API behavior are unchanged.
+- Lessons 08 and 09 now own sessions with using. Initialization-only behavior,
+  clock inputs, pixel generation, captures and reports are preserved. Diagnostic
+  snapshots have detached lists; pixel snapshots remain copies. Unbounded
+  internal history and per-call allocations remain for the separate step 2.
+- Eight new lifetime cases pass, along with existing suites: 159 default and
+  190 combined cases. Verified fresh host output/native asset propagation and
+  compared all 30 generated PNGs and the report with the pre-refactor capture.
+- No clock/pacing, WPF/threading, cancellation or guest CLOSE/WEP work is included.
+  No commit or push; stop for the owner's code review before proceeding.
 
 ### 2026-09-19 - tutorial 09: original Mondrian PNG capture
 
