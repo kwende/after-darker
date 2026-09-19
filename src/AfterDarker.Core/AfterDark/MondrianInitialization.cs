@@ -31,11 +31,7 @@ public static class MondrianInitialization
     public static (byte[] System, byte[] Module) CreateRecords(Options options)
     {
         options.Validate();
-        byte[] system = new byte[SystemBytes], module = new byte[ModuleBytes];
-        Put(system, SystemVersion, 200);
-        Put(system, SystemModuleHandle, ModuleHandle);
-        Put(system, Compatibility42, 0x42);
-        Put(system, Compatibility48, 0x48);
+        byte[] system = AfterDarkHostContract.CreateSystemRecord(), module = new byte[ModuleBytes];
         Put(module, ModuleWidth, (ushort)options.Width);
         Put(module, ModuleHeight, (ushort)options.Height);
         Put(module, ModuleSpeed, options.Speed);

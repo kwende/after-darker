@@ -112,7 +112,7 @@ public sealed class MondrianShutdownTests
             Assert.AreEqual("CLOSE", result.Phases[^2].Name);
             Assert.AreEqual((ushort)1, result.Phases[^1].StoredAx);
             Assert.AreEqual(0, result.OutstandingLocks);
-            Assert.IsLessThanOrEqualTo(256, result.Calls.Count);
+            Assert.IsLessThanOrEqualTo(256, result.RetainedCalls);
         }
     }
 

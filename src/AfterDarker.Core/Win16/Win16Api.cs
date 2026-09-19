@@ -15,6 +15,12 @@ public sealed class Win16Api(Win16ApiState state)
 {
     public Win16ApiState State { get; } = state;
 
+    public ushort CreatePen(short style, short width, uint color) => Drawing.CreatePen(style, width, color);
+    public ushort SelectObject(ushort hdc, ushort handle) => Drawing.SelectObject(hdc, handle);
+    public bool DeleteObject(ushort handle) => Drawing.DeleteObject(handle);
+    public uint MoveTo(ushort hdc, short x, short y) => Drawing.MoveTo(hdc, x, y);
+    public bool LineTo(ushort hdc, short x, short y) => Drawing.LineTo(hdc, x, y);
+
     /// <summary>Return the Windows version configured by the host.</summary>
     public uint GetVersion() => State.WindowsVersion;
 

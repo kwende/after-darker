@@ -13,7 +13,9 @@ selector/offset/far-pointer patches, with a step-by-step console walkthrough.
 Tutorial 08 executes original Mondrian startup and PREINITIALIZE/INITIALIZE
 with a narrowly scoped host environment. Tutorial 09 continues in that guest
 through BLANK and DRAWFRAME, producing changed PNG frames on a deterministic
-software surface. This is a narrow nine-import runtime, not general Win16 support.
+software surface. The WPF host now also executes Spiral Gyra through a shared
+module session, adding five pen/line imports to the original nine-service slice.
+This remains narrow compatibility support, not general Win16 emulation.
 `AfterDarker.Core` contains two extracted binary-layout helpers, a Windows NE
 metadata reader, a CPU-independent load plan, and a separate After Dark
 invocation-plan model. The C# MSTest project covers these mechanisms and the
@@ -21,6 +23,32 @@ nine educational console lessons (06 needs the optional Watcom fixture;
 08/09 need the analyzed local Mondrian file).
 
 ## Established evidence
+
+- **Windows SDK recovered:** the original Windows 3.0 SDK header and Windows
+  2.0 programmer manual establish shared `AD_SYSTEM` / `AD_MODULE` layouts,
+  including four module-interpreted control values. Control resource layouts
+  are also documented. See [sources and layout findings](research/after-dark-sdk.md).
+  Downloads remain ignored local references. The extra system words at 0x2C
+  and 0x34 remain unexplained by the public header; runtime behavior is unchanged.
+- **Spiral Gyra now runs in WPF alongside Mondrian.** File > Load AD file…
+  identifies supported versions by content hash, starts playback, and switches
+  modules after orderly shutdown. An unsupported selection leaves the active
+  guest intact. The owner has also confirmed the earlier Mondrian window works.
+- The shared `AfterDarkSession<TState>` owns loading/execution/lifecycle; profiles
+  hold artifact-specific records and typed checks. Host slots follow the actual
+  segment count, avoiding collision with Spiral's sixth segment. The original
+  Mondrian facade and all educational lesson tests remain functional.
+- Five new shared GDI services implement solid pens, selection/deletion, current
+  position and lines. Public tests verify real guest ABI round trips, bounded
+  reusable handles, and 1,500 raster cases against Windows GDI. Seven private
+  Spiral cases verify all exposed speeds, repeatability, 100 draws and cleanup.
+- Actual WPF acceptance passed original-code presentation, exact pixel readback,
+  unsupported-file rejection while playing, Stop/restart, both directions of
+  module switching, and window close during playback. All completed guests
+  returned through CLOSE/WEP with zero locks/pens. Spiral peaked at two pens.
+  See [the execution notes](research/spiral-gyra-execution.md) for the hash,
+  observed paths, fixed controls, budgets and palette/fidelity limitations.
+
 
 - The live WPF player now executes the analyzed original Mondrian continuously
   with elapsed-time pacing, bounded diagnostics and latest-frame presentation.
@@ -128,9 +156,10 @@ nine educational console lessons (06 needs the optional Watcom fixture;
   pacing, two host memory records, and static rectangle history are identified.
   Tutorials 08 and 09 verify initialization and bounded drawing by execution;
   shutdown is now also verified by the live-host and session tests.
-- The [C# test suite](testing.md) has 176 default passing cases: 121 unit, 44
+- The [C# test suite](testing.md) has 181 default passing cases: 124 unit, 46
   engine/raster conformance, and 11 tutorial checks. Twelve optional Watcom
-  cases and 34 local Mondrian cases bring the combined total to 222.
+  cases, 34 local Mondrian cases, and seven local Spiral Gyra cases bring the
+  combined total to 234.
   Public tests use generated NE
   fixtures and the same guest
   programs as the lessons, with typed observations and independent assertions.
@@ -179,9 +208,8 @@ nine educational console lessons (06 needs the optional Watcom fixture;
 
 - The host supplies the HDC and guest structures, and the module performs its
   drawing through imported Win16 GDI operations.
-- Spiral Gyra remains a promising later original-code target because its
-  observed rendering vocabulary is small: pen creation/selection, current-point
-  movement, line drawing, stock objects, and object deletion.
+- Spiral Gyra is now the second executable target; its observed pen/line
+  vocabulary is implemented and tested. Stained Glass remains a later target.
 - Stained Glass is a larger 25,008-byte NE module with nine segments and imports
   from `KERNEL`, `GDI`, and `USER`. It is a useful second-stage target because it
   exercises broader drawing and object behavior and exposes rapid synchronous
@@ -198,13 +226,14 @@ nine educational console lessons (06 needs the optional Watcom fixture;
   overrides, privilege transitions, general pointer translation, and broader
   ABI layouts remain unproven. Two successful host exits/resumes do not establish
   compatibility with arbitrary Win16 guest code.
-- Original execution is limited to the analyzed Mondrian artifact's startup,
-  initialization, drawing and shutdown; other revisions, other modules,
+- Original execution is limited to the analyzed Mondrian and Spiral Gyra
+  artifacts' startup, initialization, drawing and shutdown; other revisions, other modules,
   and historical visual/pacing fidelity remain unproven.
 - Only the observed system/module fields for that path have been supplied and
   consumed. A complete After Dark SDK structure schema remains unrecovered.
-- Only the rectangle/black-brush drawing subset is implemented. General DC
-  selections, palettes, text, mapping modes, and resource rendering remain unproven.
+- Only the rectangle/black-brush and solid cosmetic pen/line drawing subset
+  is implemented. Other object types, palettes, text, mapping modes and resource
+  rendering remain unproven.
 - The permanent engine strategy—WineVDM sidecar, custom in-process runtime, or a
   staged combination—has not been selected.
 
@@ -221,14 +250,13 @@ explicitly.
 
 ## Next planning point
 
-The active branch is `codex/mondrian-wpf-session`. All five planned steps are
-implemented as separate commits: reusable session, bounded history/buffers,
-live timing/pacing, WPF presentation, and orderly shutdown. The owner approved
-committing step 2 and finishing steps 3-5 without further review pauses.
-The next action is the owner's F5 run of **AfterDarker.Wpf**, then normal branch
-review/merge. The [player guide](wpf-player.md) records launch and proof boundaries.
-No multi-hour endurance run or historical timing comparison has been performed.
-Watcom remains [documented for reproduction](watcom-toolchain.md).
+The active branch is `codex/spiral-gyra-player`, created from clean merged main.
+The two-module implementation is ready for the owner's F5 run and review;
+changes are not committed or pushed. Use File > Load AD file… to switch between
+Mondrian and Spiral Gyra. Other files/versions are rejected explicitly.
+Further modules should extend profiles/services from observed needs rather than
+widening the current whitelist without runtime evidence. No multi-hour endurance
+or historical timing/palette comparison has been performed.
 
 The project keeps one F5-able console app, with separate tutorial classes
 invoked through `ITutorial`, alongside the live WPF host. Future expansion
@@ -239,6 +267,25 @@ Tutorial 04 implements the narrow host trap; the broader issue is not complete.
 See [the tutorial guide](tutorials.md).
 
 ## Session log
+
+### 2026-09-19 - Spiral Gyra and the AD load menu
+
+- The owner requested implementation of a second module and a Load AD file menu,
+  with initial support restricted to the two known versions. Branched from main
+  to codex/spiral-gyra-player. No commit/push requested for this work.
+- Extracted the common runner and host record fields; retained typed Mondrian
+  facade and deterministic tutorials. Spiral's six segments use dynamic host
+  placement and its own record layout instead of reusing Mondrian offsets.
+- Original Spiral initialized, rendered colored line patterns, and completed
+  CLOSE/WEP. Added CreatePen, SelectObject, DeleteObject, MoveTo and LineTo to
+  the existing Win16 implementation and registry. No new dependency was needed.
+- Solution builds without warnings. All 234 cases passed with compiler and both
+  local module opt-ins. Private Spiral tests include repeatability, all five
+  speed choices, pen reuse and cleanup. Mondrian's prior frame hashes still pass.
+- Actual WPF runs verified switching Spiral -> Mondrian and Mondrian -> Spiral,
+  invalid selection preserving playback, restart and close. Reports/images are
+  under ignored artifacts/wpf-smoke; original files and output remain untracked.
+
 
 ### 2026-09-19 - WPF steps 4 and 5: actual window and original shutdown
 

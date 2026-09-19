@@ -1,0 +1,44 @@
+namespace AfterDarker.Runtime;
+
+/// <summary>One serialized worker task owns the guest. It never touches UI objects.</summary>
+public static class AfterDarkPlayback
+{
+    public static Task<PlaybackResult> RunAsync(byte[] file, PlaybackOptions options,
+        LatestFrameMailbox frames, CancellationToken stop) => Task.Run(async () =>
+    {
+        stop.ThrowIfCancellationRequested();
+        using var session = SupportedModules.Open(file, options, timing: SessionTiming.Live());
+        session.Initialize();
+        session.Blank();
+        byte[] previous = new byte[session.PixelByteCount], current = new byte[session.PixelByteCount];
+        session.CopyPixelsTo(previous);
+        frames.Publish(previous, new(0, 0));
+        var pacer = new FramePacer(TimeSpan.FromSeconds(1.0 / 60));
+        long draws = 0, changes = 0;
+        try
+        {
+            while (true)
+            {
+                stop.ThrowIfCancellationRequested();
+                session.DrawFrame();
+                if (draws < long.MaxValue) draws++;
+                session.CopyPixelsTo(current);
+                if (!current.AsSpan().SequenceEqual(previous))
+                {
+                    if (changes < long.MaxValue) changes++;
+                    frames.Publish(current, new(draws, changes));
+                    (previous, current) = (current, previous);
+                }
+                await pacer.WaitForNextFrameAsync(stop).ConfigureAwait(false);
+            }
+        }
+        catch (OperationCanceledException) when (stop.IsCancellationRequested) { }
+        // Cancellation belongs to the host loop/pacer. We deliberately let an
+        // active bounded guest call return, so SS:SP is safe for CLOSE and WEP.
+        // An execution failure bypasses this code; using still releases Unicorn.
+        // Cleanup ignores the already-cancelled pacing token and has its own
+        // per-invocation instruction/service/time budgets.
+        session.Shutdown();
+        return session.GetPlaybackResult();
+    });
+}

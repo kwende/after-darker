@@ -1,9 +1,12 @@
-# Live Mondrian window
+# Live After Dark player
 
 Open `AfterDarker.sln`, set **AfterDarker.Wpf** as the startup project, and press
 F5. With the analyzed `ad/Mondrian.ad` present, the window starts automatically.
-Otherwise use Browse to select your local file, then Run. Stop lets you change
-the file or speed and start a fresh guest. No original modules are distributed.
+Choose **File > Load AD file…** to select **Mondrian** or **Spiral Gyra**. Loading
+starts playback automatically; the menu can also switch modules while playing.
+The previous guest shuts down before the new one starts. Unsupported files or
+versions are rejected by their content hash before stopping an active guest.
+Stop lets you change speed and Run a fresh guest. No original modules are distributed.
 
 From the repository root:
 
@@ -13,21 +16,24 @@ dotnet run --project src/AfterDarker.Wpf --no-launch-profile
 dotnet run --project src/AfterDarker.Wpf --no-launch-profile -- C:\path\Mondrian.ad
 ```
 
-This executes the original, hash-checked Mondrian Win16 code. It uses the same
-`MondrianSession`, NE loader, imports and software raster surface as tutorial
-09. No additional Win16 API is introduced by the window.
+Both supported modules execute their original, hash-checked Win16 code through
+`AfterDarkSession<TState>`. Mondrian's tutorial facade uses that same runtime.
+Spiral adds five pen/line imports; see the [execution notes](research/spiral-gyra-execution.md).
+The file picker accepts AD files generally, but only the two analyzed versions
+are executable today. A renamed supported file works; an unknown file named
+Mondrian.ad does not bypass validation.
 
 ## Ownership and presentation
 
 ```text
 serialized background task                 WPF dispatcher
-  MondrianSession                             WriteableBitmap
+  IAnimationSession                             WriteableBitmap
   original DRAWFRAME                          640 x 480 RGB24
   reusable RGB buffers                       reusable RGB buffer
         -> one pending frame (locked copy) -> WritePixels -> Image
 ```
 
-`MondrianPlayback` is the worker; it never accesses WPF objects. Awaiting its
+`AfterDarkPlayback` is the worker; it never accesses WPF objects. Awaiting its
 pacer may move it between pool threads, but no two guest calls overlap. The
 mailbox atomically transfers pixels with their counters. A slow presenter
 receives the newest pending frame; it cannot accumulate stale queued frames.
@@ -81,14 +87,17 @@ halfway through would leave its stack unsuitable for another CALL FAR to CLOSE.
 If execution or cleanup fails, no further guest calls are attempted, and the
 native engine is still disposed. The UI shows the symbolic failure. Cleanup
 ignores the cancelled pacing token but retains bounded native execution: 50,000
-instructions per invocation, one-second native slices and a five-second
+instructions per Mondrian invocation or 200,000 for Spiral Gyra, one-second
+native slices and a five-second
 cumulative native execution budget. These are cooperative runtime safeguards,
 not an out-of-process watchdog for a defective native library.
 
 CLOSE uses the existing MODULE ABI (three WORD arguments, RETF 6). WEP is a
-separate export with one WORD argument and RETF 2; its AX=1 is verified. CLOSE
+separate export with one WORD argument and RETF 2; its AX=1 is verified. Mondrian CLOSE
 may service 200 saved rectangles plus blanking and locks, so its service budget
-is explicitly 208; other calls retain 128. No new import implementation is added.
+is explicitly 208; its other calls retain 128. Spiral uses 768 services because
+one invocation can perform 30 drawing iterations. Its CLOSE restores the original
+pen and deletes its allocated pens; shutdown checks that none remain.
 With the current system record, CLOSE optionally clears then inverts the saved
 rectangles; it does not necessarily leave black pixels. The UI retains the last
 presented frame after Stop. Console lessons still end at their original boundary
@@ -100,3 +109,22 @@ active. Both shutdowns must complete, WEP must return one, and no global locks
 may remain. A 30-second initial-presentation timeout and bounded restart/close
 waits make acceptance failures diagnosable. This is a bounded lifecycle proof,
 not a multi-hour endurance test.
+
+
+To launch Spiral Gyra directly:
+
+```powershell
+dotnet run --project src/AfterDarker.Wpf --no-launch-profile -- "ad/Spiral Gyra.ad"
+```
+
+To verify switching in the actual WPF application, give smoke mode a final
+optional destination module. It validates Stop/restart, then invokes the same
+load routine used by the menu while playback is active:
+
+```powershell
+dotnet run --project src/AfterDarker.Wpf --no-launch-profile -- --smoke "ad/Spiral Gyra.ad" artifacts/wpf-smoke/spiral-switch ad/Mondrian.ad
+```
+
+The acceptance run also checks that unsupported content leaves the active guest
+untouched. `report.json` records the module names, completed CLOSE/WEP phases,
+and remaining/peak pen counts. The native file dialog itself is not automated.

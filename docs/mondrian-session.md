@@ -1,5 +1,11 @@
 # Mondrian session: explicit guest lifetime
 
+The implementation now lives in `AfterDarkSession<TState>`, shared with Spiral
+Gyra. `MondrianSession` remains the typed facade used by these lessons; its
+observations, addresses and deterministic output are preserved. See the
+[second-module notes](research/spiral-gyra-execution.md) for the extracted profile
+boundary and dynamic host placement.
+
 The live-window work gives one `MondrianSession` a loaded
 Unicorn guest, its memory, service state, and optional software surface. The
 host chooses when to call it and when to dispose it. No continuation callback

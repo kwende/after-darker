@@ -12,18 +12,18 @@ public sealed class LatestFrameMailboxTests
         var mailbox = new LatestFrameMailbox(3);
         byte[] source = [1, 2, 3], destination = new byte[3];
         Assert.IsFalse(mailbox.TryCopyTo(destination, out _));
-        mailbox.Publish(source, new(1, 1, 1));
+        mailbox.Publish(source, new(1, 1));
         source[0] = 4;
-        mailbox.Publish(source, new(2, 2, 2));
+        mailbox.Publish(source, new(2, 2));
         source[0] = 9;
         Assert.IsTrue(mailbox.TryCopyTo(destination, out var frame));
         CollectionAssert.AreEqual(new byte[] { 4, 2, 3 }, destination);
-        Assert.AreEqual(new FrameInfo(2, 2, 2), frame);
-        mailbox.Publish(source, new(3, 3, 3));
+        Assert.AreEqual(new FrameInfo(2, 2), frame);
+        mailbox.Publish(source, new(3, 3));
         Assert.AreEqual((byte)4, destination[0]);
         Assert.IsTrue(mailbox.TryCopyTo(destination, out _));
         Assert.IsFalse(mailbox.TryCopyTo(destination, out _));
-        Assert.Throws<ArgumentException>(() => mailbox.Publish(new byte[2], new(0, 0, 0)));
+        Assert.Throws<ArgumentException>(() => mailbox.Publish(new byte[2], new(0, 0)));
         Assert.Throws<ArgumentException>(() => mailbox.TryCopyTo(new byte[2], out _));
     }
 
@@ -37,7 +37,7 @@ public sealed class LatestFrameMailboxTests
             for (int i = 1; i <= 10_000; i++)
             {
                 Array.Fill(source, (byte)(i % 256));
-                mailbox.Publish(source, new(i, i, 0));
+                mailbox.Publish(source, new(i, i));
             }
         });
         byte[] destination = new byte[1024];

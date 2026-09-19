@@ -19,6 +19,38 @@ public sealed class PixelSurface
     }
     public byte[] CopyRgb() => (byte[])pixels.Clone();
 
+    /// <summary>One-pixel solid line, endpoint excluded, clipped to the surface.
+    /// Integer major-axis stepping preserves the original line's error phase when clipped.</summary>
+    public int Line(short x0, short y0, short x1, short y1, uint color)
+    {
+        int dx = Math.Abs((int)x1 - x0), dy = Math.Abs((int)y1 - y0);
+        int sx = x1 >= x0 ? 1 : -1, sy = y1 >= y0 ? 1 : -1;
+        int major = Math.Max(dx, dy), changed = 0;
+        // Windows cosmetic lines resolve exact half-pixel ties toward the top/left.
+        // Signed endpoints bound this loop to 65,535 steps, even far outside the clip.
+        for (int step = 0; step < major; step++)
+        {
+            int x, y;
+            if (dx >= dy)
+            {
+                x = x0 + sx * step;
+                y = y0 + sy * (int)(((long)step * dy + (dx - (sy > 0 ? 1 : 0)) / 2) / dx);
+            }
+            else
+            {
+                y = y0 + sy * step;
+                x = x0 + sx * (int)(((long)step * dx + (dy - (sx > 0 ? 1 : 0)) / 2) / dy);
+            }
+            if (x < 0 || x >= Width || y < 0 || y >= Height) continue;
+            int index = (y * Width + x) * 3;
+            byte r = (byte)color, g = (byte)(color >> 8), b = (byte)(color >> 16);
+            if (pixels[index] == r && pixels[index + 1] == g && pixels[index + 2] == b) continue;
+            pixels[index] = r; pixels[index + 1] = g; pixels[index + 2] = b; changed++;
+        }
+        if (changed != 0 && Revision < long.MaxValue) Revision++;
+        return changed;
+    }
+
     /// <summary>Copy into the host's reusable tightly packed RGB buffer, without allocating a snapshot.</summary>
     public void CopyRgbTo(Span<byte> destination)
     {

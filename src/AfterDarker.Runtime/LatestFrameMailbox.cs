@@ -1,6 +1,6 @@
 namespace AfterDarker.Runtime;
 
-public sealed record FrameInfo(long DrawCalls, long ChangedFrames, ushort Rectangles);
+public sealed record FrameInfo(long DrawCalls, long ChangedFrames);
 
 /// <summary>
 /// One pending frame, not a queue. The producer and consumer own their buffers;

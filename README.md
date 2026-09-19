@@ -48,12 +48,13 @@ entire desktop.
 ## Run the live window
 
 Set **AfterDarker.Wpf** as the startup project and press F5. It finds your local
-`ad/Mondrian.ad` automatically. See the [WPF player guide](docs/wpf-player.md)
+`ad/Mondrian.ad` automatically. Use **File > Load AD file…** to play either
+**Mondrian** or **Spiral Gyra**, or switch between them while running. See the [WPF player guide](docs/wpf-player.md)
 for controls, command-line launch and the original-code execution boundary.
 
 ## Status
 
-The repository now runs original Mondrian in a live WPF window. Its C# tutorials run real-mode
+The repository now runs original Mondrian and Spiral Gyra in a live WPF window. Its C# tutorials run real-mode
 addition and near calls, a 16-bit protected-mode `CALL FAR`/`RETF` round trip,
 and a synthetic C# host gateway with stop, dispatch, and guest resume in Unicorn.
 Tutorial 05 reads Windows NE files into typed C# metadata and reports their

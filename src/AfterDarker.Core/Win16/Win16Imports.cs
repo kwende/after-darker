@@ -9,7 +9,7 @@ namespace AfterDarker.Core.Win16;
 /// </summary>
 public static class Win16Imports
 {
-    public enum Handler { Unsupported, LocalInitReservation, GlobalLock, GlobalUnlock, Environment, Ticks, SetRect, GetStockObject, FillRect, InvertRect }
+    public enum Handler { Unsupported, LocalInitReservation, GlobalLock, GlobalUnlock, Environment, Ticks, SetRect, GetStockObject, FillRect, InvertRect, CreatePen, SelectObject, DeleteObject, MoveTo, LineTo }
     public sealed record ImportEntry(NeImport Import, string Name, FarPointer16 Address,
         Handler Implementation, int? ArgumentBytes, Win16ReturnLayout? ReturnLayout);
     public sealed record Reply(uint Value, ushort? Cx = null);
@@ -38,6 +38,11 @@ public static class Win16Imports
             ("USER", 72, "SetRect", enableDrawing ? Handler.SetRect : Handler.Unsupported, 12, Win16ReturnLayout.Void),
             ("USER", 81, "FillRect", enableDrawing ? Handler.FillRect : Handler.Unsupported, 8, Win16ReturnLayout.WordInAx),
             ("USER", 82, "InvertRect", enableDrawing ? Handler.InvertRect : Handler.Unsupported, 6, Win16ReturnLayout.Void),
+            ("GDI", 61, "CreatePen", enableDrawing ? Handler.CreatePen : Handler.Unsupported, 8, Win16ReturnLayout.WordInAx),
+            ("GDI", 45, "SelectObject", enableDrawing ? Handler.SelectObject : Handler.Unsupported, 4, Win16ReturnLayout.WordInAx),
+            ("GDI", 69, "DeleteObject", enableDrawing ? Handler.DeleteObject : Handler.Unsupported, 2, Win16ReturnLayout.WordInAx),
+            ("GDI", 20, "MoveTo", enableDrawing ? Handler.MoveTo : Handler.Unsupported, 6, Win16ReturnLayout.DwordInDxAx),
+            ("GDI", 19, "LineTo", enableDrawing ? Handler.LineTo : Handler.Unsupported, 6, Win16ReturnLayout.WordInAx),
         };
         const int firstGatewayOffset = 0x100, gatewaySpacing = 0x10;
         return Array.AsReadOnly(image.Imports.Select(import =>
@@ -70,6 +75,13 @@ public static class Win16Imports
             case Handler.GlobalUnlock: return new(api.GlobalUnlock(arguments[0]));
             case Handler.Environment: return new(Pack(api.GetDOSEnvironment()));
             case Handler.Ticks: return new(api.GetTickCount());
+            case Handler.CreatePen:
+                return new(api.CreatePen(unchecked((short)arguments[0]), unchecked((short)arguments[1]),
+                    ((uint)arguments[2] << 16) | arguments[3]));
+            case Handler.SelectObject: return new(api.SelectObject(arguments[0], arguments[1]));
+            case Handler.DeleteObject: return new(api.DeleteObject(arguments[0]) ? 1u : 0u);
+            case Handler.MoveTo: return new(api.MoveTo(arguments[0], unchecked((short)arguments[1]), unchecked((short)arguments[2])));
+            case Handler.LineTo: return new(api.LineTo(arguments[0], unchecked((short)arguments[1]), unchecked((short)arguments[2])) ? 1u : 0u);
             // Pascal pushes source arguments left-to-right. A far pointer is
             // pushed selector then offset; these are WORDS, not two parameters.
             case Handler.SetRect:
