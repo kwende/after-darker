@@ -16,13 +16,14 @@ public sealed class Win16ApiState
     public FarPointer16? Environment { get; }
     public uint WindowsVersion { get; }
     public bool LocalInitSucceeds { get; }
-    public uint TickStep { get; }
-    public uint NextTick { get; internal set; }
+    public IWin16Clock Clock { get; }
+    public uint? LastReturnedTick { get; internal set; }
     public Win16Drawing? Drawing { get; init; }
 
     public Win16ApiState(IGuestMemory16 memory, LocalHeapReservation reservedHeap,
         FarPointer16? environment = null, uint windowsVersion = DefaultWindowsVersion,
-        bool localInitSucceeds = true, uint initialTick = DefaultInitialTick, uint tickStep = DefaultTickStep)
+        bool localInitSucceeds = true, uint initialTick = DefaultInitialTick, uint tickStep = DefaultTickStep,
+        IWin16Clock? clock = null)
     {
         if (reservedHeap.Start.Selector == 0 || reservedHeap.Length <= 0 ||
             reservedHeap.Start.Offset + (long)reservedHeap.Length > 65536)
@@ -37,7 +38,6 @@ public sealed class Win16ApiState
         Environment = environment;
         WindowsVersion = windowsVersion;
         LocalInitSucceeds = localInitSucceeds;
-        NextTick = initialTick;
-        TickStep = tickStep;
+        Clock = clock ?? new SteppingWin16Clock(initialTick, tickStep);
     }
 }

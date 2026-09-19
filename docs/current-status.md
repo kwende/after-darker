@@ -221,6 +221,20 @@ See [the tutorial guide](tutorials.md).
 
 ## Session log
 
+### 2026-09-19 - WPF step 3: live timing and pacing
+
+- The owner approved committing step 2 and completing steps 3-5 without further
+  review pauses. Step 2 is committed as 079c8b0.
+- Win16Api now reads an injected IWin16Clock. Existing defaults use the same
+  per-request stepping clock; live timing uses monotonic elapsed milliseconds
+  with DWORD wrap. DOS civil time is captured once at live session creation.
+  Initialization validates the actual returned tick, without reading time again.
+- FramePacer accounts for work time, waits cancellably, and resets late deadlines
+  without catch-up bursts. Its cadence is host adaptation, not historical timing.
+- Clock/pacer tests cover repeated reads, rollover, wall-clock changes, independent
+  deterministic clocks, captured civil time, late deadlines and cancellation.
+  Original code progresses when a manual live clock advances between invocations.
+
 ### 2026-09-19 - WPF step 2: bounded history and reusable buffers (awaiting review)
 
 - Confirmed the owner's step-1 commit and clean branch before implementing only

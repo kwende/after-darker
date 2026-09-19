@@ -50,6 +50,7 @@ public sealed class MondrianSession : IDisposable
     private readonly IReadOnlyList<Win16Imports.ImportEntry> bindings;
     private readonly MondrianInitialization.State beforeExecution;
     private readonly Win16Api services;
+    private readonly SessionTiming timing;
     private readonly PixelSurface? surface;
     private readonly Win16Drawing? drawing;
     private readonly DiagnosticOptions diagnostics;
@@ -64,9 +65,10 @@ public sealed class MondrianSession : IDisposable
     /// <summary>Prepare/map a module without executing it. The caller owns this session with using.</summary>
     public MondrianSession(byte[] file, MondrianInitialization.Options? options = null,
         bool enableDrawing = true, TextWriter? output = null, bool trace = false, int instructionLimit = 50_000,
-        DiagnosticOptions? diagnostics = null)
+        DiagnosticOptions? diagnostics = null, SessionTiming? timing = null)
     {
         this.diagnostics = diagnostics ?? DiagnosticOptions.Recent;
+        this.timing = timing ?? SessionTiming.Deterministic();
         calls = new(this.diagnostics);
         phases = new(this.diagnostics);
         this.output = output ?? TextWriter.Null;
@@ -132,7 +134,8 @@ public sealed class MondrianSession : IDisposable
             if (data.Bytes.Length != heapStart + image.Header.HeapBytes)
                 throw new InvalidOperationException("Prepared data does not include the declared heap tail.");
             services = new Win16Api(new Win16ApiState(guest,
-                new(new(dllData, checked((ushort)heapStart)), image.Header.HeapBytes), new(HostData, EnvironmentOffset)) { Drawing = drawing });
+                new(new(dllData, checked((ushort)heapStart)), image.Header.HeapBytes), new(HostData, EnvironmentOffset),
+                clock: this.timing.Clock) { Drawing = drawing });
             services.State.Blocks.Register(MondrianInitialization.SystemHandle, new(HostData, SystemOffset), records.System.Length);
             services.State.Blocks.Register(MondrianInitialization.ModuleHandle, new(HostData, ModuleOffset), records.Module.Length);
             output.WriteLine($"2. HOST RECORDS: handle 0101 -> {HostData:X4}:{SystemOffset:X4}; handle 0102 -> {HostData:X4}:{ModuleOffset:X4}");
@@ -169,7 +172,7 @@ public sealed class MondrianSession : IDisposable
             {
                 if (number != DosClock.InterruptNumber) throw new NotSupportedException($"Unsupported INT {number:X2}h during {guest.Phase}.");
                 ushort ax = (ushort)guest.Get(X86.UC_X86_REG_AX);
-                var reply = DosClock.Respond((byte)(ax >> 8), ax, CivilTime);
+                var reply = DosClock.Respond((byte)(ax >> 8), ax, this.timing.CivilTime);
                 guest.Set(X86.UC_X86_REG_AX, reply.Ax);
                 guest.Set(X86.UC_X86_REG_CX, reply.Cx);
                 guest.Set(X86.UC_X86_REG_DX, reply.Dx);
@@ -209,7 +212,7 @@ public sealed class MondrianSession : IDisposable
             PhaseResult initialized = RunPhase("INITIALIZE", InitializeCaller, initializeEnd, InitializeResult, HostData);
             MondrianInitialization.State state = initialized.State;
             if (state.Clear != (options.Clear ? 1 : 0) || state.Threshold != options.ExpectedThreshold || state.Counter != 0 ||
-                state.Rectangles != 0 || state.Tick != Win16ApiState.DefaultInitialTick || state.Seed != (ushort)state.Time ||
+                state.Rectangles != 0 || state.Tick != services.State.LastReturnedTick || state.Seed != (ushort)state.Time ||
                 state.System != new FarPointer16(HostData, SystemOffset) || state.Module != new FarPointer16(HostData, ModuleOffset) ||
                 guest.InterruptCount != 3 || services.State.Blocks.OutstandingLocks != 0)
                 throw new InvalidOperationException("Original initialization returned but guest state disagrees with the supplied host contract.");

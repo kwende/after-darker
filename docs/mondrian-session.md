@@ -166,3 +166,16 @@ These are bounded-retention and buffer-reuse proofs, not an hours-long native
 memory-leak or real-time responsiveness test. The deterministic clock remains
 for step 3. WPF/workers are step 4. Cancellation and original CLOSE/WEP are step 5.
 `Dispose` still releases native resources without invoking guest shutdown code.
+
+
+## Live timing (step 3)
+
+Pass `timing: SessionTiming.Live()` for monotonic elapsed milliseconds. Repeated
+GetTickCount requests within the same millisecond return the same value; reading
+the clock no longer advances it. The DWORD wraps naturally. DOS date/time uses
+one captured local civil timestamp for consistent startup date/time/date replies.
+Defaults and tutorials still use deterministic stepping, preserving their hashes.
+`FramePacer` provides cancellable cadence after each draw and skips catch-up bursts
+if a frame takes longer than its interval. TimeProvider makes both behaviors
+controllable in tests. This is a modern host pacing policy, not a historical
+performance reconstruction.
