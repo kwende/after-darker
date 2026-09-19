@@ -18,6 +18,29 @@ public sealed class Win16Api(Win16ApiState state)
     /// <summary>Return the Windows version configured by the host.</summary>
     public uint GetVersion() => State.WindowsVersion;
 
+    /// <summary>Write the signed corners verbatim into guest memory; Win16's return type is void.</summary>
+    public void SetRect(FarPointer16 destination, short left, short top, short right, short bottom)
+        => State.Memory.Write(destination, new Rectangle16(left, top, right, bottom).Encode());
+
+    public ushort GetStockObject(short index)
+    {
+        if (index != Win16Drawing.BlackBrushIndex) throw new NotSupportedException($"Unsupported stock object {index}.");
+        return Win16Drawing.BlackBrushHandle;
+    }
+
+    public short FillRect(ushort hdc, FarPointer16 rectangle, ushort brush)
+    {
+        if (brush != Win16Drawing.BlackBrushHandle) throw new NotSupportedException($"Unknown brush {brush:X4}.");
+        Drawing.Paint(hdc, Rectangle16.Decode(State.Memory.Read(rectangle, Rectangle16.ByteCount)), invert: false);
+        return 1;
+    }
+
+    /// <summary>Invert RGB bits. Inverting the same pixels twice restores them; Win16 returns void.</summary>
+    public void InvertRect(ushort hdc, FarPointer16 rectangle)
+        => Drawing.Paint(hdc, Rectangle16.Decode(State.Memory.Read(rectangle, Rectangle16.ByteCount)), invert: true);
+
+    private Win16Drawing Drawing => State.Drawing ?? throw new NotSupportedException("No drawing surface was supplied.");
+
     /// <summary>
     /// Accept the loader's reserved local heap. This is a checked test double:
     /// no Windows heap metadata, LocalAlloc, or LocalFree exists yet.

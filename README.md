@@ -55,7 +55,7 @@ entry points, imports, resources, and an assumed After Dark invocation plan.
 [Tutorial 06](docs/tutorial-06-load-library.md) now loads the source-built
 Hello42 Win16 DLL, executes its startup through two limited host responses,
 calls its export, and observes the guest store 42. This is a narrow loader
-experiment; there is no general Win16 API layer or renderer.
+experiment; later lessons extend its mechanisms to a narrow original-module runtime.
 [Tutorial 07](docs/tutorial-07-relocations.md) adds an interactive relocation
 walkthrough: internal targets, entry ordinals, selector/offset/far-pointer
 patches, and source chains. It prepares a local module without executing it.
@@ -63,6 +63,10 @@ patches, and source chains. It prepares a local module without executing it.
 DLL startup, PREINITIALIZE, and INITIALIZE with checked guest records/handles,
 five narrow Win16 services, and deterministic DOS date/time responses. It verifies
 the guest's initialized state and stops before drawing.
+[Tutorial 09](docs/tutorial-09-mondrian-frames.md) continues in the same guest,
+executes Mondrian's BLANK/DRAWFRAME code, and saves 30 changed PNG images with
+a local playback viewer and reproducibility report. The host supplies four
+rectangle/brush APIs and a deterministic software surface.
 
 Prior research has established the After Dark lifecycle, inspected several
 real modules, and recovered enough behavior from Spiral Gyra and Stained Glass
@@ -115,9 +119,17 @@ see instructions. The [initialization guide](docs/tutorial-08-mondrian-initializ
 explains records, handles, registers, interrupt resume, and the exact supported
 artifact. No Watcom build is needed for this lesson.
 
+Select **Tutorial 09 - capture Mondrian PNG frames** to run the first original
+animation capture. Output stays under ignored `artifacts/mondrian-frames/`.
+Open the generated `index.html` to play or step the images.
+
+```powershell
+dotnet run --project src/AfterDarker.Tutorials --no-launch-profile -- 09 ad/Mondrian.ad
+```
+
 To read just the Windows service implementations, open
 [Win16Api.cs](src/AfterDarker.Core/Win16/Win16Api.cs). Tutorials 06 and 08 share
-these named C# methods. Import binding and register/stack handling live elsewhere;
+these named C# methods, also used by tutorial 09. Import binding and register/stack handling live elsewhere;
 each guest has its own service state. See [the implementation guide](docs/win16-implementations.md).
 
 Run `dotnet test` from the repository root for the C# test suite. The solution

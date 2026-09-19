@@ -11,18 +11,30 @@ and executes the project-owned Hello42 DLL with limited startup host responses.
 Tutorial 07 extends preparation to internal references, entry ordinals, and
 selector/offset/far-pointer patches, with a step-by-step console walkthrough.
 Tutorial 08 executes original Mondrian startup and PREINITIALIZE/INITIALIZE
-with a narrowly scoped host environment. There is no drawing runtime, general
-Win16 API layer, or renderer yet.
+with a narrowly scoped host environment. Tutorial 09 continues in that guest
+through BLANK and DRAWFRAME, producing changed PNG frames on a deterministic
+software surface. This is a narrow nine-import runtime, not general Win16 support.
 `AfterDarker.Core` contains two extracted binary-layout helpers, a Windows NE
 metadata reader, a CPU-independent load plan, and a separate After Dark
 invocation-plan model. The C# MSTest project covers these mechanisms and the
-eight educational console lessons (06 needs the optional Watcom fixture;
-08 needs the analyzed local Mondrian file).
+nine educational console lessons (06 needs the optional Watcom fixture;
+08/09 need the analyzed local Mondrian file).
 
 ## Established evidence
 
+- [Tutorial 09](tutorial-09-mondrian-frames.md) executed original Mondrian BLANK
+  and 30 DRAWFRAME calls, producing 30 distinct 640x480 PNGs in 11,859 total
+  instructions. Its four new imports are SetRect, GetStockObject (black brush),
+  FillRect, and InvertRect. All nine imports predicted for the successful path
+  were reached. Two independent runs produced identical frame hashes/state;
+  all return frames and global locks balanced. A 180-image test also reached
+  original rectangle removal and exceeded 50,000 lifetime instructions.
+  PNGs passed independent CRC/zlib and Pillow checks and visual inspection.
+  Negative rectangle extents match measured modern Windows PatBlt behavior;
+  this is not Windows 3.1 pixel-fidelity proof. CLOSE/WEP remain unexecuted.
+
 - The shared [Win16Api](../src/AfterDarker.Core/Win16/Win16Api.cs) now contains
-  the named Windows implementation methods used by both lessons 06 and 08.
+  the named Windows implementation methods used by lessons 06, 08 and 09.
   Per-guest state lives in `Win16ApiState`; import metadata/ABI conversion lives
   in static `Win16Imports`. The implementations have no tutorial, NE loader,
   or emulator dependency. Three additional direct API cases cover independent
@@ -74,12 +86,12 @@ eight educational console lessons (06 needs the optional Watcom fixture;
   date/time services (`INT 21h`, AH=2Ah/2Ch). No files, threads, task waits,
   dialogs, or callbacks were found on that path. Clock seeding, tick-based
   pacing, two host memory records, and static rectangle history are identified.
-  The complete visuals path is still static evidence; tutorial 08 now verifies
-  the initialization portion by execution.
-- The [C# test suite](testing.md) has 138 default passing cases: 104 unit, 23
-  native-engine conformance, and 11 tutorial entry-point checks. With Watcom,
-  12 additional Toolchain cases bring the total to 150; seven optional local
-  Mondrian cases bring the combined total to 157. Public tests use generated NE
+  Tutorials 08 and 09 verify initialization and bounded drawing by execution;
+  shutdown remains static evidence.
+- The [C# test suite](testing.md) has 159 default passing cases: 106 unit, 42
+  engine/raster conformance, and 11 tutorial entry-point checks. With Watcom,
+  12 additional Toolchain cases bring the total to 171; eleven optional local
+  Mondrian cases bring the combined total to 182. Public tests use generated NE
   fixtures and the same guest
   programs as the lessons, with typed observations and independent assertions.
   Temporary omitted-cleanup and wrong-return mutations were rejected. This
@@ -146,12 +158,13 @@ eight educational console lessons (06 needs the optional Watcom fixture;
   overrides, privilege transitions, general pointer translation, and broader
   ABI layouts remain unproven. Two successful host exits/resumes do not establish
   compatibility with arbitrary Win16 guest code.
-- Original execution is limited to the analyzed Mondrian artifact's startup and
-  initialization; drawing, shutdown, other revisions, and other modules remain unproven.
+- Original execution is limited to the analyzed Mondrian artifact's startup,
+  initialization and bounded drawing; shutdown, other revisions, other modules,
+  and historical visual/pacing fidelity remain unproven.
 - Only the observed system/module fields for that path have been supplied and
   consumed. A complete After Dark SDK structure schema remains unrecovered.
-- No GDI import has yet crossed an After Darker gateway into an After
-  Darker-owned render surface.
+- Only the rectangle/black-brush drawing subset is implemented. General DC
+  selections, palettes, text, mapping modes, and resource rendering remain unproven.
 - The permanent engine strategy—WineVDM sidecar, custom in-process runtime, or a
   staged combination—has not been selected.
 
@@ -168,13 +181,13 @@ explicitly.
 
 ## Next planning point
 
-The active branch is `codex/tutorial-08-mondrian-initialize`, created from clean
-main after the owner understood relocation chains. The owner authorized exactly
-the initialization lesson and raised the need for valid backing memory behind
-handles. That lesson now runs original code with checked services and records.
-Walk through [tutorial 08](tutorial-08-mondrian-initialize.md) together before
-adding BLANK/DRAWFRAME and a software surface. Real allocation, additive/OS
-fixups, drawing semantics, and guest shutdown remain separate milestones.
+The active branch is `codex/tutorial-09-mondrian-png-frames`, created from the
+clean, committed tutorial-08 branch. The owner authorized original-code image
+capture after reviewing the shared API implementations. Review the four drawing
+methods and [tutorial 09](tutorial-09-mondrian-frames.md), and open the generated
+local viewer. Bounded original animation is now proven. Guest CLOSE/WEP,
+historical reference comparisons, real-time presentation, other modules, real
+allocation, and remaining relocation modes are separate next decisions.
 Watcom remains [documented for reproduction](watcom-toolchain.md).
 
 The owner requested static analysis to bound the Windows support needed for
@@ -191,6 +204,38 @@ Tutorial 04 implements the narrow host trap; the broader issue is not complete.
 See [the tutorial guide](tutorials.md).
 
 ## Session log
+
+### 2026-09-19 - tutorial 09: original Mondrian PNG capture
+
+- Added four typed shared Win16 API implementations and opt-in drawing bindings.
+  SetRect16/InvertRect16 use void returns; signed RECT16 coordinates and far
+  pointers are decoded explicitly, with named-handle rejection and checked memory.
+- Extracted shared `MondrianRunner` from lesson 08. Lesson 09 continues the same
+  guest and HDC after initialization, calls BLANK then bounded DRAWFRAME, and
+  compares RGB snapshots before counting/saving changed frames. Existing lesson
+  08 remains initialization-only and its tests continue to pass.
+- Added software RGB pixels, HDC registry, stock black brush, and dependency-free
+  PNG writing with .NET zlib. No C# implementation generates Mondrian geometry.
+  Capture uses speed 100, fixed civil time and synthetic ticks. PNGs, report and
+  a local play/step HTML viewer stay in ignored artifacts; no private inputs or
+  output media are tracked.
+- Investigated reversed rectangle corners. A provisional one-pixel adjustment
+  inferred from a Wine helper failed five modern Windows PatBlt comparisons.
+  Corrected to the measured half-open sorted bounds for identity coordinates;
+  ten native-oracle cases now pass. Guest RECT bytes are preserved verbatim.
+  This documents a modern compatibility choice, not historical GDI equivalence.
+- Default original run: 30 changed images in 30 draws; 11,859 instructions;
+  SetRect=31, GetStockObject=1, FillRect=1, InvertRect=30; 66 locks and 66 unlocks.
+  First rectangle `(367,430)-(307,284)` changes 8,760 pixels. Final RGB SHA-256
+  `66D8954D3F8D6BD5BA311662C2D958E91CC614BEA8199C22A689A9791950EE59`.
+- Verified 159 public tests and 182 with both opt-ins. New coverage includes
+  all four drawing ABIs and failures, PNG round-trip scanlines, repeated original
+  30-frame state/hash results, 180-frame original removal, slow timing gates, and
+  intentional capture-budget exhaustion. Independent Python/Pillow inspection
+  validated every saved PNG and matched report hashes; inspected final pixels.
+- Execution budgets now apply per host invocation; cumulative instruction totals
+  remain observable. Overall draw/image/dimension limits bound captures. No
+  historical-first claim, Win3.1 visual equivalence, or CLOSE/WEP proof is made.
 
 ### 2026-09-19 — separate shared Win16 implementations for inspection
 

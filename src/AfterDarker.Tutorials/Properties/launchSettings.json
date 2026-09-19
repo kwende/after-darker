@@ -32,6 +32,10 @@
       "commandName": "Project",
       "commandLineArgs": "07 --step"
     },
+    "Tutorial 09 - capture Mondrian PNG frames": {
+      "commandName": "Project",
+      "commandLineArgs": "09"
+    },
     "Tutorial 08 - initialize local Mondrian": {
       "commandName": "Project",
       "commandLineArgs": "08"

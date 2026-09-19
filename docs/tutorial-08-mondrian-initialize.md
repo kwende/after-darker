@@ -3,7 +3,7 @@
 This lesson runs the original, locally supplied Mondrian module through DLL
 startup, `MODULE(PREINITIALIZE, ...)`, and `MODULE(INITIALIZE, ...)`, then exits.
 The guest reads real memory behind the handles we supply and writes its own
-initial state. We inspect that state and its return frames. Drawing comes later.
+initial state. We inspect that state and its return frames. Tutorial 09 continues into drawing; this lesson still stops here.
 
 ## Run it
 
@@ -31,8 +31,9 @@ and ignored by Git; the test/build process never copies them into output.
 
 ## Reading order and breakpoints
 
-Start at [Tutorial08MondrianInitialize.Execute](../src/AfterDarker.Tutorials/Lessons/Tutorial08MondrianInitialize.cs).
-The lesson deliberately keeps the stages visible:
+Start at [MondrianRunner.Execute](../src/AfterDarker.Tutorials/Runtime/MondrianRunner.cs),
+the execution path shared by tutorials 08 and 09. Tutorial 08 delegates to it
+without a drawing continuation. The stages remain visible:
 
 1. `NeLoadPlan.CreateWithImportResolver`: prepare and relocate segment arrays.
 2. `guest.Map`: copy the prepared arrays into Unicorn and build descriptors.
@@ -85,7 +86,7 @@ The five file segments use selectors `0008` through `0028`. Runtime locations:
 | File S3 | `0018` | `30000` | Compiled runtime helpers |
 | File S4 | `0020` | `40000` | DLL startup |
 | File S5 | `0028` | `50000` | Automatic data plus reserved heap tail |
-| Caller | `0030` | `60000` | Our three tiny far-call programs |
+| Caller | `0030` | `60000` | Tiny far-call programs (08 uses the first three) |
 | Gateway | `0038` | `70000` | Synthetic import addresses; hooks stop before execution |
 | Stack | `0040` | `80000` | Caller-supplied stack, initially SP=`1000` |
 | Host data | `0048` | `90000` | System/module records, empty environment, result slots |
