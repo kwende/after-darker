@@ -121,8 +121,12 @@ public sealed class SegmentedGuest : IGuestMemory16, IDisposable
         installed = true;
     }
 
-    public CpuState RunUntil(string phase, FarPointer16 start, FarPointer16 end)
+    public const int DefaultServiceExitLimit = 128;
+
+    public CpuState RunUntil(string phase, FarPointer16 start, FarPointer16 end,
+        int serviceExitLimit = DefaultServiceExitLimit)
     {
+        if (serviceExitLimit is < 1 or > 1024) throw new ArgumentOutOfRangeException(nameof(serviceExitLimit));
         // Budgets apply to each bounded host invocation. Keeping a lifetime
         // counter is useful diagnostics, but must not kill a healthy animation
         // merely because many completed DRAWFRAME calls preceded this one.
@@ -138,7 +142,7 @@ public sealed class SegmentedGuest : IGuestMemory16, IDisposable
         long resume = start.Offset;
         while (true)
         {
-            if (exits > 128 || executionTime > TimeSpan.FromSeconds(5))
+            if (executionTime > TimeSpan.FromSeconds(5))
                 throw new InvalidOperationException($"{Phase}: service/time budget exhausted.");
             gatewayReached = false;
             interrupt = null;
@@ -155,10 +159,11 @@ public sealed class SegmentedGuest : IGuestMemory16, IDisposable
             }
             finally { executionTime += Stopwatch.GetElapsedTime(began); }
             if (hookError is not null) throw new InvalidOperationException($"{Phase} at {Snapshot().Pc}: {hookError.Message}", hookError);
+            if ((interrupt is not null || gatewayReached) && ++exits > serviceExitLimit)
+                throw new InvalidOperationException($"{Phase}: service budget ({serviceExitLimit}) exhausted.");
 
             if (interrupt is int number)
             {
-                exits++;
                 CpuState atHook = Snapshot();
                 CpuState before = beforeSoftwareInterrupt ?? throw new InvalidOperationException(
                     $"{Phase}: CPU exception/unsupported interrupt {number:X2} at {atHook.Pc}.");
@@ -177,7 +182,6 @@ public sealed class SegmentedGuest : IGuestMemory16, IDisposable
             }
             else if (gatewayReached)
             {
-                exits++;
                 (DispatchGateway ?? throw new NotSupportedException("No import handler installed."))();
             }
             else

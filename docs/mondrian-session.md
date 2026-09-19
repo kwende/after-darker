@@ -1,6 +1,6 @@
 # Mondrian session: explicit guest lifetime
 
-Steps 1 and 2 of the live-window work give one `MondrianSession` a loaded
+The live-window work gives one `MondrianSession` a loaded
 Unicorn guest, its memory, service state, and optional software surface. The
 host chooses when to call it and when to dispose it. No continuation callback
 is needed to keep the native engine alive.
@@ -22,6 +22,7 @@ session.CopyPixelsTo(rgb);
 // C# has control here. Registers, guest memory and the surface remain alive.
 var second = session.DrawFrame();
 session.CopyPixelsTo(rgb); // Same host array, newly completed image.
+session.Shutdown(); // Original CLOSE, then WEP(1); optional for bounded lessons.
 var evidence = session.GetResult();
 // Leaving the using scope releases the native engine.
 ```
@@ -40,6 +41,8 @@ after `Initialize`, so it still performs exactly three phases and eleven imports
 constructor → Loaded → Initialize → Initialized → Blank → Ready
                                                          ↑     |
                                                          └ DrawFrame
+
+Ready → Shutdown (CLOSE, WEP) → Closed
 
 failure during a guest call → Faulted → Dispose → Disposed
 any live state             → Dispose → Disposed
@@ -119,7 +122,7 @@ the host's memory.
 exactly that size and checks the session state before copying. It allocates no
 new frame array and never exposes the surface's mutable internal buffer. The
 host must finish consuming a buffer before overwriting it with another copy.
-No cross-thread ownership scheme is introduced until step 4.
+The WPF host adds a separate latest-frame mailbox for cross-thread transfer.
 
 Tutorial 09 now allocates two arrays, **previous** and **current**, once:
 
@@ -179,3 +182,30 @@ Defaults and tutorials still use deterministic stepping, preserving their hashes
 if a frame takes longer than its interval. TimeProvider makes both behaviors
 controllable in tests. This is a modern host pacing policy, not a historical
 performance reconstruction.
+
+## Explicit shutdown (step 5)
+
+`Shutdown` accepts a Ready drawing session and is idempotent after success.
+It executes CLOSE and WEP with separate prebuilt far-call callers, checks their
+stack/register returns and locks, and enters Closed. Pixel snapshots and results
+remain readable until disposal; further drawing is rejected. Loaded or merely
+Initialized sessions have not entered this drawing lifecycle and reject Shutdown.
+
+`Dispose` always releases native resources and never runs guest code. This
+separation lets bounded lessons keep their existing boundaries and makes fault
+cleanup safe: a Faulted guest cannot run CLOSE from an incomplete call frame.
+The live worker explicitly calls Shutdown only after the active draw returns;
+exceptions bypass guest cleanup but still leave through its using scope.
+
+Original CLOSE can invert up to 200 saved rectangles. Its explicit 208-service
+budget accommodates that loop plus three blanking and four lock/unlock services.
+The generic runner still rejects excess dispatches, with a synthetic 200-service
+probe testing both refusal under the default 128 and success under an explicit
+larger limit. WEP uses one argument and RETF 2; MODULE uses three and RETF 6.
+
+Private tests cover empty, 30-draw and 300-draw cleanup, clearing enabled/disabled,
+WEP success, preserved caller stack/DS/BP, zero locks, exactly-once shutdown,
+refusal after faults, failure within CLOSE, and three sequential playback runs.
+CLOSE leaves the stored rectangle count unchanged. With clearing enabled it
+reconstructs the picture after clearing; without clearing it removes it by XOR.
+Those are observed results of the original code, not a host cleanup substitute.

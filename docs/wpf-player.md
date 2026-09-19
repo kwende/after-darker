@@ -67,5 +67,36 @@ saves `frame.png`, a rendering of the window's own content (`window.png`), and
 failure. This proves actual WPF presentation of original-code output; it does
 not establish Windows 3.1 visual fidelity or indefinite endurance.
 
-Step 4 stops between bounded guest invocations and releases the native engine.
-Original CLOSE/WEP and shutdown acceptance checks follow in step 5.
+## Stop, close and restart
+
+Stop cancels the host loop and pacing wait. An in-flight guest call is allowed
+to finish under its existing instruction and time budgets. The worker then
+calls original MODULE(CLOSE), followed by WEP(1), verifies their return frames
+and balanced locks, and releases Unicorn. Closing the window awaits that same
+worker asynchronously; the dispatcher remains free to process events. Run
+creates fresh guest memory, timing, handles and pixels each time.
+
+Cancellation is deliberately observed between guest calls. Interrupting a call
+halfway through would leave its stack unsuitable for another CALL FAR to CLOSE.
+If execution or cleanup fails, no further guest calls are attempted, and the
+native engine is still disposed. The UI shows the symbolic failure. Cleanup
+ignores the cancelled pacing token but retains bounded native execution: 50,000
+instructions per invocation, one-second native slices and a five-second
+cumulative native execution budget. These are cooperative runtime safeguards,
+not an out-of-process watchdog for a defective native library.
+
+CLOSE uses the existing MODULE ABI (three WORD arguments, RETF 6). WEP is a
+separate export with one WORD argument and RETF 2; its AX=1 is verified. CLOSE
+may service 200 saved rectangles plus blanking and locks, so its service budget
+is explicitly 208; other calls retain 128. No new import implementation is added.
+With the current system record, CLOSE optionally clears then inverts the saved
+rectangles; it does not necessarily leave black pixels. The UI retains the last
+presented frame after Stop. Console lessons still end at their original boundary
+and dispose without running CLOSE/WEP.
+
+The acceptance run also stops, verifies CLOSE/WEP, starts a fresh session,
+presents three more images, and closes the real window while that guest is
+active. Both shutdowns must complete, WEP must return one, and no global locks
+may remain. A 30-second initial-presentation timeout and bounded restart/close
+waits make acceptance failures diagnosable. This is a bounded lifecycle proof,
+not a multi-hour endurance test.

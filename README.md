@@ -53,7 +53,7 @@ for controls, command-line launch and the original-code execution boundary.
 
 ## Status
 
-The repository is in its bootstrap phase. Its C# tutorials run real-mode
+The repository now runs original Mondrian in a live WPF window. Its C# tutorials run real-mode
 addition and near calls, a 16-bit protected-mode `CALL FAR`/`RETF` round trip,
 and a synthetic C# host gateway with stop, dispatch, and guest resume in Unicorn.
 Tutorial 05 reads Windows NE files into typed C# metadata and reports their
@@ -92,7 +92,8 @@ See:
 - [Run the automated tests](docs/testing.md)
 - [Reproduce the pinned Watcom Win16 toolchain](docs/watcom-toolchain.md)
 
-Open `AfterDarker.sln` in Visual Studio with .NET 10 support and press **F5**.
+For lessons, open `AfterDarker.sln` in Visual Studio with .NET 10 support,
+select **AfterDarker.Tutorials** as the startup project, and press **F5**.
 The single console project runs tutorial 01 by default and exits after printing
 `AX = 12 (0x000C)`. The first build restores its dependencies automatically.
 See the tutorial guide for prerequisites and the Windows compatibility setting.

@@ -10,6 +10,25 @@ namespace AfterDarker.Tests.Conformance;
 public sealed class DosInterruptTests
 {
     [TestMethod]
+    public void LargerCleanupServiceBudgetIsExplicitAndStillBoundsDispatch()
+    {
+        // 200 independent INTs stand in for a cleanup loop's 200 host services.
+        // This tests the generic execution budget without a copyrighted input.
+        byte[] code = Enumerable.Range(0, 200).SelectMany(_ => new byte[] { 0xCD, 0x21 }).Append((byte)0x90).ToArray();
+        foreach (int limit in new[] { 128, 200 })
+        {
+            using var guest = new SegmentedGuest();
+            guest.Map(8, 0x10000, code, true); guest.Install(16);
+            int dispatched = 0;
+            guest.DispatchInterrupt = _ => dispatched++;
+            if (limit == 128)
+                Assert.Throws<InvalidOperationException>(() => guest.RunUntil("cleanup", new(8, 0), new(8, 400), limit));
+            else guest.RunUntil("cleanup", new(8, 0), new(8, 400), limit);
+            Assert.AreEqual(limit, dispatched);
+        }
+    }
+
+    [TestMethod]
     public void ProtectedModeInterruptStopsAfterIntWithoutFrameAndResumesGuestStores()
     {
         using var guest = new SegmentedGuest();

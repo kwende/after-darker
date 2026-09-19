@@ -35,6 +35,12 @@ public static class MondrianPlayback
             }
         }
         catch (OperationCanceledException) when (stop.IsCancellationRequested) { }
+        // Cancellation belongs to the host loop/pacer. We deliberately let an
+        // active bounded guest call return, so SS:SP is safe for CLOSE and WEP.
+        // An execution failure bypasses this code; using still releases Unicorn.
+        // Cleanup ignores the already-cancelled pacing token and has its own
+        // per-invocation instruction/service/time budgets.
+        session.Shutdown();
         return session.GetResult();
     });
 }

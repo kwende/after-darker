@@ -24,6 +24,8 @@ public partial class MainWindow : Window
     private CancellationTokenSource? stop;
     private Task<MondrianSession.Result>? running;
     private MondrianSession.Result? lastResult;
+    private Exception? runError;
+    private readonly TaskCompletionSource windowClosed = new(TaskCreationOptions.RunContinuationsAsynchronously);
     private bool closeAllowed, closing, smokeFinishing;
     private readonly string? smokeDirectory;
     private int presented;
@@ -40,11 +42,12 @@ public partial class MainWindow : Window
         {
             ModulePath.Text = module;
             smokeDirectory = Path.GetFullPath(destination);
+            Application.Current.ShutdownMode = ShutdownMode.OnExplicitShutdown;
         }
         else ModulePath.Text = args.Length == 1 ? args[0] : FindLocalModule();
         presenter.Tick += Present;
         Closing += OnClosing;
-        Closed += (_, _) => presenter.Stop();
+        Closed += (_, _) => { presenter.Stop(); windowClosed.TrySetResult(); };
         Loaded += async (_, _) =>
         {
             if (smokeDirectory is not null) _ = WatchSmokeTimeoutAsync();
@@ -65,7 +68,7 @@ public partial class MainWindow : Window
         if (running is not null) return;
         stop = new CancellationTokenSource();
         mailbox = new(display.Length);
-        presented = 0; latest = null; lastResult = null;
+        presented = 0; latest = null; lastResult = null; runError = null;
         Array.Clear(display);
         bitmap.WritePixels(new Int32Rect(0, 0, PixelWidth, PixelHeight), display, Stride, 0, 0);
         SetBusy(true);
@@ -77,11 +80,12 @@ public partial class MainWindow : Window
         try
         {
             lastResult = await running;
-            Status.Text = $"Stopped. {latest?.ChangedFrames ?? 0:N0} image changes; native guest released.";
+            Status.Text = $"Stopped. {latest?.ChangedFrames ?? 0:N0} image changes; CLOSE / WEP returned; native guest released.";
         }
         catch (OperationCanceledException) { Status.Text = "Stopped."; }
         catch (Exception error)
         {
+            runError = error;
             Status.Text = $"Unable to run: {error.Message}";
             if (smokeDirectory is not null) await FinishSmokeAsync(error);
         }
@@ -97,10 +101,13 @@ public partial class MainWindow : Window
     private static async Task<MondrianSession.Result> LoadAndRunAsync(string path, MondrianInitialization.Options options,
         LatestFrameMailbox frames, CancellationToken cancellationToken)
     {
-        using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, useAsync: true);
-        if (stream.Length > NeReader.MaximumFileBytes) throw new InvalidDataException("Module exceeds the NE input limit.");
-        byte[] file = new byte[(int)stream.Length];
-        await stream.ReadExactlyAsync(file, cancellationToken);
+        byte[] file;
+        using (var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, useAsync: true))
+        {
+            if (stream.Length > NeReader.MaximumFileBytes) throw new InvalidDataException("Module exceeds the NE input limit.");
+            file = new byte[(int)stream.Length];
+            await stream.ReadExactlyAsync(file, cancellationToken);
+        }
         return await MondrianPlayback.RunAsync(file, options, frames, cancellationToken);
     }
 
@@ -111,7 +118,11 @@ public partial class MainWindow : Window
         if (task is null) return;
         StopButton.IsEnabled = false;
         Status.Text = "Stopping…";
-        try { lastResult = await task; }
+        try
+        {
+            lastResult = await task;
+            Status.Text = "Stopped. CLOSE / WEP returned; native guest released.";
+        }
         catch { /* StartAsync displays the error. Closing must still release the window. */ }
     }
 
@@ -122,7 +133,7 @@ public partial class MainWindow : Window
         if (mailbox is null || !mailbox.TryCopyTo(display, out var frame)) return;
         bitmap.WritePixels(new Int32Rect(0, 0, PixelWidth, PixelHeight), display, Stride, 0, 0);
         latest = frame;
-        presented++;
+        if (presented < int.MaxValue) presented++;
         Status.Text = $"Running · 640 × 480 · {frame!.ChangedFrames:N0} image changes · {frame.DrawCalls:N0} guest calls · {frame.Rectangles} rectangles";
         if (smokeDirectory is not null && presented >= 30 && frame.ChangedFrames > 0) _ = FinishSmokeAsync(null);
     }
@@ -164,6 +175,9 @@ public partial class MainWindow : Window
         if (smokeFinishing) return;
         smokeFinishing = true;
         presenter.Stop();
+        int firstPresented = presented;
+        FrameInfo? firstFrame = latest;
+        string firstHash = Convert.ToHexString(SHA256.HashData(display));
         try
         {
             Directory.CreateDirectory(smokeDirectory!);
@@ -189,10 +203,32 @@ public partial class MainWindow : Window
                 SavePng(visual, "window.png");
             }
             await StopAsync();
+            if (error is null)
+            {
+                VerifyShutdown();
+                // Let the original StartAsync finish its UI cleanup before
+                // exercising Run again, just as the enabled Run button does.
+                await Dispatcher.Yield(DispatcherPriority.Background);
+                if (running is not null || !RunButton.IsEnabled)
+                    throw new InvalidOperationException("Stop did not return the window to its runnable state.");
+                _ = StartAsync();
+                using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+                while (presented < 3)
+                {
+                    if (runError is not null) throw new InvalidOperationException("Restart failed.", runError);
+                    await Task.Delay(10, deadline.Token);
+                }
+                if (running is null) throw new InvalidOperationException("Restart did not retain a running guest.");
+                Close(); // exercise the actual Closing handler while playback is active
+                await windowClosed.Task.WaitAsync(TimeSpan.FromSeconds(10));
+                VerifyShutdown();
+            }
             File.WriteAllText(Path.Combine(smokeDirectory!, "report.json"), JsonSerializer.Serialize(new
             {
                 Status = error is null ? "passed" : "failed", Error = error?.Message,
-                Presented = presented, Frame = latest, RgbSha256 = Convert.ToHexString(SHA256.HashData(display)),
+                Presented = firstPresented, Frame = firstFrame, RgbSha256 = firstHash,
+                RestartPresented = presented, ClosedWhilePlaying = windowClosed.Task.IsCompletedSuccessfully,
+                ShutdownPhases = lastResult?.Phases.TakeLast(2).Select(p => new { p.Name, p.StoredAx, p.Registers.Sp, p.Registers.Ds }),
                 Instructions = lastResult?.Instructions, OutstandingLocks = lastResult?.OutstandingLocks,
                 UiThread = Environment.CurrentManagedThreadId
             }, new JsonSerializerOptions { WriteIndented = true }));
@@ -212,6 +248,13 @@ public partial class MainWindow : Window
         {
             var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(source));
             using var stream = File.Create(Path.Combine(smokeDirectory!, name)); encoder.Save(stream);
+        }
+        void VerifyShutdown()
+        {
+            if (runError is not null) throw new InvalidOperationException("Playback failed during shutdown.", runError);
+            if (lastResult is null || lastResult.Phases.Count < 2 || lastResult.Phases[^2].Name != "CLOSE" ||
+                lastResult.Phases[^1].Name != "WEP" || lastResult.Phases[^1].StoredAx != 1 || lastResult.OutstandingLocks != 0)
+                throw new InvalidOperationException("Original guest shutdown did not complete with WEP success and balanced locks.");
         }
     }
 }

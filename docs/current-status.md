@@ -22,6 +22,22 @@ nine educational console lessons (06 needs the optional Watcom fixture;
 
 ## Established evidence
 
+- The live WPF player now executes the analyzed original Mondrian continuously
+  with elapsed-time pacing, bounded diagnostics and latest-frame presentation.
+  The actual-window acceptance run read back exact published RGB bytes after
+  30 presentations, stopped, restarted, presented again and closed while playing.
+  Both sessions returned from original CLOSE and WEP (AX=1), restored SP=1000
+  and caller DS=0048, and ended with zero global locks before engine disposal.
+  This is bounded runtime evidence, not indefinite endurance or historical fidelity.
+- Step 5 adds explicit, idempotent Shutdown on healthy Ready sessions. Faults
+  prohibit more guest calls; Dispose still releases the engine without executing
+  guest code. CLOSE's 208-service budget accommodates 200 rectangle inversions,
+  blanking and locks; other calls retain 128. Tests cover empty/30/300-draw
+  shutdown, both clearing settings, failure within CLOSE, and restart/cancellation.
+  CLOSE leaves the rectangle count unchanged; optional clear followed by XOR
+  replay explains why shutdown need not leave a black image. No new Win16 API
+  is added. Tutorial captures retain their existing deterministic outputs.
+
 - WPF step 4 adds the F5-runnable live window, serialized background playback,
   a single pending-frame mailbox and dispatcher-owned WriteableBitmap. Actual
   WPF acceptance presented 30 images, verified exact bitmap RGB readback and
@@ -55,7 +71,7 @@ nine educational console lessons (06 needs the optional Watcom fixture;
   original rectangle removal and exceeded 50,000 lifetime instructions.
   PNGs passed independent CRC/zlib and Pillow checks and visual inspection.
   Negative rectangle extents match measured modern Windows PatBlt behavior;
-  this is not Windows 3.1 pixel-fidelity proof. CLOSE/WEP remain unexecuted.
+  this is not Windows 3.1 pixel-fidelity proof. That bounded tutorial does not invoke CLOSE/WEP; the live host now does.
 
 - The shared [Win16Api](../src/AfterDarker.Core/Win16/Win16Api.cs) now contains
   the named Windows implementation methods used by lessons 06, 08 and 09.
@@ -111,11 +127,11 @@ nine educational console lessons (06 needs the optional Watcom fixture;
   dialogs, or callbacks were found on that path. Clock seeding, tick-based
   pacing, two host memory records, and static rectangle history are identified.
   Tutorials 08 and 09 verify initialization and bounded drawing by execution;
-  shutdown remains static evidence.
-- The [C# test suite](testing.md) has 169 default passing cases: 115 unit, 43
-  engine/raster conformance, and 11 tutorial entry-point checks. With Watcom,
-  12 additional Toolchain cases bring the total to 181; twenty-five optional local
-  Mondrian cases bring the combined total to 206. Public tests use generated NE
+  shutdown is now also verified by the live-host and session tests.
+- The [C# test suite](testing.md) has 176 default passing cases: 121 unit, 44
+  engine/raster conformance, and 11 tutorial checks. Twelve optional Watcom
+  cases and 34 local Mondrian cases bring the combined total to 222.
+  Public tests use generated NE
   fixtures and the same guest
   programs as the lessons, with typed observations and independent assertions.
   Temporary omitted-cleanup and wrong-return mutations were rejected. This
@@ -183,7 +199,7 @@ nine educational console lessons (06 needs the optional Watcom fixture;
   ABI layouts remain unproven. Two successful host exits/resumes do not establish
   compatibility with arbitrary Win16 guest code.
 - Original execution is limited to the analyzed Mondrian artifact's startup,
-  initialization and bounded drawing; shutdown, other revisions, other modules,
+  initialization, drawing and shutdown; other revisions, other modules,
   and historical visual/pacing fidelity remain unproven.
 - Only the observed system/module fields for that path have been supplied and
   consumed. A complete After Dark SDK structure schema remains unrecovered.
@@ -205,29 +221,41 @@ explicitly.
 
 ## Next planning point
 
-The active branch is `codex/mondrian-wpf-session`, created from clean main after
-the frame-capture work was merged. The owner wants the five live-window steps
-implemented as separate commits, with code review before EACH commit and before
-starting the next step. Step 1 was committed by the owner. Step 2 is implemented and awaiting review,
-uncommitted: [bounded diagnostics and reusable buffers](mondrian-session.md).
-Steps 3-5 remain pending: live clock/pacing, WPF/worker presentation, and orderly
-cancellation plus original CLOSE/WEP. No WPF host is implemented yet.
+The active branch is `codex/mondrian-wpf-session`. All five planned steps are
+implemented as separate commits: reusable session, bounded history/buffers,
+live timing/pacing, WPF presentation, and orderly shutdown. The owner approved
+committing step 2 and finishing steps 3-5 without further review pauses.
+The next action is the owner's F5 run of **AfterDarker.Wpf**, then normal branch
+review/merge. The [player guide](wpf-player.md) records launch and proof boundaries.
+No multi-hour endurance run or historical timing comparison has been performed.
 Watcom remains [documented for reproduction](watcom-toolchain.md).
 
-The owner requested static analysis to bound the Windows support needed for
-one original screensaver's visuals. Mondrian is the current first candidate;
-fixed host-supplied options are sufficient for the proposed scope, without
-options dialogs or settings persistence. The owner authorized the typed NE
-inspection tutorial and accompanying tests. Review tutorial 05's parsed values
-and contract-based call plan together before implementing the loader/services.
-The owner wants F5-able
-C# lessons in one console app, with separate implementation classes invoked
-through `ITutorial`. Understanding and explicit readiness govern progression.
+The project keeps one F5-able console app, with separate tutorial classes
+invoked through `ITutorial`, alongside the live WPF host. Future expansion
+remains module-driven and educational; settings dialogs, general Windows APIs
+and additional modules are outside this completed step.
 Issue #1 tracks the broader protected-mode and host-gateway experiments.
 Tutorial 04 implements the narrow host trap; the broader issue is not complete.
 See [the tutorial guide](tutorials.md).
 
 ## Session log
+
+### 2026-09-19 - WPF steps 4 and 5: actual window and original shutdown
+
+- Step 4 committed the WPF host and single-frame transfer as 9f80f16. No guest
+  state is touched from the UI; one sequential background task owns Unicorn.
+- Step 5 executes original MODULE(CLOSE) and WEP(1) before native disposal on
+  healthy Stop/close, and rejects guest cleanup after a fault. Stop cancels the
+  host loop/pacer, allowing an in-flight bounded invocation to return first.
+- Actual WPF smoke artifacts in ignored artifacts/wpf-smoke/step5 show 30 first
+  presentations, exact WriteableBitmap readback, three presentations after Run
+  again, and Closing while active. Both runs completed original shutdown; the
+  last WEP returned AX=1, SP=1000, DS=0048 with zero locks. The window content
+  rendering was visually inspected. These are local proprietary-output artifacts.
+- Public and optional suites pass together (222 cases). Original default frame
+  hashes remain asserted, and the console lessons retain their stopping points.
+  Invalid-input WPF acceptance also failed promptly with the expected hash diagnostic
+  and exit 1. No private inputs or generated images are staged.
 
 ### 2026-09-19 - WPF step 3: live timing and pacing
 

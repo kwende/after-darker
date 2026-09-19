@@ -471,4 +471,6 @@ The guest renders into its software surface; a one-frame mailbox copies only
 the latest changed image to the UI, which alone touches WriteableBitmap.
 No guest pointer or native handle crosses into WPF. Live pacing uses elapsed
 time while educational captures preserve their deterministic clock.
-
+The worker cancels at call boundaries, invokes original CLOSE and WEP from a
+healthy stack, then disposes the engine. Faults bypass guest cleanup; native
+resources are still released. UI close asynchronously awaits that worker.

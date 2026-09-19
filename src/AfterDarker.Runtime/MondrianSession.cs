@@ -11,9 +11,9 @@ namespace AfterDarker.Runtime;
 
 /// <summary>
 /// One loaded Mondrian guest and its optional drawing surface. Hosts explicitly
-/// initialize, blank, draw, inspect and dispose it. No callback keeps it alive.
+/// initialize, blank, draw, inspect, shut down and dispose it. No callback keeps it alive.
 /// Use from one owner sequentially; this class does not schedule or synchronize
-/// callers. The same execution path serves tutorials and a future window host.
+/// callers. The same execution path serves tutorials and the WPF host.
 /// </summary>
 public sealed class MondrianSession : IDisposable
 {
@@ -27,8 +27,13 @@ public sealed class MondrianSession : IDisposable
     private const int WordBytes = sizeof(ushort), FarReturnBytes = 2 * WordBytes;
     public static readonly DateTime CivilTime = new(1993, 6, 15, 12, 34, 56, DateTimeKind.Unspecified);
 
-    public const ushort BlankMessage = 1, DrawFrameMessage = 2;
+    public const ushort BlankMessage = 1, DrawFrameMessage = 2, CloseMessage = 3;
     private const ushort BlankCaller = 0x300, DrawCaller = 0x400, DrawingResult = 0x26;
+    private const ushort CloseCaller = 0x500, WepCaller = 0x600, CloseResult = 0x28, WepResult = 0x2A;
+    private const ushort WepSystemExit = 1;
+    // CLOSE can invert all 200 saved rectangles, plus three blanking services
+    // and four lock/unlock calls. Ordinary invocations keep the smaller budget.
+    private const int CloseServiceExitLimit = 208;
 
     public sealed record HostCall(string Phase, Win16Imports.ImportEntry Binding, IReadOnlyList<ushort> Arguments,
         uint Returned, SegmentedGuest.CpuState Before, SegmentedGuest.CpuState After);
@@ -46,7 +51,7 @@ public sealed class MondrianSession : IDisposable
     private readonly MondrianInitialization.Options options;
     private readonly NeLoadPlan plan;
     private readonly PreparedNeSegment data;
-    private readonly ushort dllData, startupEnd, preinitializeEnd, initializeEnd, blankEnd, drawEnd;
+    private readonly ushort dllData, startupEnd, preinitializeEnd, initializeEnd, blankEnd, drawEnd, closeEnd, wepEnd;
     private readonly IReadOnlyList<Win16Imports.ImportEntry> bindings;
     private readonly MondrianInitialization.State beforeExecution;
     private readonly Win16Api services;
@@ -59,7 +64,7 @@ public sealed class MondrianSession : IDisposable
     // Keys come only from the fixed import registry; this cannot grow per frame.
     private readonly Dictionary<string, long> importCalls = [];
 
-    public enum SessionState { Loaded, Initialized, Ready, Faulted, Disposed }
+    public enum SessionState { Loaded, Initialized, Ready, Closed, Faulted, Disposed }
     public SessionState State { get; private set; } = SessionState.Loaded;
 
     /// <summary>Prepare/map a module without executing it. The caller owns this session with using.</summary>
@@ -151,6 +156,9 @@ public sealed class MondrianSession : IDisposable
             // Unicorn may cache decoded code. Every invocation uses a real CALL FAR.
             blankEnd = WriteCaller(callerBytes, BlankCaller, module, DrawingResult, BlankMessage);
             drawEnd = WriteCaller(callerBytes, DrawCaller, module, DrawingResult, DrawFrameMessage);
+            closeEnd = WriteCaller(callerBytes, CloseCaller, module, CloseResult, CloseMessage);
+            FarPointer16 wep = plan.ResolveCode(image.FindExport("WEP")!.Address!.Value);
+            wepEnd = WriteCaller(callerBytes, WepCaller, wep, WepResult, null, WepSystemExit);
             guest.Map(Caller, CallerBase, callerBytes, code: true);
             guest.Install(Gateway);
 
@@ -246,11 +254,34 @@ public sealed class MondrianSession : IDisposable
         return RunDrawingPhase("DRAWFRAME", DrawCaller, drawEnd);
     }
 
+    /// <summary>
+    /// End a healthy drawing lifecycle: MODULE(CLOSE) then WEP(1), both real
+    /// far calls. Stop at a call boundary first; a faulted guest cannot safely
+    /// run cleanup code. Idempotent after success. Dispose remains host-only.
+    /// </summary>
+    public void Shutdown()
+    {
+        if (State == SessionState.Closed) return;
+        RequireState(SessionState.Ready);
+        try
+        {
+            RunPhase("CLOSE", CloseCaller, closeEnd, CloseResult, HostData, CloseServiceExitLimit);
+            PhaseResult wep = RunPhase("WEP", WepCaller, wepEnd, WepResult, HostData);
+            if (wep.StoredAx != 1) throw new InvalidOperationException("Mondrian WEP did not return success.");
+            State = SessionState.Closed;
+        }
+        catch
+        {
+            State = SessionState.Faulted;
+            throw;
+        }
+    }
+
     /// <summary>Return a detached RGB snapshot; later guest calls cannot change this array.</summary>
     public byte[] CopyPixels()
     {
         RequireDrawing();
-        RequireState(SessionState.Ready);
+        RequireState(SessionState.Ready, SessionState.Closed);
         return surface!.CopyRgb();
     }
 
@@ -267,7 +298,7 @@ public sealed class MondrianSession : IDisposable
     public void CopyPixelsTo(Span<byte> destination)
     {
         RequireDrawing();
-        RequireState(SessionState.Ready);
+        RequireState(SessionState.Ready, SessionState.Closed);
         surface!.CopyRgbTo(destination);
     }
 
@@ -284,7 +315,7 @@ public sealed class MondrianSession : IDisposable
     /// <summary>Snapshot diagnostics before disposal. Later calls do not append to this result's lists.</summary>
     public Result GetResult()
     {
-        RequireState(SessionState.Initialized, SessionState.Ready);
+        RequireState(SessionState.Initialized, SessionState.Ready, SessionState.Closed);
         return new(plan, beforeExecution, phases.Snapshot(), calls.Snapshot(),
             guest.Interrupts, services.State.InitializedHeap!,
             services.State.Blocks.OutstandingLocks, guest.Instructions, (guest.Get(X86.UC_X86_REG_CR0) & 1) != 0,
@@ -307,12 +338,12 @@ public sealed class MondrianSession : IDisposable
         }
     }
 
-    private void RequireState(SessionState allowed, SessionState? alternative = null)
+    private void RequireState(SessionState allowed, SessionState? alternative = null, SessionState? third = null)
     {
         ObjectDisposedException.ThrowIf(State == SessionState.Disposed, this);
-        if (State != allowed && State != alternative)
+        if (State != allowed && State != alternative && State != third)
             throw new InvalidOperationException($"Mondrian session is {State}; expected {allowed}" +
-                (alternative is null ? "." : $" or {alternative}."));
+                (alternative is null ? "" : $" or {alternative}") + (third is null ? "" : $" or {third}") + ".");
     }
 
     private void RequireDrawing()
@@ -322,8 +353,8 @@ public sealed class MondrianSession : IDisposable
     }
 
     /// <summary>
-    /// Release native resources once. This step does not execute CLOSE/WEP;
-    /// guest shutdown and cancellation will be implemented separately.
+    /// Release native resources once, even after a fault. Does not execute guest
+    /// code. Live hosts explicitly Shutdown first; bounded lessons may just Dispose.
     /// </summary>
     public void Dispose()
     {
@@ -332,9 +363,10 @@ public sealed class MondrianSession : IDisposable
         guest.Dispose();
     }
 
-    private PhaseResult RunPhase(string name, ushort begin, ushort end, ushort resultOffset, ushort expectedDs)
+    private PhaseResult RunPhase(string name, ushort begin, ushort end, ushort resultOffset, ushort expectedDs,
+        int serviceExitLimit = SegmentedGuest.DefaultServiceExitLimit)
     {
-        var returned = guest.RunUntil(name, new(Caller, begin), new(Caller, end));
+        var returned = guest.RunUntil(name, new(Caller, begin), new(Caller, end), serviceExitLimit);
         ushort stored = BinaryPrimitives.ReadUInt16LittleEndian(guest.Read(new(HostData, resultOffset), 2));
         if (returned.Ss != Stack || returned.Sp != InitialSp || returned.Bp != 0 || returned.Ds != expectedDs || stored != returned.Ax)
             throw new InvalidOperationException($"{name}: unbalanced stack, changed caller DS, or mismatched guest store: {returned}.");
@@ -357,13 +389,17 @@ public sealed class MondrianSession : IDisposable
             output.WriteLine($"   {call.Phase}: {call.Binding.Name}({string.Join(",", call.Arguments.Select(a => a.ToString("X4")))}) -> {call.Returned:X8}; RETF {call.Binding.ArgumentBytes}, resume {call.After.Pc}");
     }
 
-    private static ushort WriteCaller(byte[] callerBytes, ushort begin, FarPointer16 target, ushort resultOffset, ushort? message)
+    private static ushort WriteCaller(byte[] callerBytes, ushort begin, FarPointer16 target, ushort resultOffset,
+        ushort? message, ushort? wepReason = null)
     {
         var code = new List<byte>();
         if (message is ushort value)
         {
             Push(value); Push(MondrianInitialization.ReservedHdc); Push(MondrianInitialization.SystemHandle);
         }
+        // WEP has its own ABI: one WORD reason, removed by the DLL's RETF 2.
+        // MODULE instead removes three WORD arguments with RETF 6.
+        if (wepReason is ushort reason) Push(reason);
         code.Add(0x9A); Word(target.Offset); Word(target.Selector); // CALL FAR immediate
         code.AddRange([0x50, 0xB8]); Word(HostData); // PUSH AX; MOV AX,HostData
         code.AddRange([0x8E, 0xC0, 0x58]); // MOV ES,AX; POP AX (preserve returned value)
