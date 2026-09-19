@@ -55,10 +55,14 @@ entry points, imports, resources, and an assumed After Dark invocation plan.
 [Tutorial 06](docs/tutorial-06-load-library.md) now loads the source-built
 Hello42 Win16 DLL, executes its startup through two limited host responses,
 calls its export, and observes the guest store 42. This is a narrow loader
-experiment; there is no After Dark runtime, general Win16 API layer, or renderer.
+experiment; there is no general Win16 API layer or renderer.
 [Tutorial 07](docs/tutorial-07-relocations.md) adds an interactive relocation
 walkthrough: internal targets, entry ordinals, selector/offset/far-pointer
 patches, and source chains. It prepares a local module without executing it.
+[Tutorial 08](docs/tutorial-08-mondrian-initialize.md) executes original Mondrian
+DLL startup, PREINITIALIZE, and INITIALIZE with checked guest records/handles,
+five narrow Win16 services, and deterministic DOS date/time responses. It verifies
+the guest's initialized state and stops before drawing.
 
 Prior research has established the After Dark lifecycle, inspected several
 real modules, and recovered enough behavior from Spiral Gyra and Stained Glass
@@ -104,6 +108,17 @@ Select **Tutorial 07 - relocation walkthrough** for a built-in example that
 pauses after every patch, or **Tutorial 07 - local NE relocations** to supply
 your own module path. The built-in example needs neither Watcom nor private
 files. See [the relocation guide](docs/tutorial-07-relocations.md).
+
+Select **Tutorial 08 - initialize local Mondrian** to supply your module path
+and run original initialization, or **Tutorial 08 - initialization trace** to
+see instructions. The [initialization guide](docs/tutorial-08-mondrian-initialize.md)
+explains records, handles, registers, interrupt resume, and the exact supported
+artifact. No Watcom build is needed for this lesson.
+
+To read just the Windows service implementations, open
+[Win16Api.cs](src/AfterDarker.Core/Win16/Win16Api.cs). Tutorials 06 and 08 share
+these named C# methods. Import binding and register/stack handling live elsewhere;
+each guest has its own service state. See [the implementation guide](docs/win16-implementations.md).
 
 Run `dotnet test` from the repository root for the C# test suite. The solution
 contains a small shared `AfterDarker.Core` library, the educational console app,

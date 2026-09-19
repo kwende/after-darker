@@ -17,6 +17,10 @@
   <ItemGroup Condition="'$(BuildWin16Fixture)' != 'true'">
     <Compile Remove="Toolchain/**/*.cs" />
   </ItemGroup>
+  <!-- Private inputs stay outside test output and are never copied/redistributed. -->
+  <ItemGroup Condition="'$(TestLocalMondrian)' != 'true'">
+    <Compile Remove="LocalModule/**/*.cs" />
+  </ItemGroup>
   <ItemGroup Condition="'$(BuildWin16Fixture)' == 'true'">
     <None Include="../../artifacts/win16/hello42/hello42.dll" Link="Fixtures/hello42.dll" CopyToOutputDirectory="Always" />
   </ItemGroup>
