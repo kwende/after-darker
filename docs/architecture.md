@@ -527,6 +527,22 @@ The worker cancels at call boundaries, invokes original CLOSE and WEP from a
 healthy stack, then disposes the engine. Faults bypass guest cleanup; native
 resources are still released. UI close asynchronously awaits that worker.
 
+## Ocuvera Toasters as a package consumer
+
+The owner's intended downstream host is the randomized WPF screensaver suite
+`ocuvera-toasters`. Its existing scene abstraction can present copied runtime
+frames. Core/Runtime should remain independent of our console and WPF executables;
+Ocuvera should supply selection, windows, input and presentation through a small
+adapter. The owner permits changes to both projects' interfaces, including
+awaitable shutdown with immediate completion for ordinary native scenes.
+
+This is an integration goal, not a completed package or deployment proof.
+Preserve guest ownership, bounded execution, intermediate images, explicit
+dimensions and observable cleanup when evolving the library. Native asset
+packaging, the Unicorn/CFG executable requirement, asynchronous host shutdown
+and multi-monitor behavior need consumer acceptance tests. See the
+[source-based assessment and milestones](ocuvera-compatibility.md).
+
 ## Shared module sessions
 
 The second executable target, [Spiral Gyra](research/spiral-gyra-execution.md),
