@@ -45,6 +45,13 @@ ten educational console lessons (06 needs the optional Watcom fixture;
 
 ## Active scope decisions
 
+- **Ocuvera Toasters consumption (owner decision, 2026-09-20):** the eventual
+  destination is the owner's randomized WPF collection. Keep Core/Runtime
+  packageable and UI-independent; Ocuvera's interfaces may evolve to accommodate
+  guest lifecycle, with no-op/completed hooks for existing native scenes.
+  [The assessment](ocuvera-compatibility.md) records the source comparison,
+  native/CFG publication concern and proposed acceptance milestones. Integration
+  is not implemented or proven yet; AGENTS.md now preserves this direction.
 - **Color playback across all modules (owner decision, 2026-09-20):** optional
   grayscale/monochrome paths are outside required support. If they complicate
   implementation, palette behavior, tests or UI, force the color path through
@@ -422,11 +429,11 @@ String Theory/Zot! completed row 3 of the [sweep](research/module-readiness-swee
 The reassessment merged in PR #19 (`732b1f8`); its recommended order was
 Hard Rain, Shapes, then constrained Stained Glass. Later bitmap/sound candidates
 are provisional. See the [report](research/module-readiness-after-heap.md).
-Rainstorm's lightning fix merged in PR #20 (`05a435f`) and Hard Rain in PR #21
-(`31042b2`). `codex/shapes` now implements Shapes and remains uncommitted for
-review. Pause after this module and the owner's visual assessment. Constrained
-Stained Glass is next; its coordinate, raster-operation and blit behavior still
-requires investigation.
+Rainstorm's lightning fix merged in PR #20 (`05a435f`), Hard Rain in PR #21
+(`31042b2`), and Shapes in PR #22 (`ddd273c`). Module expansion is paused for the
+[Ocuvera integration assessment](ocuvera-compatibility.md). Constrained Stained
+Glass remains the next module candidate; its coordinate, raster-operation and
+blit behavior still requires investigation.
 The heap guide and Tutorial 10 retain the focused allocation lesson; Zot!'s and
 Rainstorm's notes explain presentation inside an active call. Other Fade Away
 styles and historical pixel/timing comparisons remain explicit limitations.
@@ -440,6 +447,22 @@ Tutorial 04 implements the narrow host trap; the broader issue is not complete.
 See [the tutorial guide](tutorials.md).
 
 ## Session log
+
+### 2026-09-20 - Ocuvera package compatibility assessment
+
+- Inspected After Darker at `ddd273c` and Ocuvera Toasters at `db2e78e`, both
+  initially clean on main. Created `codex/ocuvera-compatibility-notes` here at
+  the owner's request. Ocuvera remains unchanged.
+- Recorded the intended package/adapter boundary and source evidence in
+  [ocuvera-compatibility.md](ocuvera-compatibility.md); added durable AGENTS.md
+  guidance and an architecture cross-reference. The owner explicitly permits
+  coordinated interface changes in both projects, including no-op lifecycle
+  hooks for existing native scenes.
+- Existing module/scene and RGB bitmap boundaries align. Remaining work includes
+  portable native packaging, explicit CFG/apphost handling for the final `.scr`,
+  awaitable rotation/exit, typed module discovery, and monitor/timing policy.
+- Verification was source inspection and documentation checks only. No package,
+  Ocuvera playback, new runtime tests, deployment or license choice was performed.
 
 ### 2026-09-20 - Shapes and owned solid brushes
 

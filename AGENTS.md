@@ -87,6 +87,50 @@ then resumes the module.
 The synthetic gateway is our runtime design, not a magical address range
 provided by x86 or automatically understood by a CPU emulator.
 
+## Ocuvera Toasters Compatibility Goal
+
+The intended downstream home for this runtime is the owner's
+`ocuvera-toasters` screensaver suite (local checkout: `C:\repos\ocuvera-toasters`).
+Original AD modules should become selectable members of its randomized WPF
+collection alongside its native recreations. Treat package consumption by that
+suite as an architectural requirement, not as an already-proven integration.
+See [the compatibility assessment](docs/ocuvera-compatibility.md) for the source
+snapshot, proposed work and acceptance checks.
+
+- Keep `AfterDarker.Core` and `AfterDarker.Runtime` usable without our WPF
+  executable, console runner or developer checkout. Ocuvera should consume the
+  runtime through a package and a small scene adapter; it should not duplicate
+  the NE loader, Win16 services or module profiles.
+- The owner controls both projects and explicitly permits evolving Ocuvera's
+  interfaces. Prefer a clear shared lifecycle over awkward workarounds for its
+  current synchronous scene contract. Existing native scenes can complete new
+  asynchronous lifecycle methods immediately when they have no work to do.
+- Preserve one sequential owner per guest, bounded execution, observable
+  completion/failure and awaitable shutdown. Rotation and application exit must
+  account for active workers; never move guest execution onto WPF's render
+  callback or silently abandon a worker during disposal.
+- Transfer copied pixels and typed metadata across the presentation boundary.
+  WPF objects belong to the UI thread. Preserve intermediate images needed by
+  Rainstorm/Zot!, bounded buffering, and explicit guest-resolution/scaling rules.
+  Account for multiple monitors and session-local clocks/state; a consuming
+  mailbox is not a multi-window broadcast mechanism.
+- Give originals stable identities distinct from native recreations. Discover
+  user-supplied files through supported artifact identities, not filenames alone.
+  Packages must not contain proprietary AD files or require the local `/ad/`
+  folder. Adding a supported profile should not require another renderer in
+  Ocuvera. The color-playback policy applies to both hosts.
+- Keep native dependency delivery and executable requirements inspectable.
+  Initial compatibility targets Windows x64/.NET 10, including Ocuvera's
+  single-file `.scr` publication. Our current Unicorn/CFG apphost workaround is
+  a consumer integration concern; never silently patch arbitrary executables,
+  the shared .NET host or system policy from a package.
+- When changing public contracts, timing, presentation, lifecycle or deployment,
+  assess this consumer and update the compatibility notes. Interfaces may evolve;
+  document the corresponding adapter changes and proof gaps. Recheck Ocuvera's
+  current source before implementation rather than treating the assessment as a
+  frozen external API. Keep our educational console and standalone WPF host as
+  first-class consumers of the same foundation.
+
 ## Authoritative Project State
 
 Before substantial work, read:
