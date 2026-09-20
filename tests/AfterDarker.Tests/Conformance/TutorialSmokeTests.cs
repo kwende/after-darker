@@ -13,6 +13,7 @@ public sealed class TutorialSmokeTests
     [DataRow("02")]
     [DataRow("03")]
     [DataRow("04")]
+    [DataRow("10")]
     public void ConsoleLesson_RunsWithItsOriginalSuccessChecks(string id)
     {
         ITutorial lesson = id switch
@@ -21,6 +22,7 @@ public sealed class TutorialSmokeTests
             "02" => new Tutorial02StackCall(),
             "03" => new Tutorial03FarCall(),
             "04" => new Tutorial04HostGateway(),
+            "10" => new Tutorial10LocalHeap(),
             _ => throw new ArgumentOutOfRangeException(nameof(id)),
         };
         lesson.Run();

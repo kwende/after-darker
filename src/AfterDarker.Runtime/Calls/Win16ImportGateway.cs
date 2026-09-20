@@ -52,7 +52,9 @@ public sealed class Win16ImportGateway(SegmentedGuest guest,
     {
         try
         {
-            return Win16ApiDispatcher.Invoke(services, binding, frame.Arguments);
+            // Local* APIs select their heap implicitly through the caller's DS.
+            // Do not substitute the DLL selector: wrong-DS calls must fail visibly.
+            return Win16ApiDispatcher.Invoke(services, binding, frame.Arguments, new(before.Ds));
         }
         catch (Exception error)
         {

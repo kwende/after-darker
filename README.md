@@ -49,12 +49,16 @@ entire desktop.
 
 Set **AfterDarker.Wpf** as the startup project and press F5. It finds your local
 `ad/Mondrian.ad` automatically. Use **File > Load AD file…** to play
-**Mondrian**, **Spiral Gyra**, **Rainstorm**, or **Fade Away**, or switch between them while running. See the [WPF player guide](docs/wpf-player.md)
+**Mondrian**, **Spiral Gyra**, **Rainstorm**, **Fade Away**, or **Lasers**, or switch between them while running. See the [WPF player guide](docs/wpf-player.md)
 for controls, command-line launch and the original-code execution boundary.
 
 ## Status
 
-The repository now runs original Mondrian, Spiral Gyra, Rainstorm and Fade Away in a live WPF window.
+The repository now runs original Mondrian, Spiral Gyra, Rainstorm, Fade Away and Lasers in a live WPF window.
+Lasers adds a shared Win16 local heap for its original ray history. Start with
+the [heap ownership and handle walkthrough](docs/win16-local-heap.md), or run
+**Tutorial 10 - local heap and guest writes** for a self-contained F5 example.
+See [Lasers' execution evidence](docs/research/lasers-execution.md) for its fixed settings and limits.
 Fade Away runs its Radar effect over a white starting image and remains black when
 the original fade finishes (see [execution notes](docs/research/fade-away-execution.md)).
 Rainstorm uses fixed controls; its intermediate lightning flash is not yet presented
@@ -88,6 +92,7 @@ and broader Win16 behavior still require conformance experiments.
 See:
 
 - [Where to look in the runtime: stack, registers, mocked calls, and drawing](docs/runtime-code-map.md)
+- [Where the heap bytes live, what handles mean, and what Free does](docs/win16-local-heap.md)
 - [Architecture](docs/architecture.md)
 - [Current status and proof boundary](docs/current-status.md)
 - [Local module import/API census](docs/research/ad-import-census.md)

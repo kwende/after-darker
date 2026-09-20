@@ -2,7 +2,7 @@
 
 Open `AfterDarker.sln`, set **AfterDarker.Wpf** as the startup project, and press
 F5. With the analyzed `ad/Mondrian.ad` present, the window starts automatically.
-Choose **File > Load AD file…** to select **Mondrian**, **Spiral Gyra**, **Rainstorm**, or **Fade Away**. Loading
+Choose **File > Load AD file…** to select **Mondrian**, **Spiral Gyra**, **Rainstorm**, **Fade Away**, or **Lasers**. Loading
 starts playback automatically; the menu can also switch modules while playing.
 The previous guest shuts down before the new one starts. Unsupported files or
 versions are rejected by their content hash before stopping an active guest.
@@ -20,6 +20,11 @@ black. Stop/Run creates a fresh white image. Its speed selector is disabled;
 other Fade Away effects and desktop capture are not offered yet. See the
 [initial-image and completion notes](research/fade-away-execution.md).
 
+Lasers runs three rays with a fixed 30-position trail, color-speed control 50,
+and Clear Screen First enabled. Its speed selector is disabled in this version.
+The original code allocates and writes its ray history through the shared
+[Win16 local heap](win16-local-heap.md); see [execution evidence](research/lasers-execution.md).
+
 From the repository root:
 
 ```powershell
@@ -28,10 +33,10 @@ dotnet run --project src/AfterDarker.Wpf --no-launch-profile
 dotnet run --project src/AfterDarker.Wpf --no-launch-profile -- C:\path\Mondrian.ad
 ```
 
-Both supported modules execute their original, hash-checked Win16 code through
+All five supported modules execute their original, hash-checked Win16 code through
 `AfterDarkSession<TState>`. Mondrian's tutorial facade uses that same runtime.
 Spiral adds five pen/line imports; see the [execution notes](research/spiral-gyra-execution.md).
-The file picker accepts AD files generally, but only the two analyzed versions
+The file picker accepts AD files generally, but only the five analyzed versions
 are executable today. A renamed supported file works; an unknown file named
 Mondrian.ad does not bypass validation.
 
@@ -99,7 +104,7 @@ halfway through would leave its stack unsuitable for another CALL FAR to CLOSE.
 If execution or cleanup fails, no further guest calls are attempted, and the
 native engine is still disposed. The UI shows the symbolic failure. Cleanup
 ignores the cancelled pacing token but retains bounded native execution: 50,000
-instructions per Mondrian/Fade Away invocation or 200,000 for Spiral Gyra/Rainstorm, one-second
+instructions per Mondrian/Fade Away invocation or 200,000 for Spiral Gyra/Rainstorm/Lasers, one-second
 native slices and a five-second
 cumulative native execution budget. These are cooperative runtime safeguards,
 not an out-of-process watchdog for a defective native library.
@@ -114,6 +119,9 @@ pen and deletes its allocated pens; shutdown checks that none remain.
 Rainstorm allows 1,024 service exits per invocation because its 52 drops each
 perform point tests and pen/line operations. Its peak owned-pen count was one
 in the 300-draw verification; its stock black pen is host-owned.
+Lasers also allows 1,024 exits for trail cleanup during periodic regeneration
+and CLOSE. Shutdown verifies that its local allocation and locks were released;
+native memory is still disposed if the guest faults before it can clean up.
 With the current system record, CLOSE optionally clears then inverts the saved
 rectangles; it does not necessarily leave black pixels. The UI retains the last
 presented frame after Stop. Console lessons still end at their original boundary
@@ -143,4 +151,5 @@ dotnet run --project src/AfterDarker.Wpf --no-launch-profile -- --smoke "ad/Spir
 
 The acceptance run also checks that unsupported content leaves the active guest
 untouched. `report.json` records the module names, completed CLOSE/WEP phases,
-and remaining/peak pen counts. The native file dialog itself is not automated.
+remaining/peak pen counts, and local-heap capacity/live allocations/locks.
+The native file dialog itself is not automated.

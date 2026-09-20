@@ -18,6 +18,63 @@ public sealed class Win16ImportGatewayTests
     private const ushort Data = MondrianSession.HostData, Stack = MondrianSession.Stack, DllData = 0x28;
 
     [TestMethod]
+    [DataRow("LocalAlloc")]
+    [DataRow("LocalLock")]
+    [DataRow("LocalUnlock")]
+    [DataRow("LocalFree")]
+    public void LocalHeapImportsUseCallerDsAndRejectAnotherSegmentsHandleNamespace(string name)
+    {
+        using var setup = new Probe();
+        setup.Services.LocalInit(DllData, 0, 1024);
+        ushort handle = setup.Services.LocalAlloc(DllData, LocalMemoryFlags.Moveable, 8);
+        var code = new List<byte>();
+        setup.EmitCall(code, name, name == "LocalAlloc" ? new ushort[] { 0x42, 8 } : new ushort[] { handle });
+        code.AddRange([0xA3, 0x20, 0]);
+        var error = Assert.Throws<InvalidOperationException>(() => setup.Run(code)); // DS is host Data, not DLL Data.
+        StringAssert.Contains(error.Message, "!" + name);
+        StringAssert.Contains(error.Message, "caller DS");
+        Assert.AreEqual((ushort)0xCCCC, setup.Word(0x20));
+        Assert.AreEqual(1, setup.Services.State.LocalHeap!.Snapshot().Allocations.Count);
+        Assert.AreEqual(0, setup.Services.State.LocalHeap.Snapshot().OutstandingLocks);
+    }
+
+    [TestMethod]
+    public void UnsignedOversizeAllocationReturnsNullToGuestWithoutWrappingOrLosingTheStack()
+    {
+        using var setup = new Probe();
+        setup.Services.LocalInit(DllData, 0, 1024);
+        var code = new List<byte> { 0x1E, 0xB8, (byte)DllData, 0, 0x8E, 0xD8, 0xBA, 0x78, 0x56 };
+        // PUSH DS; MOV AX,DllData; MOV DS,AX; MOV DX,5678. LocalAlloc's size is UNSIGNED.
+        setup.EmitCall(code, "LocalAlloc", 0, 0xFFFF);
+        code.AddRange([0x1F, 0xA3, 0x20, 0]); // POP DS; store returned AX in caller data.
+        var final = setup.Run(code);
+        Assert.AreEqual((ushort)0, setup.Word(0x20));
+        Assert.AreEqual((ushort)0, final.Cx);
+        Assert.AreEqual((ushort)0x5678, final.Dx);
+        Assert.AreEqual((ushort)0x1000, final.Sp);
+        Assert.AreEqual(Data, final.Ds);
+        Assert.AreEqual(0, setup.Services.State.LocalHeap!.Snapshot().Allocations.Count);
+    }
+
+    [TestMethod]
+    [DataRow("LocalAlloc", 0x100, 8)]
+    [DataRow("LocalLock", 42, 0)]
+    [DataRow("LocalUnlock", 42, 0)]
+    [DataRow("LocalFree", 42, 0)]
+    public void UnsupportedHeapInputsFailByImportBeforeReturningAUsablePointer(string name, int first, int second)
+    {
+        using var setup = new Probe();
+        setup.Services.LocalInit(DllData, 0, 1024);
+        var code = new List<byte> { 0x1E, 0xB8, (byte)DllData, 0, 0x8E, 0xD8 };
+        setup.EmitCall(code, name, name == "LocalAlloc" ? new ushort[] { (ushort)first, (ushort)second } : new ushort[] { (ushort)first });
+        code.AddRange([0x1F, 0xA3, 0x20, 0]);
+        var error = Assert.Throws<InvalidOperationException>(() => setup.Run(code));
+        StringAssert.Contains(error.Message, "!" + name);
+        Assert.AreEqual((ushort)0xCCCC, setup.Word(0x20));
+        Assert.AreEqual(0, setup.Services.State.LocalHeap!.Snapshot().Allocations.Count);
+    }
+
+    [TestMethod]
     [DataRow("Ellipse")]
     [DataRow("Rectangle")]
     [DataRow("PatBlt")]
@@ -302,7 +359,8 @@ public sealed class Win16ImportGatewayTests
             var imports = new[] { new NeImport("KERNEL", 4, null), new("KERNEL", 18, null), new("KERNEL", 19, null),
                 new("KERNEL", 131, null), new("USER", 13, null), new("USER", 82, null), new("USER", 72, null), new("USER", 81, null), new("GDI", 87, null),
                 new("GDI", 61, null), new("GDI", 45, null), new("GDI", 69, null), new("GDI", 20, null), new("GDI", 19, null), new("USER", 76, null),
-                new("GDI", 24, null), new("GDI", 27, null), new("GDI", 29, null) };
+                new("GDI", 24, null), new("GDI", 27, null), new("GDI", 29, null),
+                new("KERNEL", 5, null), new("KERNEL", 7, null), new("KERNEL", 8, null), new("KERNEL", 9, null) };
             var image = NeReader.Read(RelocationDemo.Create()) with
             {
                 Relocations = imports.Select(i => new NeRelocation(1, 0, 3, 1, 0, 0, 0, i)).ToArray()

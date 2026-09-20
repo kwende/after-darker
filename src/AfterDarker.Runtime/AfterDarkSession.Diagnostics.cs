@@ -19,7 +19,7 @@ public partial class AfterDarkSession<TState>
     /// <param name="Phases">Retained lifecycle observations, bounded by diagnostic policy.</param>
     /// <param name="Calls">Retained import-call traces, bounded by diagnostic policy.</param>
     /// <param name="Interrupts">Retained software-interrupt observations.</param>
-    /// <param name="Heap">Validated LocalInit reservation, not a general heap allocator.</param>
+    /// <param name="Heap">Validated initial LocalInit reservation; LocalHeap reports current allocation state.</param>
     /// <param name="OutstandingLocks">Resident global-block locks still held.</param>
     /// <param name="Instructions">Lifetime instruction count.</param>
     /// <param name="ProtectedMode">Whether CR0 still has the protection-enable bit set.</param>
@@ -27,7 +27,11 @@ public partial class AfterDarkSession<TState>
     public sealed record Result(NeLoadPlan Plan, TState BeforeExecution,
         IReadOnlyList<PhaseResult> Phases, IReadOnlyList<Win16CallTrace> Calls,
         IReadOnlyList<SegmentedGuest.InterruptVisit> Interrupts, LocalHeapReservation Heap,
-        int OutstandingLocks, long Instructions, bool ProtectedMode, DiagnosticSummary Diagnostics);
+        int OutstandingLocks, long Instructions, bool ProtectedMode, DiagnosticSummary Diagnostics)
+    {
+        /// <summary>Current live allocations and bounded capacity, detached from the running allocator.</summary>
+        public LocalHeapSnapshot? LocalHeap { get; init; }
+    }
     /// <summary>Distinguishes retained history length from lifetime totals.</summary>
     /// <param name="HistoryCapacity">Maximum entries per history; null means full recording.</param>
     /// <param name="TotalCalls">Lifetime import calls.</param>

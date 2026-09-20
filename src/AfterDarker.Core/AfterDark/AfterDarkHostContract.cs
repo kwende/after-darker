@@ -14,6 +14,8 @@ public static class AfterDarkHostContract
     public const ushort PreinitializeMessage = 12;
     /// <summary>SDK lifecycle message requesting animation initialization.</summary>
     public const ushort InitializeMessage = 0;
+    /// <summary>SDK HSV_PAL reply from BLANK, requesting a smooth hue/saturation palette in the original indexed host.</summary>
+    public const ushort HueSaturationPaletteRequest = 10;
     /// <summary>Guest handle resolved by GlobalLock to our system record.</summary>
     public const ushort SystemHandle = 0x101;
     /// <summary>Guest handle resolved by GlobalLock to our module record.</summary>

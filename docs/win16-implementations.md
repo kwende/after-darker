@@ -7,6 +7,10 @@ Mondrian lessons call its methods.
 ```csharp
 uint GetVersion();
 bool LocalInit(ushort dataSelector, ushort start, ushort bytes);
+ushort LocalAlloc(ushort dataSelector, LocalMemoryFlags flags, ushort bytes);
+FarPointer16 LocalLock(ushort dataSelector, ushort handle);
+ushort LocalUnlock(ushort dataSelector, ushort handle);
+ushort LocalFree(ushort dataSelector, ushort handle);
 FarPointer16 GlobalLock(ushort handle);
 ushort GlobalUnlock(ushort handle);
 FarPointer16 GetDOSEnvironment();
@@ -25,7 +29,11 @@ not yet been placed into CPU registers.
 | Method | What our current implementation does |
 | --- | --- |
 | GetVersion | Returns the version supplied by the host. |
-| LocalInit | Validates the supplied selector and reserved zero-filled heap range; records success or an explicitly configured test failure. It does not build a Windows allocator. |
+| LocalInit | Validates the selector and zero-filled initial reservation, then publishes the shared local allocator; configured failure remains available to tutorial 06. |
+| LocalAlloc | Allocates a bounded slice of guest data memory and returns a fixed offset or movable identity. Zero-init clears reused payload bytes. |
+| LocalLock | Resolves a local handle under caller DS and pins a movable block; AX is the near offset, DX its selector. |
+| LocalUnlock | Decreases a movable lock count; zero after the last lock is normal. |
+| LocalFree | Releases the identity and coalesces its free extent; it does not unmap memory or free an OS allocation. |
 | GlobalLock | Looks up a resident guest block, checks its backing memory, increments its lock count, and returns its guest address. |
 | GlobalUnlock | Releases one lock and reports how many remain. |
 | GetDOSEnvironment | Returns the address of a supplied empty guest environment; rejects absent or unsupported contents. |
@@ -53,12 +61,19 @@ uses [Win16ArgumentReader](../src/AfterDarker.Core/Win16/Win16ArgumentReader.cs)
 turn source-ordered words into named, typed arguments. The API implementation
 need not know any register names.
 
+Local heap methods have an additional input: `dataSelector` comes from the
+gateway's snapshot of caller DS, not a Pascal stack argument. See
+[Win16CallContext](../src/AfterDarker.Core/Win16/Win16CallContext.cs).
+The prominent [heap guide](win16-local-heap.md) leads to
+`Win16LocalHeap.Allocate/Lock/Unlock/Free` and tutorial 10's actual x86 writes.
+
 [Win16ImportGateway](../src/AfterDarker.Runtime/Calls/Win16ImportGateway.cs)
 coordinates that call. [Win16Stack](../src/AfterDarker.Runtime/Calls/Win16Stack.cs)
 reads the frame and later advances SP/restores CS:IP.
 [Win16RegisterConvention](../src/AfterDarker.Runtime/Calls/Win16RegisterConvention.cs)
 writes word results to AX, DWORD/far-pointer results to DX:AX, and GlobalLock's
-additional selector result to CX. Void signatures preserve AX/DX. See the
+additional selector result to CX. LocalAlloc also returns its handle in CX.
+Void signatures preserve AX/DX. See the
 [runtime code map](runtime-code-map.md) for a complete worked stack example.
 
 Tutorial 06 retains its smaller teaching implementation and sends its two
@@ -79,7 +94,8 @@ Guest CALL FAR -> gateway -> decode arguments
 
 `DosClock` remains separate: those are DOS interrupt services, not Windows
 imports. Unsupported Windows calls still fail by name. Extracting these methods
-did not change the heap-model limitation. Tutorial 09 adds only the four drawing
+originally retained a reservation-only heap; the Lasers increment now adds the
+bounded allocator described above. Tutorial 09 adds only the four drawing
 methods listed above. `Win16ApiState.Drawing` holds each guest's HDC registry;
 [Win16DeviceContext](../src/AfterDarker.Core/Win16/Win16DeviceContext.cs) holds
 selected-pen/current-point state. `PixelSurface` owns pixel storage;
@@ -89,7 +105,7 @@ boundaries and the Win16 void-return distinction.
 
 The direct [Win16ApiTests](../tests/AfterDarker.Tests/Unit/Win16ApiTests.cs) need
 no emulator. Existing CPU/gateway tests verify the marshaling around the same
-methods, and the opt-in tests exercise all four supported original modules.
+methods, and the opt-in tests exercise all five supported original modules.
 
 Fade Away's Radar path adds no Windows API behavior. Its other styles import
 Ellipse, Rectangle and PatBlt; their named registry entries remain unsupported

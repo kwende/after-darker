@@ -271,6 +271,23 @@ The compatibility layer must explicitly model:
 Native pointers must never appear in guest memory. A guest HDC or HPEN is a
 small token resolved through a checked host table.
 
+### 3.5.1 Local heap ownership
+
+The shared local heap is now implemented in `Win16LocalHeap`, with named entry
+points in `Win16Api`. `LocalInit` establishes the initial NE reservation;
+LocalAlloc/Lock/Unlock/Free manage slices of mapped guest memory. Caller DS is
+an explicit `Win16CallContext` input, separate from the Pascal arguments.
+Fixed handles are near offsets; movable handles resolve through per-guest host
+metadata. Ordinary x86 writes touch the backing memory directly through Unicorn.
+
+Lasers opts into reserving a full 64-KiB automatic data segment before execution,
+allowing allocator growth beyond its initial 1-KiB heap without changing selectors.
+The other current profiles retain their prior reservation-sized mappings.
+Free coalesces ranges; guest disposal releases native backing. This is a bounded
+host allocator with Win16 API behavior, not reconstruction of Windows arena
+headers, compaction, callbacks, or segment resizing. See the
+[ownership and heap guide](win16-local-heap.md) and [Lasers evidence](research/lasers-execution.md).
+
 ### 3.6 Win16 modules
 
 Built-in host modules are registered by their Win16 names, initially:

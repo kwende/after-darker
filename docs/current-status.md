@@ -19,14 +19,29 @@ Rainstorm is the third playable module, with fixed controls, shared black-pen
 lookup and PtInRect support; its intermediate lightning image is not presented.
 Fade Away is the fourth, running its original Radar effect on host-supplied
 white pixels and remaining black after the fade completes.
+Lasers is the fifth: its original three-ray drawing owns a movable allocation
+in the new shared local heap. Tutorial 10 exposes allocation, locking, guest
+writes, freeing and reuse in a small source-authored program.
 This remains narrow compatibility support, not general Win16 emulation.
 `AfterDarker.Core` contains two extracted binary-layout helpers, a Windows NE
 metadata reader, a CPU-independent load plan, and a separate After Dark
 invocation-plan model. The C# MSTest project covers these mechanisms and the
-nine educational console lessons (06 needs the optional Watcom fixture;
+ten educational console lessons (06 needs the optional Watcom fixture;
 08/09 need the analyzed local Mondrian file).
 
 ## Established evidence
+
+- **Shared local heap and Lasers:** `Win16LocalHeap` manages fixed/movable
+  allocations, zero-init, lock counts, reuse/coalescing and bounded growth in
+  already-mapped guest memory. Gateway context checks caller DS explicitly.
+  Original Lasers allocates 1,836 bytes beyond its initial 1-KiB reservation,
+  writes ray history, draws through periodic regeneration, and frees it on
+  CLOSE. No new GDI API was needed. Six private cases plus public allocator,
+  ABI and tutorial cases pass; all 306 combined tests and 235 public tests pass.
+  Actual standalone WPF and switching checks pass with clean shutdown. See
+  [the heap guide](win16-local-heap.md) and [Lasers proof and limits](research/lasers-execution.md).
+  No Windows arena reconstruction, compaction, global allocator or indexed
+  palette implementation is claimed. Magic, String Theory and Zot! remain future work.
 
 - **Fade Away Radar playback:** a fresh session starts white, then the original
   code erases it in coarse and fine sweeps and finishes with a black fill.
@@ -266,7 +281,8 @@ nine educational console lessons (06 needs the optional Watcom fixture;
   ABI layouts remain unproven. Two successful host exits/resumes do not establish
   compatibility with arbitrary Win16 guest code.
 - Supported application playback is limited to the analyzed Mondrian, Spiral
-  Gyra, Rainstorm and Fade Away artifacts, with Radar as the only Fade Away style.
+  Gyra, Rainstorm, Fade Away and Lasers artifacts, with Radar as the only Fade Away style
+  and Lasers fixed to three rays. Lasers requires dimensions of at least 141x141.
   The whole-folder research probes supply narrower
   observations for other modules without making them supported application
   playback. Other revisions and historical visual/pacing fidelity remain unproven.
@@ -293,13 +309,12 @@ explicitly.
 
 ## Next planning point
 
-The Fade Away increment is on `codex/fade-away-player`, created from clean main
-after the Rainstorm merge (`c668f63`). Its Radar effect now runs on the requested
-white initial image. The owner intends to use a desktop-style snapshot in a
-future actual screensaver host; initial image loading is separate from guest
-drawing, but no capture or fullscreen integration was added here. Stop after
-this module and report novel findings before starting another. The
-[sweep](research/module-readiness-sweep.md) retains the remaining candidates.
+The local-heap/Lasers increment is on `codex/local-heap-lasers`, created from
+clean main after Fade Away merged (`4b0fc18`). The owner selected shared heap
+plus Lasers first from row 3 of the [sweep](research/module-readiness-sweep.md).
+Stop here for review before Magic, String Theory or Zot!. Changes remain local
+and uncommitted; publication was not requested. The heap guide and Tutorial 10
+make allocation ownership and handle indirection prominent.
 Other Fade Away styles, Rainstorm's intermediate lightning presentation, and
 historical pixel/timing comparisons remain explicit limitations.
 
@@ -312,6 +327,37 @@ Tutorial 04 implements the narrow host trap; the broader issue is not complete.
 See [the tutorial guide](tutorials.md).
 
 ## Session log
+
+### 2026-09-19 - shared local heap and original Lasers
+
+- Created `codex/local-heap-lasers` from reviewed main. Implemented only Lasers
+  from the grouped heap candidates, following the owner's explicit selection.
+- Added a CPU-independent per-guest allocator and four Win16 Local* services.
+  Fixed handles equal near offsets; movable identities resolve to offsets.
+  Caller DS is passed separately from stack arguments and checked against the
+  owning heap. Free returns ranges to a coalescing free list, not the OS.
+- Lasers requests `LocalAlloc(0042, 1836)` while its NE header reserves only
+  1,024 heap bytes. Its profile opts into mapping the full bounded data segment
+  before startup, then enabling growth into that tail as needed. This is an
+  explicit host policy; no live descriptor resizing or compaction is claimed.
+- Added F5 Tutorial 10 with visible x86: allocate, lock, write/read BEEF, unlock,
+  free, reuse stale bytes, explicitly zero reused storage, and free again.
+  The host independently reads the actual guest write before free. The same
+  gateway and heap implementation serve tutorial and original module.
+- The real module passes 1,100 draws including periodic regeneration: 6,690
+  LineTo calls and 1,256,277 instructions before CLOSE; one live 1,836-byte
+  allocation during playback, zero after CLOSE/WEP. Independent sessions,
+  dimension boundaries, empty playback, hash rejection and cleanup pass.
+- BLANK returns the SDK HSV_PAL request. The explicit profile accepts this for
+  24-bit RGB drawing without claiming indexed-palette support. Regression tests
+  found the same existing Spiral Gyra reply; its policy is now explicit too.
+  Failed initialization and unknown drawing replies stop symbolically.
+- Verified 306 combined tests and 235 public tests. Actual standalone LASERS
+  window readback/restart/close and switching with Spiral Gyra in both directions
+  pass. Shutdown leaves no local allocations/locks, global locks or owned pens.
+  Source-authored tests and documents are public; AD inputs, Wine reference
+  source, captures, disassembly and detailed reports remain ignored.
+- Paused after this module with implementation and documentation uncommitted.
 
 ### 2026-09-19 - Fade Away Radar and the starting-image boundary
 

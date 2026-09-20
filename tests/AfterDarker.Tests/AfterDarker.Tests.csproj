@@ -31,6 +31,9 @@
   <ItemGroup Condition="'$(TestLocalFadeAway)' != 'true'">
     <Compile Remove="LocalFadeAway/**/*.cs" />
   </ItemGroup>
+  <ItemGroup Condition="'$(TestLocalLasers)' != 'true'">
+    <Compile Remove="LocalLasers/**/*.cs" />
+  </ItemGroup>
   <ItemGroup Condition="'$(BuildWin16Fixture)' == 'true'">
     <None Include="../../artifacts/win16/hello42/hello42.dll" Link="Fixtures/hello42.dll" CopyToOutputDirectory="Always" />
   </ItemGroup>

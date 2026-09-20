@@ -4,6 +4,19 @@ One C# console application hosts small lessons through `ITutorial`. Each lesson
 is an inspectable experiment: prediction, execution, observation, and a stated
 proof boundary. Work through one together before implementing the next.
 
+For the distinction between memory backing, a Win16 handle and an address,
+start with [Tutorial 10: the local heap](win16-local-heap.md). It makes actual
+guest allocation calls, writes through the returned near pointer, frees and
+reuses storage, and verifies explicit zero-initialization. Use F5 profile
+**Tutorial 10 - local heap and guest writes**, or:
+
+```powershell
+dotnet run --project src/AfterDarker.Tutorials --no-launch-profile -- 10
+```
+
+This lesson uses the same heap and gateway as Lasers, with a tiny source-authored
+guest program and no proprietary input. The earlier lessons remain unchanged.
+
 ## Run tutorial 01
 
 For inspecting an original local `.AD` file without executing it, jump to

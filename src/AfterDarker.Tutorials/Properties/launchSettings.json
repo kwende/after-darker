@@ -47,6 +47,10 @@
     "Tutorial 07 - local NE relocations": {
       "commandName": "Project",
       "commandLineArgs": "07 --file --step"
+    },
+    "Tutorial 10 - local heap and guest writes": {
+      "commandName": "Project",
+      "commandLineArgs": "10"
     }
   }
 }
