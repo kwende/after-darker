@@ -67,6 +67,8 @@ public static class Win16ApiDispatcher
                     uint colorReference = arguments.ReadDoubleWord();
                     return new Win16Imports.Reply(api.CreatePen(style, width, colorReference));
                 }
+            case Win16Imports.Handler.CreateSolidBrush:
+                return new Win16Imports.Reply(api.CreateSolidBrush(arguments.ReadDoubleWord()));
             case Win16Imports.Handler.SelectObject:
                 {
                     ushort deviceContext = arguments.ReadWord();
@@ -90,13 +92,16 @@ public static class Win16ApiDispatcher
                     return BooleanResult(api.LineTo(deviceContext, destinationX, destinationY));
                 }
             case Win16Imports.Handler.Ellipse:
+            case Win16Imports.Handler.Rectangle:
                 {
                     ushort deviceContext = arguments.ReadWord();
                     short left = arguments.ReadSignedWord();
                     short top = arguments.ReadSignedWord();
                     short right = arguments.ReadSignedWord();
                     short bottom = arguments.ReadSignedWord();
-                    return BooleanResult(api.Ellipse(deviceContext, left, top, right, bottom));
+                    return BooleanResult(entry.Implementation == Win16Imports.Handler.Ellipse
+                        ? api.Ellipse(deviceContext, left, top, right, bottom)
+                        : api.Rectangle(deviceContext, left, top, right, bottom));
                 }
             case Win16Imports.Handler.SetRect:
                 {

@@ -18,12 +18,17 @@ public sealed class Win16Api(Win16ApiState state)
 
     /// <summary>Create a supported solid pen; color is a Win16 COLORREF, not an ARGB pixel.</summary>
     public ushort CreatePen(short style, short width, uint color) => Drawing.CreatePen(style, width, color);
-    /// <summary>Select a pen or supported stock brush, returning the previous handle of the same kind.</summary>
+    /// <summary>Create an owned solid brush from an RGB or PALETTERGB COLORREF.</summary>
+    public ushort CreateSolidBrush(uint color) => Drawing.CreateSolidBrush(color);
+    /// <summary>Select a pen or brush, returning the previous handle of the same kind.</summary>
     public ushort SelectObject(ushort hdc, ushort handle) => Drawing.SelectObject(hdc, handle);
     /// <summary>Draw with the selected pen and brush; all four coordinates are signed Win16 words.</summary>
     public bool Ellipse(ushort hdc, short left, short top, short right, short bottom) =>
         Drawing.Ellipse(hdc, new(left, top, right, bottom));
-    /// <summary>Delete an unselected owned pen; stock objects remain host-owned.</summary>
+    /// <summary>Fill/outline a rectangle with the selected objects, preserving the current point.</summary>
+    public bool Rectangle(ushort hdc, short left, short top, short right, short bottom) =>
+        Drawing.Rectangle(hdc, new(left, top, right, bottom));
+    /// <summary>Delete an unselected owned pen or brush; stock objects remain host-owned.</summary>
     public bool DeleteObject(ushort handle) => Drawing.DeleteObject(handle);
     /// <summary>Move the HDC current point; return its previous coordinates packed as Y:X.</summary>
     public uint MoveTo(ushort hdc, short x, short y) => Drawing.MoveTo(hdc, x, y);
@@ -37,11 +42,12 @@ public sealed class Win16Api(Win16ApiState state)
     public void SetRect(FarPointer16 destination, short left, short top, short right, short bottom)
         => State.Memory.Write(destination, new Rectangle16(left, top, right, bottom).Encode());
 
-    /// <summary>Return a host-owned stock black brush or pen; these do not consume the created-pen pool.</summary>
+    /// <summary>Return a stock black brush, black pen or null pen; stock objects do not consume owned-object pools.</summary>
     public ushort GetStockObject(short index) => index switch
     {
         Win16Drawing.BlackBrushIndex => Win16Drawing.BlackBrushHandle,
         Win16Drawing.BlackPenIndex => Win16Drawing.BlackPenHandle,
+        Win16Drawing.NullPenIndex => Win16Drawing.NullPenHandle,
         _ => throw new NotSupportedException($"Unsupported stock object {index}.")
     };
 

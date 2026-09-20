@@ -3,11 +3,16 @@
 Open `AfterDarker.sln`, set **AfterDarker.Wpf** as the startup project, and press
 F5. With the analyzed `ad/Mondrian.ad` present, the window starts automatically.
 Choose **File > Load AD file…** to select **Mondrian**, **Spiral Gyra**, **Rainstorm**,
-**Fade Away**, **Lasers**, **Magic**, **String Theory**, **Zot!**, or **Hard Rain**. Loading
+**Fade Away**, **Lasers**, **Magic**, **String Theory**, **Zot!**, **Hard Rain**, or **Shapes**. Loading
 starts playback automatically; the menu can also switch modules while playing.
 The previous guest shuts down before the new one starts. Unsupported files or
 versions are rejected by their content hash before stopping an active guest.
 Stop lets you change speed and Run a fresh guest. No original modules are distributed.
+
+Shapes uses Color and Clear Screen First. Each original DRAWFRAME paints one
+random rectangle or ellipse. The speed selector is disabled; the host uses its
+existing 60-Hz pacing. PALETTERGB's components are rendered directly as RGB,
+without historical palette matching. See [the execution and preview notes](research/shapes-execution.md).
 
 Hard Rain uses five drops, size 20 and Clear Screen First. Its speed selector is
 disabled. Original code grows colored rings with two-pixel then one-pixel pens,

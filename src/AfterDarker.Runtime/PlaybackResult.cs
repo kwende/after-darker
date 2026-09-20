@@ -20,6 +20,10 @@ public sealed record PlaybackPhase(string Name, ushort StoredAx, SegmentedGuest.
 public sealed record PlaybackResult(string ModuleName, IReadOnlyList<PlaybackPhase> Phases, long Instructions,
     int OutstandingLocks, int RetainedCalls, int LivePens, int PeakPens, IReadOnlyDictionary<string, long> ImportCalls)
 {
+    /// <summary>Owned brushes remaining; zero after successful guest shutdown.</summary>
+    public int LiveBrushes { get; init; }
+    /// <summary>Maximum simultaneous owned brushes, excluding stock objects.</summary>
+    public int PeakBrushes { get; init; }
     /// <summary>Detached local-heap ownership, including remaining allocations and locks at shutdown.</summary>
     public LocalHeapSnapshot? LocalHeap { get; init; }
     /// <summary>Reached image checkpoints inside DRAWFRAME; zero for profiles that present only after return.</summary>

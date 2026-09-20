@@ -4,7 +4,7 @@ namespace AfterDarker.Core.Win16;
 
 /// <summary>Persistent drawing state behind one guest HDC handle.</summary>
 /// <remarks>
-/// The supported subset uses identity coordinates, full-surface clipping, a solid pen and stock brushes.
+/// The supported subset uses identity coordinates, full-surface clipping, solid/null pens and solid brushes.
 /// Selecting a pen/brush or moving the current point changes this state without drawing pixels.
 /// See docs/win16-implementations.md; this is not a native Windows device context.
 /// </remarks>

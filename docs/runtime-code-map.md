@@ -28,6 +28,9 @@ larger boundaries and proof requirements, see [architecture](architecture.md).
 | Where are String Theory's groups, history and colors observed? | [StringTheoryProfile](../src/AfterDarker.Runtime/Modules/StringTheoryProfile.cs), [StringTheoryState](../src/AfterDarker.Runtime/Modules/StringTheoryState.cs) and [evidence](research/string-theory-execution.md) |
 | Where are Zot!'s fixed blocks, clock gate and flash points defined? | [ZotProfile](../src/AfterDarker.Runtime/Modules/ZotProfile.cs), [ZotState](../src/AfterDarker.Runtime/Modules/ZotState.cs) and [evidence](research/zot-execution.md) |
 | Where are Hard Rain's drop records and square-pixel inputs? | [HardRainProfile](../src/AfterDarker.Runtime/Modules/HardRainProfile.cs), [HardRainState](../src/AfterDarker.Runtime/Modules/HardRainState.cs) and [evidence](research/hard-rain-execution.md) |
+| Where does Shapes accept its palette request and expose its original random state? | [ShapesProfile](../src/AfterDarker.Runtime/Modules/ShapesProfile.cs), [ShapesState](../src/AfterDarker.Runtime/Modules/ShapesState.cs) and [evidence](research/shapes-execution.md) |
+| Where are RGB and PALETTERGB interpreted? | [Win16Color](../src/AfterDarker.Core/Win16/Win16Color.cs); pens and brushes use the same explicit true-color policy |
+| Where are brushes allocated, selected and deleted? | [Win16Drawing](../src/AfterDarker.Core/Win16/Win16Drawing.cs) owns the bounded brush pool; [PlaybackResult](../src/AfterDarker.Runtime/PlaybackResult.cs) exposes live/peak brush counts |
 | Who writes the shared SDK record layout for newer modules? | [StandardModuleRecords](../src/AfterDarker.Runtime/Modules/StandardModuleRecords.cs); profiles supply the meanings of its four control words |
 | Who runs and resumes machine code? | [SegmentedGuest.RunUntil](../src/AfterDarker.Runtime/SegmentedGuest.cs) |
 | What do the register snapshots mean? | [SegmentedGuest diagnostics](../src/AfterDarker.Runtime/SegmentedGuest.Diagnostics.cs) |
@@ -47,6 +50,7 @@ larger boundaries and proof requirements, see [architecture](architecture.md).
 | Where are selected pens, brushes and the current point stored? | [Win16Drawing](../src/AfterDarker.Core/Win16/Win16Drawing.cs), [Win16Pen](../src/AfterDarker.Core/Win16/Win16Pen.cs) and [Win16DeviceContext](../src/AfterDarker.Core/Win16/Win16DeviceContext.cs) |
 | Where are ellipse outlines, fills and the raster approximation explained? | [EllipseRasterizer](../src/AfterDarker.Core/Rendering/EllipseRasterizer.cs) builds row spans; [Hard Rain's notes](research/hard-rain-execution.md) record the native comparison |
 | Where do operations become pixels? | [PixelSurface](../src/AfterDarker.Core/Rendering/PixelSurface.cs) and [CosmeticLineRasterizer](../src/AfterDarker.Core/Rendering/CosmeticLineRasterizer.cs) |
+| Which tests explain the different Rectangle/FillRect bounds? | [SelectedRectangleRasterTests](../tests/AfterDarker.Tests/Conformance/SelectedRectangleRasterTests.cs) and the existing [RectangleRasterTests](../tests/AfterDarker.Tests/Conformance/RectangleRasterTests.cs); [WindowsShapeOracle](../tests/AfterDarker.Tests/Conformance/WindowsShapeOracle.cs) supplies native shape pixels only in tests |
 
 Folders group responsibilities; new runtime files retain the `AfterDarker.Runtime`
 namespace. The `.Diagnostics.cs` files hold nested types on partial classes so

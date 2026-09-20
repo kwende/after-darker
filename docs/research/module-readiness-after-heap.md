@@ -18,8 +18,10 @@ is now implemented using the shared checkpoint mechanism. The next-module
 ranking and historical probe results below are unchanged.
 The subsequent [Hard Rain increment](hard-rain-execution.md) now implements
 playback with pen widths, selected stock brushes and a documented software ellipse
-raster. Shapes is next; owned brushes, null pens and its palette request still
-need implementation. The original probe results below remain historical evidence.
+raster. The subsequent [Shapes increment](shapes-execution.md) adds owned
+brushes, null pens and rectangles, accepting its palette request with the owner's
+approved direct-RGB policy. Constrained Stained Glass is next. The original
+probe results below remain historical evidence.
 
 ## What was checked again
 

@@ -32,7 +32,9 @@ public static class Win16Imports
         DeleteObject,
         MoveTo,
         LineTo,
-        Ellipse
+        Ellipse,
+        Rectangle,
+        CreateSolidBrush
     }
     /// <summary>One NE import bound to our synthetic code address and its known ABI.</summary>
     /// <param name="Import">Original module/ordinal or module/name identity.</param>
@@ -87,9 +89,8 @@ public static class Win16Imports
             ("USER", 76, "PtInRect", Handler.PtInRect, 8, Win16ReturnLayout.WordInAx),
             // Hard Rain reaches Ellipse. Fade Away's Radar path still does not.
             ("GDI", 24, "Ellipse", enableDrawing ? Handler.Ellipse : Handler.Unsupported, 10, Win16ReturnLayout.WordInAx),
-            // Fade Away imports these for other styles. Radar does not call them.
-            // Bind their identities for relocation, but fail symbolically if a guest reaches them.
-            ("GDI", 27, "Rectangle", Handler.Unsupported, null, null),
+            ("GDI", 27, "Rectangle", enableDrawing ? Handler.Rectangle : Handler.Unsupported, 10, Win16ReturnLayout.WordInAx),
+            // Fade Away's other styles import PatBlt; keep that unimplemented identity guarded.
             ("GDI", 29, "PatBlt", Handler.Unsupported, null, null),
             ("KERNEL", 5, "LocalAlloc", Handler.LocalAlloc, 4, Win16ReturnLayout.WordInAx),
             ("KERNEL", 7, "LocalFree", Handler.LocalFree, 2, Win16ReturnLayout.WordInAx),
@@ -97,6 +98,7 @@ public static class Win16Imports
             ("KERNEL", 9, "LocalUnlock", Handler.LocalUnlock, 2, Win16ReturnLayout.WordInAx),
             // Wine 10.0 user.exe16.spec maps both clock ordinals to GetTickCount.
             ("USER", 15, "GetCurrentTime", Handler.Ticks, 0, Win16ReturnLayout.DwordInDxAx),
+            ("GDI", 66, "CreateSolidBrush", enableDrawing ? Handler.CreateSolidBrush : Handler.Unsupported, 4, Win16ReturnLayout.WordInAx),
         };
         const int firstGatewayOffset = 0x100, gatewaySpacing = 0x10;
         return Array.AsReadOnly(imports.Distinct().Select(import =>

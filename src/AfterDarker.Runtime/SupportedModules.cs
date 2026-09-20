@@ -6,6 +6,8 @@ namespace AfterDarker.Runtime;
 /// <summary>Verified artifact identities, not file names or a claim of general AD compatibility.</summary>
 public static class SupportedModules
 {
+    /// <summary>Exact Shapes artifact verified with Color and Clear Screen First enabled.</summary>
+    public const string ShapesSha256 = "16E51D41E4BA8E05EBF9ED5E4A59FDCFD32255634304E38DAC2BA93AE1C4C67C";
     /// <summary>Exact Hard Rain artifact verified with five drops, size 20 and Clear Screen First.</summary>
     public const string HardRainSha256 = "0A93389EFC588962EAF0FE683836EFCB934BF1D036B2316FF202212A0800B331";
     /// <summary>Exact String Theory artifact verified with three groups of 100 strings.</summary>
@@ -34,7 +36,8 @@ public static class SupportedModules
         StringTheorySha256 => "String Theory",
         ZotSha256 => "Zot!",
         HardRainSha256 => "Hard Rain",
-        _ => throw new NotSupportedException("This AD file is not supported yet. Supported modules: the analyzed Mondrian, Spiral Gyra, Rainstorm, Fade Away, Lasers, Magic, String Theory, Zot! and Hard Rain versions. File names alone do not identify a supported version.")
+        ShapesSha256 => "Shapes",
+        _ => throw new NotSupportedException("This AD file is not supported yet. Supported modules: the analyzed Mondrian, Spiral Gyra, Rainstorm, Fade Away, Lasers, Magic, String Theory, Zot!, Hard Rain and Shapes versions. File names alone do not identify a supported version.")
     };
     /// <summary>Construct the selected profile and shared session without yet executing guest code.</summary>
     public static IAnimationSession Open(byte[] file, PlaybackOptions options, SessionTiming? timing = null,
@@ -58,6 +61,8 @@ public static class SupportedModules
             "Zot!" => new AfterDarkSession<ZotState>(file, new ZotProfile(), options,
                 instructionLimit: 2_000_000, timing: timing, diagnostics: diagnostics, output: output),
             "Hard Rain" => new AfterDarkSession<HardRainState>(file, new HardRainProfile(), options,
+                timing: timing, diagnostics: diagnostics, output: output),
+            "Shapes" => new AfterDarkSession<ShapesState>(file, new ShapesProfile(), options,
                 timing: timing, diagnostics: diagnostics, output: output),
             _ => throw new InvalidOperationException()
         };

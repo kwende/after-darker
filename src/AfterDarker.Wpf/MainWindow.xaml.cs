@@ -120,6 +120,7 @@ public partial class MainWindow : Window
             "String Theory" => "String Theory uses three groups of 100 strings, color speed 96, and Clear Screen First.",
             "Zot!" => "Zot! uses Few forks and Stormy frequency. Brief lightning images are presented during its drawing calls.",
             "Hard Rain" => "Hard Rain uses five drops, size 20 and Clear Screen First in this version.",
+            "Shapes" => "Shapes uses Color and Clear Screen First; each update draws one original shape.",
             _ => "Original module speed; applies on Run"
         };
         Title = $"After Darker — {name}";
@@ -195,7 +196,7 @@ public partial class MainWindow : Window
     private void SetBusy(bool busy)
     {
         ModulePath.IsEnabled = BrowseButton.IsEnabled = RunButton.IsEnabled = !busy && !loading && !closing;
-        Speed.IsEnabled = !busy && !loading && !closing && selectedModuleName is not ("Rainstorm" or "Fade Away" or "Lasers" or "Magic" or "String Theory" or "Zot!" or "Hard Rain");
+        Speed.IsEnabled = !busy && !loading && !closing && selectedModuleName is not ("Rainstorm" or "Fade Away" or "Lasers" or "Magic" or "String Theory" or "Zot!" or "Hard Rain" or "Shapes");
         StopButton.IsEnabled = busy;
     }
     private async void OnClosing(object? sender, CancelEventArgs e)
@@ -314,6 +315,7 @@ public partial class MainWindow : Window
                 ShutdownPhases = lastResult?.Phases.TakeLast(2).Select(p => new { p.Name, p.StoredAx, p.Registers.Sp, p.Registers.Ds }),
                 Module = lastResult?.ModuleName, SwitchedFrom = switchedFrom, Instructions = lastResult?.Instructions, OutstandingLocks = lastResult?.OutstandingLocks,
                 LivePens = lastResult?.LivePens, PeakPens = lastResult?.PeakPens,
+                LiveBrushes = lastResult?.LiveBrushes, PeakBrushes = lastResult?.PeakBrushes,
                 LocalHeap = lastResult?.LocalHeap,
                 IntermediateFrames = lastResult?.IntermediateFrames,
                 UiThread = Environment.CurrentManagedThreadId
@@ -340,7 +342,7 @@ public partial class MainWindow : Window
             if (runError is not null) throw new InvalidOperationException("Playback failed during shutdown.", runError);
             var result = completed ?? lastResult;
             if (result is null || result.Phases.Count < 2 || result.Phases[^2].Name != "CLOSE" ||
-                result.Phases[^1].Name != "WEP" || result.Phases[^1].StoredAx != 1 || result.OutstandingLocks != 0 || result.LivePens != 0 ||
+                result.Phases[^1].Name != "WEP" || result.Phases[^1].StoredAx != 1 || result.OutstandingLocks != 0 || result.LivePens != 0 || result.LiveBrushes != 0 ||
                 result.LocalHeap?.Allocations.Count > 0 || result.LocalHeap?.OutstandingLocks > 0)
                 throw new InvalidOperationException("Original guest shutdown did not complete with WEP success and balanced locks.");
         }

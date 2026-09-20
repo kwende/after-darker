@@ -4,10 +4,10 @@ using AfterDarker.Core.Win16;
 namespace AfterDarker.Tests.Conformance;
 
 /// <summary>Test-only modern Windows raster reference. No native GDI objects enter guest code or production rendering.</summary>
-internal static class WindowsEllipseOracle
+internal static class WindowsShapeOracle
 {
     public static byte[] Render(int width, int height, Rectangle16 rectangle, int penWidth,
-        uint penColor = 0x00332211, uint brushColor = 0x00996644)
+        uint penColor = 0x00332211, uint brushColor = 0x00996644, bool drawRectangle = false)
     {
         nint context = CreateCompatibleDC(0);
         Assert.AreNotEqual(nint.Zero, context);
@@ -18,13 +18,15 @@ internal static class WindowsEllipseOracle
             bitmap = CreateDIBSection(context, ref info, 0, out nint bits, 0, 0);
             Assert.AreNotEqual(nint.Zero, bitmap);
             previousBitmap = SelectObject(context, bitmap);
-            pen = CreatePen(0, penWidth, penColor);
+            pen = CreatePen(penWidth == 0 ? 5 : 0, penWidth, penColor); // PS_NULL or PS_SOLID.
             brush = CreateSolidBrush(brushColor);
             Assert.AreNotEqual(nint.Zero, pen); Assert.AreNotEqual(nint.Zero, brush);
             previousPen = SelectObject(context, pen); previousBrush = SelectObject(context, brush);
             byte[] bgra = new byte[width * height * 4];
             Marshal.Copy(bgra, 0, bits, bgra.Length);
-            Assert.IsTrue(Ellipse(context, rectangle.Left, rectangle.Top, rectangle.Right, rectangle.Bottom));
+            Assert.IsTrue(drawRectangle
+                ? Rectangle(context, rectangle.Left, rectangle.Top, rectangle.Right, rectangle.Bottom)
+                : Ellipse(context, rectangle.Left, rectangle.Top, rectangle.Right, rectangle.Bottom));
             Assert.IsTrue(GdiFlush());
             Marshal.Copy(bits, bgra, 0, bgra.Length);
             byte[] rgb = new byte[width * height * 3];
@@ -64,6 +66,7 @@ internal static class WindowsEllipseOracle
     [DllImport("gdi32.dll")] private static extern nint CreatePen(int style, int width, uint color);
     [DllImport("gdi32.dll")] private static extern nint CreateSolidBrush(uint color);
     [DllImport("gdi32.dll")] private static extern bool Ellipse(nint context, int left, int top, int right, int bottom);
+    [DllImport("gdi32.dll")] private static extern bool Rectangle(nint context, int left, int top, int right, int bottom);
     [DllImport("gdi32.dll")] private static extern bool GdiFlush();
     [DllImport("gdi32.dll")] private static extern bool DeleteObject(nint item);
     [DllImport("gdi32.dll")] private static extern bool DeleteDC(nint context);

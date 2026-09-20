@@ -102,7 +102,6 @@ public sealed class Win16ImportGatewayTests
     }
 
     [TestMethod]
-    [DataRow("Rectangle")]
     [DataRow("PatBlt")]
     public void ImportsFromUnsupportedFadeStylesStopByNameBeforeReadingArguments(string name)
     {
@@ -439,6 +438,74 @@ public sealed class Win16ImportGatewayTests
         Assert.AreEqual(0L, setup.Surface.Revision);
     }
 
+    [TestMethod]
+    [DataRow("Ellipse")]
+    [DataRow("Rectangle")]
+    public void GuestCreatesPaletteRelativeBrushDrawsWithNullPenAndDeletesItsRestoredBrush(string shape)
+    {
+        using var setup = new Probe(drawing: true);
+        var code = new List<byte> { 0xBA, 0x78, 0x56 }; // Nonzero DX must survive word results.
+        setup.EmitCall(code, "CreateSolidBrush", 0x0233, 0x2211); // DWORD in Pascal high-word/low-word order.
+        code.AddRange([0x89, 0xC3, 0x68, 0x03, 0x01, 0x53]); // Save brush in BX; PUSH HDC; PUSH BX.
+        setup.EmitCall(code, "SelectObject");
+        code.AddRange([0xA3, 0x20, 0]);
+        setup.EmitCall(code, "GetStockObject", (ushort)Win16Drawing.NullPenIndex);
+        code.AddRange([0x68, 0x03, 0x01, 0x50]); // PUSH HDC; PUSH returned NULL_PEN.
+        setup.EmitCall(code, "SelectObject");
+        setup.EmitCall(code, shape, 0x103, 0xFFFE, 0xFFFF, 6, 5);
+        code.AddRange([0xA3, 0x22, 0]);
+        setup.EmitCall(code, "SelectObject", 0x103, Win16Drawing.BlackPenHandle);
+        setup.EmitCall(code, "SelectObject", 0x103, Win16Drawing.WhiteBrushHandle);
+        code.Add(0x50); setup.EmitCall(code, "DeleteObject"); // AX is the brush just deselected.
+        code.AddRange([0xA3, 0x24, 0]);
+        var final = setup.Run(code);
+        Assert.AreEqual(Win16Drawing.WhiteBrushHandle, setup.Word(0x20));
+        Assert.AreEqual((ushort)1, setup.Word(0x22));
+        Assert.AreEqual((ushort)1, setup.Word(0x24));
+        var brushCall = setup.Calls.Single(call => call.Binding.Implementation == Win16Imports.Handler.CreateSolidBrush);
+        CollectionAssert.AreEqual(new ushort[] { 0x0233, 0x2211 }, brushCall.Arguments.ToArray());
+        Assert.AreEqual(8, brushCall.After.Sp - brushCall.Before.Sp);
+        var shapeCall = setup.Calls.Single(call => call.Binding.Name.Contains("!" + shape + " "));
+        CollectionAssert.AreEqual(new ushort[] { 0x103, 0xFFFE, 0xFFFF, 6, 5 }, shapeCall.Arguments.ToArray());
+        Assert.AreEqual(14, shapeCall.After.Sp - shapeCall.Before.Sp);
+        foreach (var call in setup.Calls)
+        {
+            Assert.AreEqual((ushort)0x5678, call.After.Dx);
+            Assert.AreEqual(Code, call.After.Cs); Assert.AreEqual(Data, call.After.Ds);
+            Assert.AreEqual(call.Before.Es, call.After.Es); Assert.AreEqual(call.Before.Bp, call.After.Bp);
+            Assert.AreEqual(call.Before.Sp + 4 + call.Binding.ArgumentBytes, (int?)call.After.Sp);
+        }
+        Assert.IsTrue(setup.Surface.CopyRgb().AsSpan((2 * 8 + 2) * 3, 3).SequenceEqual(new byte[] { 0x11, 0x22, 0x33 }));
+        Assert.AreEqual(0, setup.Services.State.Drawing!.LiveBrushCount);
+        Assert.AreEqual(1, setup.Services.State.Drawing.PeakBrushCount);
+        Assert.AreEqual((ushort)0x1000, final.Sp);
+    }
+
+    [TestMethod]
+    [DataRow("Rectangle")]
+    [DataRow("CreateSolidBrush")]
+    public void ShapesImportsFailSymbolicallyWithoutReadingArgumentsWhenDrawingIsDisabled(string name)
+    {
+        using var setup = new Probe(drawing: false);
+        var code = new List<byte>();
+        setup.EmitCall(code, name);
+        var error = Assert.Throws<NotSupportedException>(() => setup.Run(code));
+        StringAssert.Contains(error.Message, "GDI!" + name);
+    }
+
+    [TestMethod]
+    public void IndexedBrushColorStopsBeforeAllocatingAnObjectOrReturningToTheGuest()
+    {
+        using var setup = new Probe(drawing: true);
+        var code = new List<byte>();
+        setup.EmitCall(code, "CreateSolidBrush", 0x0100, 17);
+        code.AddRange([0xA3, 0x20, 0]);
+        var error = Assert.Throws<InvalidOperationException>(() => setup.Run(code));
+        StringAssert.Contains(error.Message, "GDI!CreateSolidBrush");
+        Assert.AreEqual((ushort)0xCCCC, setup.Word(0x20));
+        Assert.AreEqual(0, setup.Services.State.Drawing!.LiveBrushCount);
+    }
+
     // Entirely original tiny guest programs: no private file or Watcom required.
     private sealed class Probe : IDisposable
     {
@@ -452,7 +519,7 @@ public sealed class Win16ImportGatewayTests
             var imports = new[] { new NeImport("KERNEL", 4, null), new("KERNEL", 18, null), new("KERNEL", 19, null),
                 new("KERNEL", 131, null), new("USER", 13, null), new("USER", 82, null), new("USER", 72, null), new("USER", 81, null), new("GDI", 87, null),
                 new("GDI", 61, null), new("GDI", 45, null), new("GDI", 69, null), new("GDI", 20, null), new("GDI", 19, null), new("USER", 76, null),
-                new("GDI", 24, null), new("GDI", 27, null), new("GDI", 29, null),
+                new("GDI", 24, null), new("GDI", 27, null), new("GDI", 29, null), new("GDI", 66, null),
                 new("KERNEL", 5, null), new("KERNEL", 7, null), new("KERNEL", 8, null), new("KERNEL", 9, null), new("USER", 15, null) };
             var image = NeReader.Read(RelocationDemo.Create()) with
             {

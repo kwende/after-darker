@@ -22,7 +22,7 @@ public sealed class EllipseRasterTests
             var surface = new PixelSurface(64, 64);
             surface.Ellipse(rectangle, 0x00332211, penWidth, 0x00996644);
             byte[] actual = surface.CopyRgb();
-            byte[] expected = WindowsEllipseOracle.Render(64, 64, rectangle, penWidth);
+            byte[] expected = WindowsShapeOracle.Render(64, 64, rectangle, penWidth);
             for (int row = 0; row < 64; row++)
             for (int column = 0; column < 64; column++)
             {
