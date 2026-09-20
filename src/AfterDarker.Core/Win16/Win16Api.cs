@@ -11,10 +11,16 @@ namespace AfterDarker.Core.Win16;
 /// between guests. Win16ApiState holds that state and the host's chosen inputs.
 /// These methods implement only the documented subset, not all of Windows.
 /// </summary>
-public sealed class Win16Api(Win16ApiState state)
+public sealed partial class Win16Api(Win16ApiState state)
 {
     /// <summary>Per-guest Windows state; never shared across simultaneously loaded modules.</summary>
     public Win16ApiState State { get; } = state;
+    /// <summary>Return the DC's logical origin as a packed signed Y:X coordinate pair.</summary>
+    public uint GetWindowOrg(ushort hdc) => Drawing.GetWindowOrg(hdc);
+    /// <summary>Choose the logical coordinate at device pixel zero, returning the previous packed origin.</summary>
+    public uint SetWindowOrg(ushort hdc, short horizontal, short vertical) => Drawing.SetWindowOrg(hdc, horizontal, vertical);
+    /// <summary>Choose how pen/brush colors combine with existing pixels, returning the previous ROP2 mode.</summary>
+    public ushort SetROP2(ushort hdc, ushort mode) => Drawing.SetROP2(hdc, mode);
 
     /// <summary>Create a supported solid pen; color is a Win16 COLORREF, not an ARGB pixel.</summary>
     public ushort CreatePen(short style, short width, uint color) => Drawing.CreatePen(style, width, color);
@@ -42,12 +48,14 @@ public sealed class Win16Api(Win16ApiState state)
     public void SetRect(FarPointer16 destination, short left, short top, short right, short bottom)
         => State.Memory.Write(destination, new Rectangle16(left, top, right, bottom).Encode());
 
-    /// <summary>Return a stock black brush, black pen or null pen; stock objects do not consume owned-object pools.</summary>
+    /// <summary>Return a stock white/black/null brush or black/null pen; stock objects do not consume owned-object pools.</summary>
     public ushort GetStockObject(short index) => index switch
     {
         Win16Drawing.BlackBrushIndex => Win16Drawing.BlackBrushHandle,
+        Win16Drawing.WhiteBrushIndex => Win16Drawing.WhiteBrushHandle,
         Win16Drawing.BlackPenIndex => Win16Drawing.BlackPenHandle,
         Win16Drawing.NullPenIndex => Win16Drawing.NullPenHandle,
+        Win16Drawing.NullBrushIndex => Win16Drawing.NullBrushHandle,
         _ => throw new NotSupportedException($"Unsupported stock object {index}.")
     };
 
@@ -60,13 +68,20 @@ public sealed class Win16Api(Win16ApiState state)
             point.Y >= rectangle.Top && point.Y < rectangle.Bottom;
     }
 
-    /// <summary>Read a guest RECT, fill it using the supported black brush, and return success.</summary>
+    /// <summary>Read a guest RECT and fill it with an explicit solid brush, preserving selected objects.</summary>
     public short FillRect(ushort hdc, FarPointer16 rectangle, ushort brush)
     {
-        if (brush != Win16Drawing.BlackBrushHandle) throw new NotSupportedException($"Unknown brush {brush:X4}.");
-        Drawing.Paint(hdc, Rectangle16.Decode(State.Memory.Read(rectangle, Rectangle16.ByteCount)), invert: false);
-        return 1;
+        return Drawing.FillRect(hdc, ReadRectangle(rectangle), brush);
     }
+
+    /// <summary>Read a guest RECT and paint its inside border using the explicit solid brush.</summary>
+    public short FrameRect(ushort hdc, FarPointer16 rectangle, ushort brush) => Drawing.FrameRect(hdc, ReadRectangle(rectangle), brush);
+    /// <summary>Write one logical pixel directly, returning its RGB COLORREF or CLR_INVALID.</summary>
+    public uint SetPixel(ushort hdc, short horizontal, short vertical, uint color) => Drawing.SetPixel(hdc, horizontal, vertical, color);
+    /// <summary>Copy a source DC region with its explicit raster operation; selected objects and ROP2 are unaffected.</summary>
+    public bool BitBlt(ushort destinationHdc, short destinationX, short destinationY, short width, short height,
+        ushort sourceHdc, short sourceX, short sourceY, uint rasterOperation) =>
+        Drawing.BitBlt(destinationHdc, destinationX, destinationY, width, height, sourceHdc, sourceX, sourceY, rasterOperation);
 
     /// <summary>Invert RGB bits. Inverting the same pixels twice restores them; Win16 returns void.</summary>
     public void InvertRect(ushort hdc, FarPointer16 rectangle)

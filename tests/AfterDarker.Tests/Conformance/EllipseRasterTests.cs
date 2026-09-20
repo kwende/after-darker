@@ -10,7 +10,8 @@ public sealed class EllipseRasterTests
     [TestMethod]
     [DataRow(1)]
     [DataRow(2)]
-    public void HardRainRingsStayWithinOnePixelOfWindowsButDoNotClaimExactRasterEquality(int penWidth)
+    [DataRow(3)]
+    public void SupportedCircleStrokesStayWithinOnePixelOfWindowsButDoNotClaimExactRasterEquality(int penWidth)
     {
         // Square-pixel Hard Rain generates circles; radius 27 gives one pixel of
         // headroom beyond its largest erasure. Compare each color in both directions, so disappearing interiors

@@ -545,6 +545,17 @@ and multi-monitor behavior need consumer acceptance tests. See the
 
 ## Shared module sessions
 
+[Stained Glass](research/stained-glass-execution.md) extends the same shared GDI
+model with per-DC window origins and ROP2. Logical coordinates remain signed
+Win16 words; translation and clipping use wider host arithmetic. Selected pen
+and brush drawing combines source and destination colors once per covered pixel.
+Explicit-brush FillRect/FrameRect and SetPixel instead write their colors directly.
+SRCCOPY BitBlt takes source and destination DC state and snapshots its source
+before writing, so overlapping self-copies cannot smear their input. These
+mechanisms belong to Core; module profiles only supply identity, controls and
+observations. Width-three lines and ellipse strokes are documented software
+approximations. No module-specific drawing backend or new host interface is needed.
+
 The second executable target, [Spiral Gyra](research/spiral-gyra-execution.md),
 shares `AfterDarkSession<TState>` with Mondrian. The generic runner owns segment
 placement, native execution, import dispatch and lifecycle; typed profiles hold

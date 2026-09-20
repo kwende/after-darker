@@ -34,7 +34,17 @@ public static class Win16Imports
         LineTo,
         Ellipse,
         Rectangle,
-        CreateSolidBrush
+        CreateSolidBrush,
+        GetWindowOrg,
+        OffsetRect,
+        InflateRect,
+        IntersectRect,
+        EqualRect,
+        SetROP2,
+        SetWindowOrg,
+        FrameRect,
+        SetPixel,
+        BitBlt
     }
     /// <summary>One NE import bound to our synthetic code address and its known ABI.</summary>
     /// <param name="Import">Original module/ordinal or module/name identity.</param>
@@ -58,7 +68,7 @@ public static class Win16Imports
     /// <summary>Bind explicit import identities, also used by source-authored guest conformance programs.</summary>
     public static IReadOnlyList<ImportEntry> BindImports(IEnumerable<NeImport> imports, ushort gateway, bool enableDrawing = false)
     {
-        // Ordinals/signatures: Wine 10.0 krnl386.exe16.spec and user.exe16.spec.
+        // Ordinals/signatures: Wine 10.0 krnl386.exe16.spec, user.exe16.spec and gdi.exe16.spec.
         // Each synthetic address is OUR choice; its selector is a code gateway.
         // Unsupported entries deliberately have no guessed marshaling contract.
         var definitions = new (string Module, ushort Ordinal, string Name, Handler Handler, int? Bytes, Win16ReturnLayout? Return)[]
@@ -99,6 +109,18 @@ public static class Win16Imports
             // Wine 10.0 user.exe16.spec maps both clock ordinals to GetTickCount.
             ("USER", 15, "GetCurrentTime", Handler.Ticks, 0, Win16ReturnLayout.DwordInDxAx),
             ("GDI", 66, "CreateSolidBrush", enableDrawing ? Handler.CreateSolidBrush : Handler.Unsupported, 4, Win16ReturnLayout.WordInAx),
+            ("GDI", 97, "GetWindowOrg", enableDrawing ? Handler.GetWindowOrg : Handler.Unsupported, 2, Win16ReturnLayout.DwordInDxAx),
+            ("GDI", 11, "SetWindowOrg", enableDrawing ? Handler.SetWindowOrg : Handler.Unsupported, 6, Win16ReturnLayout.DwordInDxAx),
+            ("GDI", 4, "SetROP2", enableDrawing ? Handler.SetROP2 : Handler.Unsupported, 4, Win16ReturnLayout.WordInAx),
+            ("USER", 83, "FrameRect", enableDrawing ? Handler.FrameRect : Handler.Unsupported, 8, Win16ReturnLayout.WordInAx),
+            ("GDI", 31, "SetPixel", enableDrawing ? Handler.SetPixel : Handler.Unsupported, 10, Win16ReturnLayout.DwordInDxAx),
+            ("GDI", 34, "BitBlt", enableDrawing ? Handler.BitBlt : Handler.Unsupported, 20, Win16ReturnLayout.WordInAx),
+            ("GDI", 35, "StretchBlt", Handler.Unsupported, null, null),
+            // Win16 OffsetRect/InflateRect return void (unlike the Win32 BOOL declarations).
+            ("USER", 77, "OffsetRect", Handler.OffsetRect, 8, Win16ReturnLayout.Void),
+            ("USER", 78, "InflateRect", Handler.InflateRect, 8, Win16ReturnLayout.Void),
+            ("USER", 79, "IntersectRect", Handler.IntersectRect, 12, Win16ReturnLayout.WordInAx),
+            ("USER", 244, "EqualRect", Handler.EqualRect, 8, Win16ReturnLayout.WordInAx),
         };
         const int firstGatewayOffset = 0x100, gatewaySpacing = 0x10;
         return Array.AsReadOnly(imports.Distinct().Select(import =>

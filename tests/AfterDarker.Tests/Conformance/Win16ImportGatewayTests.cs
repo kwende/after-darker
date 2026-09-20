@@ -12,7 +12,7 @@ namespace AfterDarker.Tests.Conformance;
 
 [TestClass]
 [TestCategory("Conformance")]
-public sealed class Win16ImportGatewayTests
+public sealed partial class Win16ImportGatewayTests
 {
     [TestMethod]
     [DataRow(0x12345678u, 0x12345688u)]
@@ -352,7 +352,7 @@ public sealed class Win16ImportGatewayTests
     }
 
     [TestMethod]
-    [DataRow("GetStockObject", 0, 0, 0, 0)]
+    [DataRow("GetStockObject", 1, 0, 0, 0)]
     [DataRow("GetStockObject", 65535, 0, 0, 0)]
     [DataRow("FillRect", 0x103, Data, 0x350, 0xFFFF)]
     [DataRow("FillRect", 0xFFFF, Data, 0x350, Win16Drawing.BlackBrushHandle)]
@@ -520,6 +520,8 @@ public sealed class Win16ImportGatewayTests
                 new("KERNEL", 131, null), new("USER", 13, null), new("USER", 82, null), new("USER", 72, null), new("USER", 81, null), new("GDI", 87, null),
                 new("GDI", 61, null), new("GDI", 45, null), new("GDI", 69, null), new("GDI", 20, null), new("GDI", 19, null), new("USER", 76, null),
                 new("GDI", 24, null), new("GDI", 27, null), new("GDI", 29, null), new("GDI", 66, null),
+                new("GDI", 97, null), new("GDI", 11, null), new("GDI", 4, null), new("GDI", 31, null), new("GDI", 34, null),
+                new("USER", 77, null), new("USER", 78, null), new("USER", 79, null), new("USER", 244, null), new("USER", 83, null),
                 new("KERNEL", 5, null), new("KERNEL", 7, null), new("KERNEL", 8, null), new("KERNEL", 9, null), new("USER", 15, null) };
             var image = NeReader.Read(RelocationDemo.Create()) with
             {

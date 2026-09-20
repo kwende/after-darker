@@ -36,6 +36,10 @@ a measured one-pixel neighborhood bound for the tested ring sizes.
 Shapes is the tenth: owned solid brushes, null pens and filled rectangles join
 the shared drawing layer. Its original code chooses random colors and shapes;
 the host uses PALETTERGB's RGB values directly under an explicit adaptation.
+Stained Glass is the eleventh: per-DC origins and ROP2, rectangle helpers,
+explicit brush frames, SetPixel and SRCCOPY BitBlt support its original tiled
+patterns at fixed color controls. Width-three strokes extend the documented
+software raster approximation; scaled blits remain guarded and unexercised.
 This remains narrow compatibility support, not general Win16 emulation.
 `AfterDarker.Core` contains two extracted binary-layout helpers, a Windows NE
 metadata reader, a CPU-independent load plan, and a separate After Dark
@@ -52,6 +56,8 @@ ten educational console lessons (06 needs the optional Watcom fixture;
   [The assessment](ocuvera-compatibility.md) records the source comparison,
   native/CFG publication concern and proposed acceptance milestones. Integration
   is not implemented or proven yet; AGENTS.md now preserves this direction.
+  The owner subsequently parked packaging/integration until the current module
+  collection is rounded out. Stained Glass changes no consumer/session interface.
 - **Color playback across all modules (owner decision, 2026-09-20):** optional
   grayscale/monochrome paths are outside required support. If they complicate
   implementation, palette behavior, tests or UI, force the color path through
@@ -61,6 +67,19 @@ ten educational console lessons (06 needs the optional Watcom fixture;
   This generalizes the earlier Shapes-only decision and is recorded in AGENTS.md.
 
 ## Established evidence
+
+- **Stained Glass playback:** fixed Complexity/Duplication/Color controls
+  `10/100/100` execute the original pattern and duplication code. Ten shared
+  services add coordinate origins, binary raster mixing, rectangle helpers,
+  explicit brush borders, individual pixels and overlap-safe image copies.
+  Native comparisons match exact pixels for the tested one-pixel/brush/copy
+  cases. Width-three lines/ellipses remain explicit approximations. Actual WPF
+  checks pass switching both ways with Shapes, including readback, restart
+  and close while playing. All **388 combined cases** and **273 public cases**
+  pass. Seven private cases cover 2,000 draws, four further seed/size combinations,
+  independent guests, dimension/artifact rejection and clean shutdown. The main
+  run executes 1,164 BitBlts and 201,112 SetPixels; peak owned pens/brushes are
+  one each. See [the execution and proof boundaries](research/stained-glass-execution.md).
 
 - **Shapes playback:** fixed Color/Clear Screen First controls run 1,000 draws:
   521,164 instructions, 489 rectangles, 511 ellipses and 1,000 colors. Tests
@@ -447,6 +466,31 @@ Tutorial 04 implements the narrow host trap; the broader issue is not complete.
 See [the tutorial guide](tutorials.md).
 
 ## Session log
+
+### 2026-09-20 - Stained Glass and shared GDI state/copying
+
+- Created `codex/stained-glass` from reviewed, clean main `a7e50ff`. The Ocuvera
+  assessment is merged; implementation here stays focused on the next module.
+- Original DLL startup and lifecycle use the existing loader and session.
+  Artifact-specific code is confined to the typed profile/state and support
+  registry. The profile uses color, controls 10/100/100, and dimensions 64–2048.
+- Shared services add window origins, all 16 ROP2 modes, rectangle helpers,
+  SetPixel, FrameRect and SRCCOPY BitBlt. White/hollow brushes, explicit-brush
+  fills and width-three pen strokes extend existing object ownership/rendering.
+- Native comparison exposed FrameRect's nonempty degenerate edge strips;
+  alias-safe rectangle writes and overlap-safe copies have direct tests.
+  Void Win16 rectangle helpers retain their own ABI instead of using Win32 BOOL.
+- Three-pixel line and ellipse boundaries approximate modern GDI; finite native
+  comparison bounds and unimplemented StretchBlt are documented explicitly.
+  No new dependencies, packaging, host UI abstractions or proprietary files added.
+- WPF acceptance passed switching both directions with Shapes, exact bitmap
+  readback, restart and CLOSE/WEP with zero owned objects/locks/allocations.
+  Local PNGs, disassembly and reports remain under ignored artifacts.
+- Validation: **273/273 public cases** pass independently and **388/388 combined
+  cases** pass with the compiler and all eleven modules (7m32s). The 2,000-draw
+  run executes 11,212,972 instructions before shutdown; its largest draw takes
+  62,089 instructions and 2,073 imports. WPF builds with zero warnings/errors.
+- Changes remain uncommitted for review; no next module has been started.
 
 ### 2026-09-20 - Ocuvera package compatibility assessment
 

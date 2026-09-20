@@ -20,7 +20,10 @@ The subsequent [Hard Rain increment](hard-rain-execution.md) now implements
 playback with pen widths, selected stock brushes and a documented software ellipse
 raster. The subsequent [Shapes increment](shapes-execution.md) adds owned
 brushes, null pens and rectangles, accepting its palette request with the owner's
-approved direct-RGB policy. Constrained Stained Glass is next. The original
+approved direct-RGB policy. [Stained Glass](stained-glass-execution.md) now runs
+with fixed color controls, adding origins, raster mixing, geometry helpers and
+SRCCOPY BitBlt. Gravity remains a provisional later candidate; its sound and
+off-screen bitmap requirements have not been implemented. The original
 probe results below remain historical evidence.
 
 ## What was checked again

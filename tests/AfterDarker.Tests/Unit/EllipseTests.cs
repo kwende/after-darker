@@ -81,7 +81,7 @@ public sealed class EllipseTests
     public void FullSignedCoordinateRangeDoesNotOverflowAndUnsupportedWidthsLeavePixelsAlone()
     {
         var surface = new PixelSurface(2, 2);
-        Assert.Throws<ArgumentOutOfRangeException>(() => surface.Ellipse(new(0, 0, 2, 2), 0, 3, 0));
+        Assert.Throws<ArgumentOutOfRangeException>(() => surface.Ellipse(new(0, 0, 2, 2), 0, 4, 0));
         Assert.AreEqual(0L, surface.Revision);
         Assert.AreEqual(4, surface.Ellipse(new(short.MinValue, short.MinValue, short.MaxValue, short.MaxValue), 0, 2, 0xFFFFFF));
         Assert.IsTrue(surface.CopyRgb().All(component => component == 255));

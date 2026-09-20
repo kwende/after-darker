@@ -4,10 +4,10 @@ namespace AfterDarker.Core.Rendering;
 
 /// <summary>Build clipped scanline spans for a solid ellipse without touching any device-context state.</summary>
 /// <remarks>
-/// One-pixel boundaries use integer ellipse stepping. Width two uses the band between
-/// ellipses expanded and contracted by one pixel: a deterministic software stroke,
-/// not a claim to reproduce every pixel of Windows' ellipse rasterizer at either width.
-/// See docs/research/hard-rain-execution.md for the measured compatibility boundary.
+/// One-pixel boundaries use integer ellipse stepping. Wider strokes use the band between
+/// expanded and contracted ellipses: a deterministic software approximation of widths two
+/// and three, not a claim to reproduce every pixel of Windows' ellipse rasterizer.
+/// See docs/research/hard-rain-execution.md and stained-glass-execution.md for the measured boundary.
 /// Boundary stepping is adapted from Alois Zingl's MIT-licensed plotEllipseRect;
 /// attribution and license: third-party/zingl-bresenham.txt.
 /// </remarks>
@@ -21,10 +21,13 @@ internal static class EllipseRasterizer
     }
 
     /// <summary>Rows retain original-curve rounding even when most of the ellipse is outside the surface.</summary>
-    public static Row[] BuildRows(Rectangle16 rectangle, int penWidth, int surfaceHeight)
+    public static Row[] BuildRows(Rectangle16 rectangle, int penWidth, int surfaceHeight, Point16 origin = default)
     {
         int left = Math.Min(rectangle.Left, rectangle.Right), right = Math.Max(rectangle.Left, rectangle.Right);
         int top = Math.Min(rectangle.Top, rectangle.Bottom), bottom = Math.Max(rectangle.Top, rectangle.Bottom);
+        // Keep translated coordinates in 32 bits: subtracting two signed Win16
+        // words need not fit in a word. Translation does not increase curve size.
+        left -= origin.X; right -= origin.X; top -= origin.Y; bottom -= origin.Y;
         Row[] rows = NewRows(surfaceHeight);
         if (left == right || top == bottom) return rows;
         if (penWidth == 1)
@@ -33,12 +36,14 @@ internal static class EllipseRasterizer
             return rows;
         }
 
-        // Center the two-pixel band on the original curve. Fill the inner ellipse
-        // with the brush; do not paint over the outline in a second raster pass.
+        // Expand the outside by one pixel; widths two/three inset the inside by
+        // one/two pixels. Fill and stroke are disjoint, so XOR mixes each pixel
+        // only once rather than erasing an overlap in a second raster pass.
         TraceBoundary(left - 1, top - 1, right, bottom, rows);
         Row[] interior = NewRows(surfaceHeight);
-        if (right - left > 2 && bottom - top > 2)
-            TraceBoundary(left + 1, top + 1, right - 2, bottom - 2, interior);
+        int inset = (penWidth + 1) / 2;
+        if (right - left > inset * 2 && bottom - top > inset * 2)
+            TraceBoundary(left + inset, top + inset, right - 1 - inset, bottom - 1 - inset, interior);
         for (int row = 0; row < rows.Length; row++)
         {
             rows[row].BrushLeft = interior[row].Left;
