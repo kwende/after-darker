@@ -57,6 +57,10 @@ logic; do not build unrelated Windows services in anticipation of other modules.
 
 ## 3. Layered design
 
+For concrete files and a walkthrough of stack/register handling, start with
+[the runtime code map](runtime-code-map.md). It distinguishes shared runtime
+mechanisms from intentionally self-contained educational lessons.
+
 ### 3.1 Artifact inspector
 
 Responsibilities:
@@ -121,8 +125,8 @@ Tutorial 08 now executes Mondrian startup and its PREINITIALIZE/INITIALIZE
 messages. `SegmentedGuest` owns native execution behind checked guest-memory
 operations; shared `Win16Api` methods own the narrow service behavior and
 `Win16ApiState` keeps each guest's state separate. Tutorials 06 and 08 both
-call these methods. `Win16Imports` separates import metadata and ABI conversion
-from implementation; the API class contains no emulator/stack handling. The profile
+call these methods. `Win16Imports` supplies import metadata, while `Win16ApiDispatcher` converts
+ABI words to typed arguments; the API class contains no emulator/stack handling. The profile
 supplies two resident global blocks and an empty environment, with separate
 far-call and DOS-interrupt dispatch after the native hooks return. Public
 synthetic programs verify those same boundaries. Hash-specific local tests
@@ -493,3 +497,11 @@ GDI now models a selected solid pen and current point per HDC, with bounded,
 reusable guest pen handles. `MoveTo` returns the previous packed position;
 `LineTo` renders through the same deterministic software surface. This adds
 five Win16 imports without introducing a module-specific drawing backend.
+
+The third target, [Rainstorm](research/rainstorm-execution.md), adds a stock
+black-pen lookup and a by-value POINT geometry import through the same gateway.
+Its profile supplies fixed controls and SDK-sized module storage. Its lightning
+path exposes a presentation boundary: two inversions occur within one DRAWFRAME,
+whereas the current host publishes only the final surface after the call.
+Intermediate effects and their historical timing require a separate presentation
+policy; executing the calls alone does not establish visible fidelity.

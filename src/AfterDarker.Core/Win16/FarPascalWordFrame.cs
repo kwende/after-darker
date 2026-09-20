@@ -9,8 +9,11 @@ namespace AfterDarker.Core.Win16;
 /// </summary>
 public readonly ref struct FarPascalWordFrame
 {
+    /// <summary>Saved IP and CS, two bytes each, pushed by a 16-bit CALL FAR.</summary>
+    public const int ReturnAddressBytes = 2 * sizeof(ushort);
     private readonly ReadOnlySpan<byte> bytes;
 
+    /// <summary>Decode a frame already read from checked guest stack memory.</summary>
     public FarPascalWordFrame(ReadOnlySpan<byte> bytes)
     {
         if (bytes.Length < 4 || (bytes.Length & 1) != 0)
@@ -18,12 +21,16 @@ public readonly ref struct FarPascalWordFrame
         this.bytes = bytes;
     }
 
+    /// <summary>Offset of the instruction following the guest CALL FAR.</summary>
     public ushort ReturnIp => BinaryPrimitives.ReadUInt16LittleEndian(bytes);
+    /// <summary>Code selector saved by the guest CALL FAR.</summary>
     public ushort ReturnCs => BinaryPrimitives.ReadUInt16LittleEndian(bytes[2..]);
-    public int ArgumentCount => (bytes.Length - 4) / 2;
+    /// <summary>Number of argument words, excluding the return address.</summary>
+    public int ArgumentCount => (bytes.Length - ReturnAddressBytes) / sizeof(ushort);
 
     // Pascal pushes left to right: the last argument sits closest to the return.
     // Indices here follow the source-language order: 0 is the LEFT argument.
+    /// <summary>Read a signed word in source order: index zero is the leftmost argument.</summary>
     public short ReadArgument(int index)
     {
         if (index < 0 || index >= ArgumentCount)
@@ -34,6 +41,7 @@ public readonly ref struct FarPascalWordFrame
 
     // Pop IP + CS + all arguments. Our supported host path rejects wrapping;
     // a general x86 stack implementation would also need to model wrap semantics.
+    /// <summary>Compute SP after RETF and callee argument cleanup; wrapping is rejected.</summary>
     public ushort StackPointerAfterReturn(ushort stackPointer) =>
         checked((ushort)(stackPointer + bytes.Length));
 }

@@ -2,6 +2,12 @@
 
 Scan date: 2026-09-16. **Artifact facts, not observed execution.**
 
+For current implementation priorities, see the
+[2026-09-19 compatibility sweep](module-readiness-sweep.md), which verifies the
+same artifact hashes against the expanded runtime and adds bounded execution
+probes. The later SDK recovery also supplies AD_SND declarations; statements
+below about unrecovered sound contracts describe this original scan's evidence.
+
 The 29 local modules do not directly import thread creation, mutex/semaphore
 operations, Win16 task-event waits, or task-yield APIs. They do require services
 beyond drawing. Memory handles, resource loading, timing, files/settings, modal

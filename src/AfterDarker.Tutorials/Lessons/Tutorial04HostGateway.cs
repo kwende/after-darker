@@ -6,6 +6,11 @@ using UnicornEngine.Const;
 
 namespace AfterDarker.Tutorials.Lessons;
 
+// This lesson intentionally keeps its CPU/ABI mechanics local for a step-through explanation.
+// The reusable player path is Runtime/Calls/Win16ImportGateway.cs, Win16Stack.cs and
+// Win16RegisterConvention.cs. See docs/runtime-code-map.md before extending production behavior.
+
+
 /// <summary>
 /// Guest CALL FAR -> stop at a synthetic gateway -> C# service -> guest store.
 /// Descriptor setup repeats tutorial 03 so this lesson can be read on its own.
@@ -18,8 +23,11 @@ public sealed class Tutorial04HostGateway : ITutorial
     public void Run()
     {
         Result observed = Execute(output: Console.Out);
-        if (observed is not { FinalSp: 0x1000, FinalCs: 0x0008, FinalIp: 0x001C,
-            FinalAx: 0xFFFE, FinalDs: 0x0018, FinalSs: 0x0020, ProtectedMode: true } ||
+        if (observed is not
+            {
+                FinalSp: 0x1000, FinalCs: 0x0008, FinalIp: 0x001C,
+                FinalAx: 0xFFFE, FinalDs: 0x0018, FinalSs: 0x0020, ProtectedMode: true
+            } ||
             observed.Calls.Count != 2 || observed.StoredValues[0] != 12 || observed.StoredValues[1] != 0xFFFE)
             throw new InvalidOperationException($"Host gateway completion did not match the lesson: {observed}.");
         Console.WriteLine("PASS: two host calls returned to x86; the guest stored both results and restored its stack.");

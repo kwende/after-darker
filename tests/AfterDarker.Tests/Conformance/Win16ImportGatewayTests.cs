@@ -12,10 +12,68 @@ namespace AfterDarker.Tests.Conformance;
 
 [TestClass]
 [TestCategory("Conformance")]
-public sealed class MondrianGatewayTests
+public sealed class Win16ImportGatewayTests
 {
     private const ushort Code = MondrianSession.Caller, Gateway = MondrianSession.Gateway;
     private const ushort Data = MondrianSession.HostData, Stack = MondrianSession.Stack, DllData = 0x28;
+
+    [TestMethod]
+    [DataRow(-8, 6, 1)]
+    [DataRow(6, -8, 0)]
+    [DataRow(2, 0, 0)]
+    [DataRow(0, 9, 0)]
+    public void PointByValueRoundTripsSignedCoordinatesBoolAndPascalCleanup(int x, int y, int expected)
+    {
+        using var setup = new Probe(); // Geometry works without a drawing surface.
+        byte[] rectangle = new Rectangle16(-10, -5, 2, 9).Encode();
+        setup.Guest.Write(new(Data, 0x350), rectangle);
+        var code = new List<byte> { 0xBA, 0x78, 0x56 }; // MOV DX,5678: BOOL must preserve DX.
+        // The RECT is a far pointer. POINT is one value, pushed Y then X.
+        setup.EmitCall(code, "PtInRect", Data, 0x350, unchecked((ushort)y), unchecked((ushort)x));
+        code.AddRange([0xA3, 0x20, 0]); // Guest stores the returned AX itself.
+        var final = setup.Run(code);
+        Assert.AreEqual((ushort)expected, setup.Word(0x20));
+        Assert.AreEqual((ushort)0x5678, final.Dx);
+        Assert.AreEqual((ushort)0x1000, final.Sp);
+        var call = setup.Calls.Single();
+        Assert.AreEqual(call.Before.Sp + 12, (int)call.After.Sp); // Four return bytes + eight argument bytes.
+        Assert.AreEqual(Code, call.After.Cs);
+        Assert.AreEqual(Data, call.After.Ds);
+        Assert.AreEqual(Stack, call.After.Ss);
+        Assert.AreEqual(call.Before.Bp, call.After.Bp);
+        Assert.AreEqual(call.Before.Es, call.After.Es);
+        CollectionAssert.AreEqual(rectangle, setup.Guest.Read(new(Data, 0x350), Rectangle16.ByteCount));
+    }
+
+    [TestMethod]
+    [DataRow(0, 0)]
+    [DataRow(Data, 0xFFC)]
+    public void PointInRectRejectsInvalidRectangleBeforeReturningToGuest(int selector, int offset)
+    {
+        using var setup = new Probe();
+        var code = new List<byte>();
+        setup.EmitCall(code, "PtInRect", (ushort)selector, (ushort)offset, 0, 0);
+        code.AddRange([0xA3, 0x20, 0]);
+        var error = Assert.Throws<InvalidOperationException>(() => setup.Run(code));
+        StringAssert.Contains(error.Message, "PtInRect");
+        Assert.AreEqual((ushort)0xCCCC, setup.Word(0x20));
+    }
+
+    [TestMethod]
+    public void GuestCanSelectTheStockBlackPenReturnedThroughAx()
+    {
+        using var setup = new Probe(drawing: true);
+        var code = new List<byte> { 0xBA, 0x78, 0x56 };
+        setup.EmitCall(code, "GetStockObject", (ushort)Win16Drawing.BlackPenIndex);
+        code.AddRange([0xA3, 0x20, 0, 0x68, 0x03, 0x01, 0x50]); // Store AX; PUSH HDC; PUSH returned AX.
+        setup.EmitCall(code, "SelectObject");
+        var final = setup.Run(code);
+        Assert.AreEqual(Win16Drawing.BlackPenHandle, setup.Word(0x20));
+        Assert.AreEqual(Win16Drawing.BlackPenHandle, final.Ax);
+        Assert.AreEqual((ushort)0x5678, final.Dx);
+        Assert.AreEqual((ushort)0x1000, final.Sp);
+        Assert.AreEqual(0, setup.Services.State.Drawing!.LivePenCount);
+    }
 
     [TestMethod]
     public void PenAndLineImportsRoundTripColorsSignedCoordinatesHandlesAndReturnRegisters()
@@ -146,7 +204,7 @@ public sealed class MondrianGatewayTests
         setup.EmitCall(code, "InvertRect");
         var error = Assert.Throws<NotSupportedException>(() => setup.Run(code));
         StringAssert.Contains(error.Message, "USER!InvertRect");
-        StringAssert.Contains(error.Message, "initialization-only");
+        StringAssert.Contains(error.Message, "service is not enabled");
     }
 
     [TestMethod]
@@ -219,13 +277,13 @@ public sealed class MondrianGatewayTests
         public SegmentedGuest Guest { get; } = new();
         public Win16Api Services { get; }
         public IReadOnlyList<Win16Imports.ImportEntry> Bindings { get; }
-        public List<MondrianSession.HostCall> Calls { get; } = [];
+        public List<Win16CallTrace> Calls { get; } = [];
         public PixelSurface Surface { get; } = new(8, 6);
         public Probe(bool drawing = false)
         {
             var imports = new[] { new NeImport("KERNEL", 4, null), new("KERNEL", 18, null), new("KERNEL", 19, null),
                 new("KERNEL", 131, null), new("USER", 13, null), new("USER", 82, null), new("USER", 72, null), new("USER", 81, null), new("GDI", 87, null),
-                new("GDI", 61, null), new("GDI", 45, null), new("GDI", 69, null), new("GDI", 20, null), new("GDI", 19, null) };
+                new("GDI", 61, null), new("GDI", 45, null), new("GDI", 69, null), new("GDI", 20, null), new("GDI", 19, null), new("USER", 76, null) };
             var image = NeReader.Read(RelocationDemo.Create()) with
             {
                 Relocations = imports.Select(i => new NeRelocation(1, 0, 3, 1, 0, 0, 0, i)).ToArray()
@@ -243,7 +301,7 @@ public sealed class MondrianGatewayTests
             var contexts = new Win16Drawing();
             contexts.Register(0x103, Surface);
             Services = new(new Win16ApiState(Guest, new(new(DllData, 64), 1024), new(Data, 0x300))
-                { Drawing = drawing ? contexts : null });
+            { Drawing = drawing ? contexts : null });
             Services.State.Blocks.Register(0x102, new(Data, 0x200), records.Module.Length);
         }
         public void EmitCall(List<byte> code, string name, params ushort[] args)
@@ -261,7 +319,9 @@ public sealed class MondrianGatewayTests
             Guest.Set(X86.UC_X86_REG_DS, Data);
             Guest.Set(X86.UC_X86_REG_SS, Stack);
             Guest.Set(X86.UC_X86_REG_SP, 0x1000);
-            Guest.DispatchGateway = () => Calls.Add(MondrianSession.DispatchImport(Guest, Bindings, Services));
+            var stack = new Win16Stack(Guest, MondrianSession.Stack, MondrianSession.InitialSp);
+            var gateway = new Win16ImportGateway(Guest, Bindings, Services, stack);
+            Guest.DispatchGateway = () => Calls.Add(gateway.Dispatch());
             return Guest.RunUntil("synthetic import probe", new(Code, 0), new(Code, end));
         }
         public ushort Word(ushort offset) => BinaryPrimitives.ReadUInt16LittleEndian(Guest.Read(new(Data, offset), 2));

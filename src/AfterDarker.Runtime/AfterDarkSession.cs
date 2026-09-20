@@ -15,73 +15,110 @@ namespace AfterDarker.Runtime;
 /// Use from one owner sequentially; this class does not schedule or synchronize
 /// callers. The same execution path serves tutorials and the WPF host.
 /// </summary>
-public class AfterDarkSession<TState> : IAnimationSession
+public partial class AfterDarkSession<TState> : IAnimationSession
 {
-    // Host slots follow ALL loaded NE segments. A sixth DLL segment must not
-    // collide with the caller slot used by the five-segment Mondrian tutorial.
-    public ushort Caller { get; }
-    public ushort Gateway { get; }
-    public ushort Stack { get; }
-    public ushort HostData { get; }
-    public uint CallerBase => (uint)(Caller / 8) << 16;
-    public uint GatewayBase => (uint)(Gateway / 8) << 16;
-    public uint StackBase => (uint)(Stack / 8) << 16;
-    public uint HostDataBase => (uint)(HostData / 8) << 16;
-    public const ushort InitialSp = 0x1000, SystemOffset = 0x100, ModuleOffset = 0x200, EnvironmentOffset = 0x300;
+    private readonly SessionMemoryLayout memoryLayout;
+
+    /// <summary>Selector for host-built lifecycle caller instructions.</summary>
+    public ushort Caller => memoryLayout.Caller;
+    /// <summary>Selector for the synthetic import addresses intercepted by the CPU hook.</summary>
+    public ushort Gateway => memoryLayout.Gateway;
+    /// <summary>Selector for the caller-owned guest stack.</summary>
+    public ushort Stack => memoryLayout.Stack;
+    /// <summary>Selector for host-provided system/module records and result storage.</summary>
+    public ushort HostData => memoryLayout.HostData;
+    /// <summary>Linear base of the caller's code under our slot allocation policy.</summary>
+    public uint CallerBase => SessionMemoryLayout.LinearBase(Caller);
+    /// <summary>Linear base of the gateway's guard instructions.</summary>
+    public uint GatewayBase => SessionMemoryLayout.LinearBase(Gateway);
+    /// <summary>Linear base of the stack segment.</summary>
+    public uint StackBase => SessionMemoryLayout.LinearBase(Stack);
+    /// <summary>Linear base of host-owned guest data.</summary>
+    public uint HostDataBase => SessionMemoryLayout.LinearBase(HostData);
+    /// <summary>Empty descending-stack offset, before any PUSH or CALL.</summary>
+    public const ushort InitialSp = SessionMemoryLayout.EmptyStackPointer;
+    /// <summary>AD_SYSTEM offset in HostData.</summary>
+    public const ushort SystemOffset = SessionMemoryLayout.SystemOffset;
+    /// <summary>AD_MODULE offset in HostData.</summary>
+    public const ushort ModuleOffset = SessionMemoryLayout.ModuleOffset;
+    /// <summary>Empty DOS environment offset in HostData.</summary>
+    public const ushort EnvironmentOffset = SessionMemoryLayout.EnvironmentOffset;
     private const ushort StartupResult = 0x20, PreinitializeResult = 0x22, InitializeResult = 0x24;
     private const ushort StartupCaller = 0, PreinitializeCaller = 0x100, InitializeCaller = 0x200;
-    private const int WordBytes = sizeof(ushort), FarReturnBytes = 2 * WordBytes;
+    /// <summary>Fixed local civil time used by deterministic educational captures.</summary>
     public static readonly DateTime CivilTime = new(1993, 6, 15, 12, 34, 56, DateTimeKind.Unspecified);
 
-    public const ushort BlankMessage = 1, DrawFrameMessage = 2, CloseMessage = 3;
+    /// <summary>SDK message requesting initial blanking.</summary>
+    public const ushort BlankMessage = 1;
+    /// <summary>SDK message requesting one animation update.</summary>
+    public const ushort DrawFrameMessage = 2;
+    /// <summary>SDK message requesting module cleanup.</summary>
+    public const ushort CloseMessage = 3;
     private const ushort BlankCaller = 0x300, DrawCaller = 0x400, DrawingResult = 0x26;
     private const ushort CloseCaller = 0x500, WepCaller = 0x600, CloseResult = 0x28, WepResult = 0x2A;
     private const ushort WepSystemExit = 1;
-
-    public sealed record HostCall(string Phase, Win16Imports.ImportEntry Binding, IReadOnlyList<ushort> Arguments,
-        uint Returned, SegmentedGuest.CpuState Before, SegmentedGuest.CpuState After);
-    public sealed record PhaseResult(string Name, SegmentedGuest.CpuState Registers, ushort StoredAx,
-        TState State);
-    public sealed record Result(NeLoadPlan Plan, TState BeforeExecution,
-        IReadOnlyList<PhaseResult> Phases, IReadOnlyList<HostCall> Calls,
-        IReadOnlyList<SegmentedGuest.InterruptVisit> Interrupts, LocalHeapReservation Heap,
-        int OutstandingLocks, long Instructions, bool ProtectedMode, DiagnosticSummary Diagnostics);
-    public sealed record DiagnosticSummary(int? HistoryCapacity, long TotalCalls, long TotalPhases,
-        long TotalInterrupts, IReadOnlyDictionary<string, long> ImportCalls);
 
     private readonly SegmentedGuest guest;
     private readonly TextWriter output;
     private readonly PlaybackOptions options;
     private readonly ModuleProfile<TState> profile;
     private readonly NeLoadPlan plan;
-    private readonly PreparedNeSegment data;
-    private readonly ushort dllData, startupEnd, preinitializeEnd, initializeEnd, blankEnd, drawEnd, closeEnd, wepEnd;
-    private readonly IReadOnlyList<Win16Imports.ImportEntry> bindings;
+    private readonly PreparedNeSegment automaticDataSegment;
+    private readonly ushort libraryDataSelector;
+    private readonly ushort startupEnd;
+    private readonly ushort preinitializeEnd;
+    private readonly ushort initializeEnd;
+    private readonly ushort blankEnd;
+    private readonly ushort drawEnd;
+    private readonly ushort closeEnd;
+    private readonly ushort wepEnd;
+    private readonly IReadOnlyList<Win16Imports.ImportEntry> importBindings;
     private readonly TState beforeExecution;
     private readonly Win16Api services;
+    private readonly Win16ImportGateway importGateway;
     private readonly SessionTiming timing;
     private readonly PixelSurface? surface;
     private readonly Win16Drawing? drawing;
     private readonly DiagnosticOptions diagnostics;
-    private readonly DiagnosticHistory<HostCall> calls;
+    private readonly DiagnosticHistory<Win16CallTrace> calls;
     private readonly DiagnosticHistory<PhaseResult> phases;
     // Keys come only from the fixed import registry; this cannot grow per frame.
     private readonly Dictionary<string, long> importCalls = [];
 
+    /// <inheritdoc/>
     public string ModuleName => profile.Name;
+    /// <summary>Owned pens currently held by the guest, excluding stock objects.</summary>
     public int LivePenCount => drawing?.LivePenCount ?? 0;
+    /// <summary>Maximum concurrent owned pens in this session.</summary>
     public int PeakPenCount => drawing?.PeakPenCount ?? 0;
     void IAnimationSession.Initialize() => Initialize();
     void IAnimationSession.Blank() => Blank();
     void IAnimationSession.DrawFrame() => DrawFrame();
+    /// <inheritdoc/>
     public PlaybackResult GetPlaybackResult()
     {
         var result = GetResult();
-        return new(ModuleName, result.Phases.Select(p => new PlaybackPhase(p.Name, p.StoredAx, p.Registers)).ToArray(),
+        return new(ModuleName, result.Phases.Select(phase => new PlaybackPhase(phase.Name, phase.StoredAx, phase.Registers)).ToArray(),
             result.Instructions, result.OutstandingLocks, result.Calls.Count, LivePenCount, PeakPenCount, result.Diagnostics.ImportCalls);
     }
 
-    public enum SessionState { Loaded, Initialized, Ready, Closed, Faulted, Disposed }
+    /// <summary>Valid lifecycle stages; faults forbid further guest execution.</summary>
+    public enum SessionState
+    {
+        /// <summary>Mapped and prepared, with no guest instructions executed.</summary>
+        Loaded,
+        /// <summary>Startup and initialization completed; BLANK is required before drawing.</summary>
+        Initialized,
+        /// <summary>BLANK completed; DRAWFRAME or orderly Shutdown may run.</summary>
+        Ready,
+        /// <summary>CLOSE and WEP completed successfully.</summary>
+        Closed,
+        /// <summary>Execution failed; only inspection-free disposal is safe.</summary>
+        Faulted,
+        /// <summary>The native engine has been released.</summary>
+        Disposed
+    }
+    /// <summary>Current lifecycle gate, checked before every operation.</summary>
     public SessionState State { get; private set; } = SessionState.Loaded;
 
     /// <summary>Prepare/map a module without executing it. The caller owns this session with using.</summary>
@@ -111,58 +148,25 @@ public class AfterDarkSession<TState> : IAnimationSession
             drawing.Register(AfterDarkHostContract.ReservedHdc, surface);
         }
         NeImage image = NeReader.Read(file);
-        Caller = checked((ushort)((image.Segments.Count + 1) * 8));
-        Gateway = (ushort)(Caller + 8); Stack = (ushort)(Caller + 16); HostData = (ushort)(Caller + 24);
-        bindings = Win16Imports.BindImports(image, Gateway, enableDrawing: drawing is not null);
-        var byImport = bindings.ToDictionary(b => b.Import);
+        memoryLayout = new SessionMemoryLayout(image.Segments.Count);
+        importBindings = Win16Imports.BindImports(image, Gateway, enableDrawing: drawing is not null);
+        var bindingsByImport = importBindings.ToDictionary(binding => binding.Import);
         plan = NeLoadPlan.CreateWithImportResolver(file, NeLoadPlan.PlaceSegments(image),
-            import => byImport[import].Address);
-        data = plan.Segments.Single(s => s.Source.Number == image.Header.AutomaticDataSegment);
-        dllData = data.Placement.Selector;
+            import => bindingsByImport[import].Address);
+        automaticDataSegment = plan.Segments.Single(segment => segment.Source.Number == image.Header.AutomaticDataSegment);
+        libraryDataSelector = automaticDataSegment.Placement.Selector;
         FarPointer16 startup = plan.ResolveCode(image.Header.Startup!.Value);
         FarPointer16 module = plan.ResolveCode(image.FindExport("MODULE")!.Address!.Value);
-        beforeExecution = profile.Observe(data.Bytes);
+        beforeExecution = profile.Observe(automaticDataSegment.Bytes);
         output.WriteLine($"1. PREPARE {hash}: {plan.Segments.Count} segments; {plan.Patches.Count} patches; startup {startup}; MODULE {module}");
 
         guest = new SegmentedGuest(output, trace, instructionLimit, this.diagnostics);
         try
         {
-            foreach (PreparedNeSegment segment in plan.Segments)
-            {
-                // MemMap creates storage; MemWrite copies ALREADY relocated machine
-                // code/data. Unicorn later fetches those bytes without any C# opcode enum.
-                guest.Map(segment.Placement.Selector, segment.Placement.LinearBase, segment.Bytes, !segment.Source.IsData);
-                output.WriteLine($"   S{segment.Source.Number} -> {segment.Placement.Selector:X4}:0000 at linear {segment.Placement.LinearBase:X5}, {segment.Bytes.Length} bytes");
-            }
-
-            // Allocate records before publishing handles. Neither 0101 nor 0102 is
-            // a usable address: GlobalLock translates them into HostData:offset.
-            var records = profile.CreateRecords(options);
-            byte[] hostBytes = new byte[SegmentedGuest.PageBytes];
-            records.System.CopyTo(hostBytes, SystemOffset);
-            records.Module.CopyTo(hostBytes, ModuleOffset);
-            // EnvironmentOffset already holds two NUL bytes: a valid empty string list.
-            // No TZ selects the guest runtime's built-in timezone, not the host's.
-            for (int i = StartupResult; i <= InitializeResult + 1; i++) hostBytes[i] = 0xCC;
-            guest.Map(HostData, HostDataBase, hostBytes, code: false);
-            guest.Map(Stack, StackBase, new byte[SegmentedGuest.PageBytes], code: false);
-
-            byte[] gatewayBytes = new byte[SegmentedGuest.PageBytes];
-            foreach (var binding in bindings)
-            {
-                gatewayBytes[binding.Address.Offset] = 0x0F;
-                gatewayBytes[binding.Address.Offset + 1] = 0x0B; // UD2; never execute the synthetic address.
-                output.WriteLine($"   {binding.Name} -> {binding.Address}: {binding.Implementation}");
-            }
-            guest.Map(Gateway, GatewayBase, gatewayBytes, code: true);
-            int heapStart = Math.Max(data.Source.FileBytes, data.Source.MinimumAllocationBytes);
-            if (data.Bytes.Length != heapStart + image.Header.HeapBytes)
-                throw new InvalidOperationException("Prepared data does not include the declared heap tail.");
-            services = new Win16Api(new Win16ApiState(guest,
-                new(new(dllData, checked((ushort)heapStart)), image.Header.HeapBytes), new(HostData, EnvironmentOffset),
-                clock: this.timing.Clock) { Drawing = drawing });
-            services.State.Blocks.Register(AfterDarkHostContract.SystemHandle, new(HostData, SystemOffset), records.System.Length);
-            services.State.Blocks.Register(AfterDarkHostContract.ModuleHandle, new(HostData, ModuleOffset), records.Module.Length);
+            MapLibrarySegments();
+            var records = profile.CreateRecords(this.options);
+            MapHostSegments(records);
+            services = CreateWindowsServices(image.Header.HeapBytes, records);
             output.WriteLine($"2. HOST RECORDS: handle 0101 -> {HostData:X4}:{SystemOffset:X4}; handle 0102 -> {HostData:X4}:{ModuleOffset:X4}");
             output.WriteLine($"   Options {options.Width}x{options.Height}, speed={options.Speed}, clear={options.Clear}; empty environment {HostData:X4}:{EnvironmentOffset:X4}");
 
@@ -182,31 +186,15 @@ public class AfterDarkSession<TState> : IAnimationSession
             guest.Map(Caller, CallerBase, callerBytes, code: true);
             guest.Install(Gateway);
 
-            // DLL startup's compiler ABI: DS = automatic data, DI = instance token,
-            // CX = heap request, ES:SI = optional command line (null for this DLL).
-            // SS:SP belongs to our caller; BP=0 terminates the initial frame chain.
-            guest.Set(X86.UC_X86_REG_DS, dllData);
-            guest.Set(X86.UC_X86_REG_ES, 0);
-            guest.Set(X86.UC_X86_REG_SI, 0);
-            guest.Set(X86.UC_X86_REG_DI, dllData);
-            guest.Set(X86.UC_X86_REG_CX, image.Header.HeapBytes);
-            guest.Set(X86.UC_X86_REG_SS, Stack);
-            guest.Set(X86.UC_X86_REG_SP, InitialSp);
-            guest.Set(X86.UC_X86_REG_BP, 0);
-            output.WriteLine($"3. STARTUP INPUTS: DS={dllData:X4}, DI={dllData:X4}, CX={image.Header.HeapBytes}, ES:SI=0000:0000, SS:SP={Stack:X4}:{InitialSp:X4}, BP=0");
+            var startupContext = new LibraryStartupContext(libraryDataSelector, image.Header.HeapBytes, Stack, InitialSp);
+            Win16RegisterConvention.SetUpPrologRegisters(guest, startupContext);
+            output.WriteLine($"3. STARTUP INPUTS: DS={libraryDataSelector:X4}, DI={libraryDataSelector:X4}, CX={image.Header.HeapBytes}, ES:SI=0000:0000, SS:SP={Stack:X4}:{InitialSp:X4}, BP=0");
 
+            var stack = new Win16Stack(guest, Stack, InitialSp);
+            importGateway = new Win16ImportGateway(guest, importBindings, services, stack);
             guest.DispatchGateway = DispatchHostCall;
-            guest.DispatchInterrupt = number =>
-            {
-                if (number != DosClock.InterruptNumber) throw new NotSupportedException($"Unsupported INT {number:X2}h during {guest.Phase}.");
-                ushort ax = (ushort)guest.Get(X86.UC_X86_REG_AX);
-                var reply = DosClock.Respond((byte)(ax >> 8), ax, this.timing.CivilTime);
-                guest.Set(X86.UC_X86_REG_AX, reply.Ax);
-                guest.Set(X86.UC_X86_REG_CX, reply.Cx);
-                guest.Set(X86.UC_X86_REG_DX, reply.Dx);
-                if (output != TextWriter.Null)
-                    output.WriteLine($"   {guest.Phase}: INT 21h AH={ax >> 8:X2} -> AX={reply.Ax:X4} CX={reply.Cx:X4} DX={reply.Dx:X4}; resume after INT (no RETF/IRET)");
-            };
+            var dosDispatcher = new DosInterruptDispatcher(guest, this.timing, output);
+            guest.DispatchInterrupt = dosDispatcher.Dispatch;
 
         }
         catch
@@ -218,20 +206,77 @@ public class AfterDarkSession<TState> : IAnimationSession
         }
     }
 
+    /// <summary>Copy relocated DLL code and data into mapped guest segments.</summary>
+    private void MapLibrarySegments()
+    {
+        foreach (PreparedNeSegment segment in plan.Segments)
+        {
+            // MemMap creates storage; MemWrite copies ALREADY relocated machine
+            // code/data. Unicorn later fetches those bytes without any C# opcode enum.
+            guest.Map(segment.Placement.Selector, segment.Placement.LinearBase, segment.Bytes, !segment.Source.IsData);
+            output.WriteLine($"   S{segment.Source.Number} -> {segment.Placement.Selector:X4}:0000 at linear {segment.Placement.LinearBase:X5}, {segment.Bytes.Length} bytes");
+        }
+
+    }
+
+    /// <summary>Map records, an empty stack, and code guards which the gateway hook must stop before executing.</summary>
+    private void MapHostSegments((byte[] System, byte[] Module) records)
+    {
+        byte[] hostBytes = new byte[SegmentedGuest.PageBytes];
+        records.System.CopyTo(hostBytes, SystemOffset);
+        records.Module.CopyTo(hostBytes, ModuleOffset);
+        // EnvironmentOffset already holds two NUL bytes: a valid empty string list.
+        // No TZ selects the guest runtime's built-in timezone, not the host's.
+        for (int resultByteOffset = StartupResult; resultByteOffset <= InitializeResult + 1; resultByteOffset++)
+        {
+            hostBytes[resultByteOffset] = 0xCC;
+        }
+        guest.Map(HostData, HostDataBase, hostBytes, code: false);
+        guest.Map(Stack, StackBase, new byte[SegmentedGuest.PageBytes], code: false);
+
+        byte[] gatewayBytes = new byte[SegmentedGuest.PageBytes];
+        foreach (var binding in importBindings)
+        {
+            gatewayBytes[binding.Address.Offset] = 0x0F;
+            gatewayBytes[binding.Address.Offset + 1] = 0x0B; // UD2; never execute the synthetic address.
+            output.WriteLine($"   {binding.Name} -> {binding.Address}: {binding.Implementation}");
+        }
+        guest.Map(Gateway, GatewayBase, gatewayBytes, code: true);
+    }
+
+    /// <summary>Give Windows services checked guest memory and registered global-block handles.</summary>
+    private Win16Api CreateWindowsServices(ushort heapBytes, (byte[] System, byte[] Module) records)
+    {
+        int heapStart = Math.Max(automaticDataSegment.Source.FileBytes, automaticDataSegment.Source.MinimumAllocationBytes);
+        if (automaticDataSegment.Bytes.Length != heapStart + heapBytes)
+            throw new InvalidOperationException("Prepared data does not include the declared heap tail.");
+        var heapAddress = new FarPointer16(libraryDataSelector, checked((ushort)heapStart));
+        var heapReservation = new LocalHeapReservation(heapAddress, heapBytes);
+        var environmentAddress = new FarPointer16(HostData, EnvironmentOffset);
+        var apiState = new Win16ApiState(guest, heapReservation, environmentAddress, clock: timing.Clock)
+        {
+            Drawing = drawing
+        };
+        var api = new Win16Api(apiState);
+        api.State.Blocks.Register(AfterDarkHostContract.SystemHandle, new(HostData, SystemOffset), records.System.Length);
+        api.State.Blocks.Register(AfterDarkHostContract.ModuleHandle, new(HostData, ModuleOffset), records.Module.Length);
+        return api;
+    }
+
     /// <summary>Execute DLL startup, PREINITIALIZE and INITIALIZE exactly once.</summary>
     public PhaseResult Initialize()
     {
         RequireState(SessionState.Loaded);
         try
         {
-            PhaseResult initializedDll = RunPhase("DLL startup", StartupCaller, startupEnd, StartupResult, dllData);
-            if (initializedDll.StoredAx == 0 || profile.Instance(initializedDll.State) != dllData || services.State.InitializedHeap is null)
+            PhaseResult initializedDll = RunPhase("DLL startup", StartupCaller, startupEnd, StartupResult, libraryDataSelector);
+            if (initializedDll.StoredAx == 0 || profile.Instance(initializedDll.State) != libraryDataSelector || services.State.InitializedHeap is null)
                 throw new InvalidOperationException("DLL startup did not succeed and save its instance handle; MODULE will not run.");
 
             // Call MODULE from a different DS, exercising the export-prologue patch.
             // Initialization may create/select GDI objects. The persistent
             // surface and device-context state already exist before that call.
-            guest.Set(X86.UC_X86_REG_DS, HostData);
+            Win16RegisterConvention.SetUpModuleCallerDataSegment(guest, HostData);
             PhaseResult preinitialized = RunPhase("PREINITIALIZE", PreinitializeCaller, preinitializeEnd, PreinitializeResult, HostData);
             if (profile.Compatibility(preinitialized.State) != 1)
                 throw new InvalidOperationException("Module rejected the supplied compatibility fields; INITIALIZE will not run.");
@@ -319,6 +364,7 @@ public class AfterDarkSession<TState> : IAnimationSession
         surface!.CopyRgbTo(destination);
     }
 
+    /// <summary>Most recent raster operation, available while the drawing session is ready.</summary>
     public Win16Drawing.Operation? LastDrawingOperation
     {
         get
@@ -340,6 +386,7 @@ public class AfterDarkSession<TState> : IAnimationSession
                 new ReadOnlyDictionary<string, long>(new Dictionary<string, long>(importCalls))));
     }
 
+    /// <summary>Execute BLANK or DRAWFRAME and transition to Ready, or Faulted on failure.</summary>
     private PhaseResult RunDrawingPhase(string name, ushort begin, ushort end)
     {
         try
@@ -355,6 +402,7 @@ public class AfterDarkSession<TState> : IAnimationSession
         }
     }
 
+    /// <summary>Reject lifecycle misuse before touching the CPU.</summary>
     private void RequireState(SessionState allowed, SessionState? alternative = null, SessionState? third = null)
     {
         ObjectDisposedException.ThrowIf(State == SessionState.Disposed, this);
@@ -363,6 +411,7 @@ public class AfterDarkSession<TState> : IAnimationSession
                 (alternative is null ? "" : $" or {alternative}") + (third is null ? "" : $" or {third}") + ".");
     }
 
+    /// <summary>Reject rendering operations on initialization-only or disposed sessions.</summary>
     private void RequireDrawing()
     {
         ObjectDisposedException.ThrowIf(State == SessionState.Disposed, this);
@@ -380,6 +429,7 @@ public class AfterDarkSession<TState> : IAnimationSession
         guest.Dispose();
     }
 
+    /// <summary>Run the guest caller, check restored stack and DS, and observe the original DLL globals.</summary>
     private PhaseResult RunPhase(string name, ushort begin, ushort end, ushort resultOffset, ushort expectedDs,
         int serviceExitLimit = SegmentedGuest.DefaultServiceExitLimit)
     {
@@ -389,74 +439,40 @@ public class AfterDarkSession<TState> : IAnimationSession
             throw new InvalidOperationException($"{name}: unbalanced stack, changed caller DS, or mismatched guest store: {returned}.");
         if (services.State.Blocks.OutstandingLocks != 0) throw new InvalidOperationException($"{name}: leaked global locks.");
         var observation = new PhaseResult(name, returned, stored,
-            profile.Observe(guest.Read(new(dllData, 0), data.Bytes.Length)));
+            profile.Observe(guest.Read(new(libraryDataSelector, 0), automaticDataSegment.Bytes.Length)));
         phases.Add(observation);
         if (output != TextWriter.Null)
             output.WriteLine($"   {name} returned to {returned.Pc}; AX={stored:X4} (guest stored); DS={returned.Ds:X4}; SS:SP={returned.Ss:X4}:{returned.Sp:X4}");
         return observation;
     }
 
+    /// <summary>Record a managed gateway dispatch without embedding the stack or register convention here.</summary>
     private void DispatchHostCall()
     {
-        HostCall call = DispatchImport(guest, bindings, services, Stack);
+        Win16CallTrace call = importGateway.Dispatch();
         calls.Add(call);
         long total = importCalls.GetValueOrDefault(call.Binding.Name);
         importCalls[call.Binding.Name] = total == long.MaxValue ? total : total + 1;
         if (output != TextWriter.Null)
-            output.WriteLine($"   {call.Phase}: {call.Binding.Name}({string.Join(",", call.Arguments.Select(a => a.ToString("X4")))}) -> {call.Returned:X8}; RETF {call.Binding.ArgumentBytes}, resume {call.After.Pc}");
+            output.WriteLine($"   {call.Phase}: {call.Binding.Name}({string.Join(",", call.Arguments.Select(argument => argument.ToString("X4")))}) -> {call.Returned:X8}; RETF {call.Binding.ArgumentBytes}, resume {call.After.Pc}");
     }
 
+    /// <summary>Choose the lifecycle call's Pascal arguments, then encode a real x86 caller.</summary>
     private ushort WriteCaller(byte[] callerBytes, ushort begin, FarPointer16 target, ushort resultOffset,
         ushort? message, ushort? wepReason = null)
     {
-        var code = new List<byte>();
-        if (message is ushort value)
+        ushort[] arguments = [];
+        if (message is ushort lifecycleMessage)
         {
-            Push(value); Push(AfterDarkHostContract.ReservedHdc); Push(AfterDarkHostContract.SystemHandle);
+            arguments = [lifecycleMessage, AfterDarkHostContract.ReservedHdc, AfterDarkHostContract.SystemHandle];
         }
-        // WEP has its own ABI: one WORD reason, removed by the DLL's RETF 2.
-        // MODULE instead removes three WORD arguments with RETF 6.
-        if (wepReason is ushort reason) Push(reason);
-        code.Add(0x9A); Word(target.Offset); Word(target.Selector); // CALL FAR immediate
-        code.AddRange([0x50, 0xB8]); Word(HostData); // PUSH AX; MOV AX,HostData
-        code.AddRange([0x8E, 0xC0, 0x58]); // MOV ES,AX; POP AX (preserve returned value)
-        code.AddRange([0x26, 0xA3]); Word(resultOffset); // MOV ES:[resultOffset],AX
-        code.CopyTo(callerBytes, begin);
-        return checked((ushort)(begin + code.Count));
-        void Push(ushort value) { code.Add(0x68); Word(value); }
-        void Word(ushort value) { code.Add((byte)value); code.Add((byte)(value >> 8)); }
-    }
-    // Public so original tiny guest programs can test the SAME argument/return
-    // path without requiring anyone else's copyrighted DLL. Shared by both lessons
-    // so the learner can step directly from a trapped call into this mechanism.
-    public static HostCall DispatchImport(SegmentedGuest guest,
-        IReadOnlyList<Win16Imports.ImportEntry> bindings, Win16Api services, ushort stack = 0x40)
-    {
-        var before = guest.Snapshot();
-        var binding = bindings.SingleOrDefault(b => b.Address == before.Pc)
-            ?? throw new NotSupportedException($"Unknown import gateway {before.Pc} during {guest.Phase}.");
-        if (binding.Implementation == Win16Imports.Handler.Unsupported)
-            throw new NotSupportedException($"{guest.Phase}: {binding.Name} reached at {before.Pc}; initialization-only lesson stops here.");
-        if (before.Ss != stack || before.Sp + FarReturnBytes + binding.ArgumentBytes!.Value > InitialSp)
-            throw new InvalidOperationException($"Invalid far Pascal frame for {binding.Name}.");
-        var frame = new FarPascalWordFrame(guest.Read(new(stack, before.Sp), FarReturnBytes + binding.ArgumentBytes.Value));
-        var arguments = new ushort[frame.ArgumentCount];
-        for (int i = 0; i < arguments.Length; i++) arguments[i] = unchecked((ushort)frame.ReadArgument(i));
-        var returnAddress = new FarPointer16(frame.ReturnCs, frame.ReturnIp);
-        guest.RequireCode(returnAddress, 1);
-        Win16Imports.Reply reply;
-        try { reply = Win16Imports.Invoke(services, binding, arguments); }
-        catch (Exception error) { throw new InvalidOperationException($"{guest.Phase}: {binding.Name} at {before.Pc}: {error.Message}", error); }
-        // SetRect16 and InvertRect16 are void (unlike their modern Win32
-        // counterparts). Preserve AX/DX instead of inventing a success value.
-        if (binding.ReturnLayout != Win16ReturnLayout.Void) guest.Set(X86.UC_X86_REG_AX, (ushort)reply.Value);
-        if (binding.ReturnLayout == Win16ReturnLayout.DwordInDxAx) guest.Set(X86.UC_X86_REG_DX, (ushort)(reply.Value >> 16));
-        if (reply.Cx is ushort cx) guest.Set(X86.UC_X86_REG_CX, cx);
-        // Unlike INT, CALL FAR pushed IP/CS. Simulate RETF + Pascal cleanup
-        // here, outside the hook, before the execution loop starts again.
-        guest.Set(X86.UC_X86_REG_CS, frame.ReturnCs);
-        guest.Set(X86.UC_X86_REG_EIP, frame.ReturnIp);
-        guest.Set(X86.UC_X86_REG_SP, frame.StackPointerAfterReturn(before.Sp));
-        return new(guest.Phase, binding, Array.AsReadOnly(arguments), reply.Value, before, guest.Snapshot());
+        else if (wepReason is ushort exitReason)
+        {
+            arguments = [exitReason];
+        }
+
+        // MODULE removes three words with RETF 6; WEP removes one with RETF 2.
+        return GuestCallerBuilder.WriteCaller(callerBytes, begin, target,
+            new FarPointer16(HostData, resultOffset), arguments);
     }
 }

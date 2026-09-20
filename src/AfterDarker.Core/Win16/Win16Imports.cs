@@ -9,11 +9,42 @@ namespace AfterDarker.Core.Win16;
 /// </summary>
 public static class Win16Imports
 {
-    public enum Handler { Unsupported, LocalInitReservation, GlobalLock, GlobalUnlock, Environment, Ticks, SetRect, GetStockObject, FillRect, InvertRect, CreatePen, SelectObject, DeleteObject, MoveTo, LineTo }
+    /// <summary>Typed implementation identity; unsupported services retain a symbolic name without a guessed ABI.</summary>
+    public enum Handler
+    {
+        Unsupported,
+        LocalInitReservation,
+        GlobalLock,
+        GlobalUnlock,
+        Environment,
+        Ticks,
+        SetRect,
+        PtInRect,
+        GetStockObject,
+        FillRect,
+        InvertRect,
+        CreatePen,
+        SelectObject,
+        DeleteObject,
+        MoveTo,
+        LineTo
+    }
+    /// <summary>One NE import bound to our synthetic code address and its known ABI.</summary>
+    /// <param name="Import">Original module/ordinal or module/name identity.</param>
+    /// <param name="Name">Human-readable symbol used in diagnostics.</param>
+    /// <param name="Address">Host-chosen guest gateway address patched into the loaded DLL.</param>
+    /// <param name="Implementation">Which supported C# service should run.</param>
+    /// <param name="ArgumentBytes">Bytes removed by Pascal callee cleanup; null when unknown.</param>
+    /// <param name="ReturnLayout">Register representation of the result; null when unknown.</param>
     public sealed record ImportEntry(NeImport Import, string Name, FarPointer16 Address,
         Handler Implementation, int? ArgumentBytes, Win16ReturnLayout? ReturnLayout);
+    /// <summary>A service result before it is written to guest registers.</summary>
+    /// <param name="Value">Word, DWORD or packed far pointer; ignored for void signatures.</param>
+    /// <param name="Cx">Optional extra selector result used by GlobalLock.</param>
     public sealed record Reply(uint Value, ushort? Cx = null);
 
+    /// <summary>Resolve known imports to distinct gateway entries; no guest code or services execute here.</summary>
+    /// <remarks>See docs/win16-implementations.md for adding a signature and its implementation.</remarks>
     public static IReadOnlyList<ImportEntry> BindImports(NeImage image, ushort gateway, bool enableDrawing = false)
     {
         // Ordinals/signatures: Wine 10.0 krnl386.exe16.spec and user.exe16.spec.
@@ -43,58 +74,19 @@ public static class Win16Imports
             ("GDI", 69, "DeleteObject", enableDrawing ? Handler.DeleteObject : Handler.Unsupported, 2, Win16ReturnLayout.WordInAx),
             ("GDI", 20, "MoveTo", enableDrawing ? Handler.MoveTo : Handler.Unsupported, 6, Win16ReturnLayout.DwordInDxAx),
             ("GDI", 19, "LineTo", enableDrawing ? Handler.LineTo : Handler.Unsupported, 6, Win16ReturnLayout.WordInAx),
+            // Geometry needs checked memory, but does not require a drawing surface.
+            ("USER", 76, "PtInRect", Handler.PtInRect, 8, Win16ReturnLayout.WordInAx),
         };
         const int firstGatewayOffset = 0x100, gatewaySpacing = 0x10;
         return Array.AsReadOnly(image.Imports.Select(import =>
         {
-            int index = Array.FindIndex(definitions, d => import.Name is null && d.Ordinal == import.Ordinal &&
-                string.Equals(d.Module, import.Module, StringComparison.OrdinalIgnoreCase));
+            int index = Array.FindIndex(definitions, definition => import.Name is null && definition.Ordinal == import.Ordinal &&
+                string.Equals(definition.Module, import.Module, StringComparison.OrdinalIgnoreCase));
             if (index < 0) throw new NotSupportedException($"Unrecognized Win16 import {import.Module}!{import.Name ?? $"#{import.Ordinal}"}.");
-            var d = definitions[index];
-            return new ImportEntry(import, $"{d.Module}!{d.Name} (#{d.Ordinal})",
-                new(gateway, (ushort)(firstGatewayOffset + index * gatewaySpacing)), d.Handler, d.Bytes, d.Return);
+            var definition = definitions[index];
+            return new ImportEntry(import, $"{definition.Module}!{definition.Name} (#{definition.Ordinal})",
+                new(gateway, (ushort)(firstGatewayOffset + index * gatewaySpacing)), definition.Handler, definition.Bytes, definition.Return);
         }).ToArray());
     }
 
-    // ABI adapter only: turn decoded words into typed arguments, and typed
-    // results into register-sized values. Service behavior lives in Win16Api.
-    public static Reply Invoke(Win16Api api, ImportEntry entry, ushort[] arguments)
-    {
-        if (entry.Implementation == Handler.Unsupported)
-            throw new NotSupportedException($"{entry.Name} reached outside the supported initialization path.");
-        if (arguments.Length * 2 != entry.ArgumentBytes)
-            throw new ArgumentException($"Wrong argument count for {entry.Name}.");
-        switch (entry.Implementation)
-        {
-            case Handler.LocalInitReservation:
-                return new(api.LocalInit(arguments[0], arguments[1], arguments[2]) ? 1u : 0u);
-            case Handler.GlobalLock:
-                FarPointer16 pointer = api.GlobalLock(arguments[0]);
-                // Win16 GlobalLock also returns its selector in CX.
-                return new(Pack(pointer), pointer.Selector);
-            case Handler.GlobalUnlock: return new(api.GlobalUnlock(arguments[0]));
-            case Handler.Environment: return new(Pack(api.GetDOSEnvironment()));
-            case Handler.Ticks: return new(api.GetTickCount());
-            case Handler.CreatePen:
-                return new(api.CreatePen(unchecked((short)arguments[0]), unchecked((short)arguments[1]),
-                    ((uint)arguments[2] << 16) | arguments[3]));
-            case Handler.SelectObject: return new(api.SelectObject(arguments[0], arguments[1]));
-            case Handler.DeleteObject: return new(api.DeleteObject(arguments[0]) ? 1u : 0u);
-            case Handler.MoveTo: return new(api.MoveTo(arguments[0], unchecked((short)arguments[1]), unchecked((short)arguments[2])));
-            case Handler.LineTo: return new(api.LineTo(arguments[0], unchecked((short)arguments[1]), unchecked((short)arguments[2])) ? 1u : 0u);
-            // Pascal pushes source arguments left-to-right. A far pointer is
-            // pushed selector then offset; these are WORDS, not two parameters.
-            case Handler.SetRect:
-                api.SetRect(new(arguments[0], arguments[1]), unchecked((short)arguments[2]),
-                    unchecked((short)arguments[3]), unchecked((short)arguments[4]), unchecked((short)arguments[5]));
-                return new(0); // Void: dispatcher preserves return registers.
-            case Handler.GetStockObject: return new(api.GetStockObject(unchecked((short)arguments[0])));
-            case Handler.FillRect: return new(unchecked((ushort)api.FillRect(arguments[0], new(arguments[1], arguments[2]), arguments[3])));
-            case Handler.InvertRect:
-                api.InvertRect(arguments[0], new(arguments[1], arguments[2]));
-                return new(0);
-            default: throw new NotSupportedException(entry.Name);
-        }
-    }
-    private static uint Pack(FarPointer16 pointer) => ((uint)pointer.Selector << 16) | pointer.Offset;
 }

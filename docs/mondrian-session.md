@@ -1,5 +1,9 @@
 # Mondrian session: explicit guest lifetime
 
+For stack cleanup, register setup, import dispatch and code locations, see
+[the runtime code map](runtime-code-map.md). Those mechanisms live in dedicated
+classes under `AfterDarker.Runtime/Calls`; the session coordinates lifecycle.
+
 The implementation now lives in `AfterDarkSession<TState>`, shared with Spiral
 Gyra. `MondrianSession` remains the typed facade used by these lessons; its
 observations, addresses and deterministic output are preserved. See the

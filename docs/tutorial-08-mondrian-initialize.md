@@ -41,7 +41,7 @@ disposes it. See [session lifetime](mondrian-session.md). The stages remain visi
 3. `CreateRecords` and `Blocks.Register`: allocate guest data before publishing handles.
 4. The register assignments: establish the startup ABI and our caller's stack.
 5. `RunPhase`: enter the guest and verify each completed return before continuing.
-6. `DispatchImport`: read an actual far Pascal frame and return a service result.
+6. `Win16ImportGateway.Dispatch`: read an actual far Pascal frame and return a service result.
 7. `MondrianInitialization.Observe`: read state produced by the original code.
 
 Follow `guest.RunUntil` into
@@ -235,7 +235,7 @@ emulated machine; no guest shutdown lifecycle is invoked in this lesson.
 
 `dotnet test` runs self-contained layout, handle lifetime, clock packing, invalid
 input, instruction-budget, and CPU/gateway tests. The synthetic import program
-uses the **same DispatchImport** as the lesson, checks every supported import's
+uses the **same Win16ImportGateway.Dispatch** as the lesson, checks every supported import's
 arguments/results/cleanup, and dereferences the returned pointer in guest code.
 Optional local-module tests check the lifecycle and all five speed options:
 
@@ -260,3 +260,5 @@ ABI and behavior references:
   AH=2Ah/2Ch contracts in [our DOS source reference](research/dos-source-reference.md).
 
 These are behavior references, not vendored implementations or new dependencies.
+
+For the extracted stack and register helpers, see [the runtime code map](runtime-code-map.md).

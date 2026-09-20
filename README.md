@@ -48,13 +48,15 @@ entire desktop.
 ## Run the live window
 
 Set **AfterDarker.Wpf** as the startup project and press F5. It finds your local
-`ad/Mondrian.ad` automatically. Use **File > Load AD file…** to play either
-**Mondrian** or **Spiral Gyra**, or switch between them while running. See the [WPF player guide](docs/wpf-player.md)
+`ad/Mondrian.ad` automatically. Use **File > Load AD file…** to play
+**Mondrian**, **Spiral Gyra**, or **Rainstorm**, or switch between them while running. See the [WPF player guide](docs/wpf-player.md)
 for controls, command-line launch and the original-code execution boundary.
 
 ## Status
 
-The repository now runs original Mondrian and Spiral Gyra in a live WPF window. Its C# tutorials run real-mode
+The repository now runs original Mondrian, Spiral Gyra and Rainstorm in a live WPF window.
+Rainstorm uses fixed controls; its intermediate lightning flash is not yet presented
+(see [execution evidence and limits](docs/research/rainstorm-execution.md)). Its C# tutorials run real-mode
 addition and near calls, a 16-bit protected-mode `CALL FAR`/`RETF` round trip,
 and a synthetic C# host gateway with stop, dispatch, and guest resume in Unicorn.
 Tutorial 05 reads Windows NE files into typed C# metadata and reports their
@@ -83,9 +85,11 @@ and broader Win16 behavior still require conformance experiments.
 
 See:
 
+- [Where to look in the runtime: stack, registers, mocked calls, and drawing](docs/runtime-code-map.md)
 - [Architecture](docs/architecture.md)
 - [Current status and proof boundary](docs/current-status.md)
 - [Local module import/API census](docs/research/ad-import-census.md)
+- [Which modules are closest: fresh compatibility sweep](docs/research/module-readiness-sweep.md)
 - [Mondrian's constrained visuals path](docs/research/mondrian-static-analysis.md)
 - [Local MS-DOS source reference](docs/research/dos-source-reference.md)
 - [Agent collaboration charter](AGENTS.md)
