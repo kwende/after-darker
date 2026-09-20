@@ -40,16 +40,18 @@ not yet been placed into CPU registers.
 | GetDOSEnvironment | Returns the address of a supplied empty guest environment; rejects absent or unsupported contents. |
 | GetTickCount | Reads the per-guest clock: deterministic stepping for tests/captures or monotonic elapsed time for live playback. USER #15 GetCurrentTime uses this same method. |
 | SetRect | Writes the four signed corners unchanged to checked guest memory. |
-| GetStockObject | Returns stock black brush (index 4) or black pen (index 7); rejects other indices. Stock objects do not consume created-object capacity. |
+| GetStockObject | Returns stock black brush (4), black pen (7) or null pen (8); rejects other indices. Stock objects do not consume created-object capacity. |
 | PtInRect | Reads a checked guest RECT and tests a signed by-value POINT; left/top inclusive, right/bottom exclusive. Empty/inverted rectangles return false. |
 | FillRect | Resolves the HDC and black brush; fills the clipped rectangle on its persistent surface. |
 | InvertRect | Resolves the HDC; inverts the clipped rectangle's RGB bits. |
 | CreatePen | Allocates a bounded, reusable guest identity retaining solid RGB color and width 0/1/2. Width zero becomes one. |
-| SelectObject | Selects a pen or supported stock brush into its own HDC slot and returns the previous object of the same kind. |
-| DeleteObject | Releases an unselected owned pen; keeps stock objects host-owned. |
+| CreateSolidBrush | Allocates a bounded guest brush using RGB/PALETTERGB components directly; palette-index colors fail before allocation. |
+| SelectObject | Selects a supported pen or brush into its own HDC slot and returns the previous object of the same kind. |
+| DeleteObject | Releases an owned pen/brush only when no HDC selects it; keeps stock objects host-owned. |
 | MoveTo | Updates the HDC current point and returns its previous coordinates. |
-| LineTo | Draws with a one-pixel pen, excludes the endpoint, and advances the current point. A width-two pen fails before mutation. |
-| Ellipse | Outlines with the selected pen and fills with the selected black/white brush, preserving the current point; software raster policy is documented in the Hard Rain guide. |
+| LineTo | Draws with a one-pixel pen and advances the current point. A null pen only moves the point; a width-two pen fails before mutation. |
+| Ellipse | Uses the selected solid brush and optional pen without changing the current point; software raster policy is documented in the Hard Rain/Shapes guides. |
+| Rectangle | Uses the selected solid brush and null/one-pixel pen, preserving the current point; native-tested bounds include NULL_PEN's additional right/bottom contraction. |
 
 State is in [Win16ApiState.cs](../src/AfterDarker.Core/Win16/Win16ApiState.cs).
 One instance per guest keeps handles, initialized heaps, versions, and clocks
@@ -108,7 +110,7 @@ boundaries and the Win16 void-return distinction.
 
 The direct [Win16ApiTests](../tests/AfterDarker.Tests/Unit/Win16ApiTests.cs) need
 no emulator. Existing CPU/gateway tests verify the marshaling around the same
-methods, and the opt-in tests exercise all nine supported original modules.
+methods, and the opt-in tests exercise all ten supported original modules.
 
 Zot! adds the `USER!GetCurrentTime` identity with zero Pascal argument bytes
 and a DWORD return in DX:AX. Both it and `GetTickCount` bind to `Handler.Ticks`;
@@ -118,8 +120,8 @@ establish this alias. Public gateway tests check clock sharing, unsigned wrap,
 register results and stack cleanup. See [Zot!'s execution notes](research/zot-execution.md).
 
 Fade Away's Radar path adds no Windows API behavior. Its other styles import
-Ellipse, Rectangle and PatBlt. Hard Rain now implements the Ellipse identity;
-Rectangle and PatBlt remain guarded before argument decoding. This does not
+Ellipse, Rectangle and PatBlt. Hard Rain implements Ellipse and Shapes adds
+Rectangle; PatBlt remains guarded before argument decoding. This does not
 enable other Fade Away styles. Initial white pixels are supplied
 by the host through `PixelSurface.LoadRgb`, not by a fake Windows call. See the
 [Fade Away notes](research/fade-away-execution.md).
@@ -128,6 +130,13 @@ Hard Rain's `Ellipse` is GDI ordinal 24, with ten argument bytes and a BOOL in
 AX. The default white brush and explicitly selected black brush have host-owned
 identities; neither consumes the pen pool. `SelectObject` restores the correct
 object kind by looking up the handle, not by guessing from the last drawing call.
+
+Shapes adds GDI #66 CreateSolidBrush (four argument bytes, HBRUSH in AX) and
+GDI #27 Rectangle (ten argument bytes, BOOL in AX). Both preserve DX and use the
+existing far-return cleanup. `Win16Color` holds the RGB/PALETTERGB policy;
+`Win16Drawing` owns separate bounded brush and pen handle pools. Playback results
+and shutdown checks include both kinds. FillRect remains limited to its existing
+black-brush behavior. See [Shapes' evidence and limits](research/shapes-execution.md).
 See [the pen/brush, aspect-ratio and raster walkthrough](research/hard-rain-execution.md).
 
 ## POINT by value

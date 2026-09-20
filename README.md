@@ -50,12 +50,16 @@ entire desktop.
 Set **AfterDarker.Wpf** as the startup project and press F5. It finds your local
 `ad/Mondrian.ad` automatically. Use **File > Load AD file…** to play
 **Mondrian**, **Spiral Gyra**, **Rainstorm**, **Fade Away**, **Lasers**, **Magic**,
-**String Theory**, **Zot!**, or **Hard Rain**, or switch between them while running. See the [WPF player guide](docs/wpf-player.md)
+**String Theory**, **Zot!**, **Hard Rain**, or **Shapes**, or switch between them while running. See the [WPF player guide](docs/wpf-player.md)
 for controls, command-line launch and the original-code execution boundary.
 
 ## Status
 
-The repository now runs nine original modules in a live WPF window.
+The repository now runs ten original modules in a live WPF window.
+[Shapes](docs/research/shapes-execution.md) adds owned solid brushes, null pens
+and rectangles. Original code draws randomly colored ellipses and rectangles;
+the host renders PALETTERGB components directly on its RGB surface, an explicit
+adaptation rather than historical palette matching.
 [Hard Rain](docs/research/hard-rain-execution.md) adds selected brushes and
 solid ellipse drawing with one- and two-pixel outlines. Its five original drops
 grow, thin, erase and regenerate. Software ellipse edges have a documented

@@ -33,6 +33,9 @@ Hard Rain is the ninth: selected stock brushes, stored pen widths and software
 ellipse drawing support its original growing rings. Its profile supplies the
 SDK's square-pixel aspect values. Ellipse pixels approximate modern GDI, with
 a measured one-pixel neighborhood bound for the tested ring sizes.
+Shapes is the tenth: owned solid brushes, null pens and filled rectangles join
+the shared drawing layer. Its original code chooses random colors and shapes;
+the host uses PALETTERGB's RGB values directly under an explicit adaptation.
 This remains narrow compatibility support, not general Win16 emulation.
 `AfterDarker.Core` contains two extracted binary-layout helpers, a Windows NE
 metadata reader, a CPU-independent load plan, and a separate After Dark
@@ -40,7 +43,29 @@ invocation-plan model. The C# MSTest project covers these mechanisms and the
 ten educational console lessons (06 needs the optional Watcom fixture;
 08/09 need the analyzed local Mondrian file).
 
+## Active scope decisions
+
+- **Color playback across all modules (owner decision, 2026-09-20):** optional
+  grayscale/monochrome paths are outside required support. If they complicate
+  implementation, palette behavior, tests or UI, force the color path through
+  profile controls and display capabilities and document the choice. Grayscale
+  may be added by future contributors; it is not a module-completion requirement.
+  Preserve guest-selected RGB values, including naturally black/white/gray content.
+  This generalizes the earlier Shapes-only decision and is recorded in AGENTS.md.
+
 ## Established evidence
+
+- **Shapes playback:** fixed Color/Clear Screen First controls run 1,000 draws:
+  521,164 instructions, 489 rectangles, 511 ellipses and 1,000 colors. Tests
+  check each color, shape choice, bounds and random seed against the original
+  algorithm. Six private cases include independent guests, dimensions and
+  cleanup. Actual WPF acceptance passes alone and switching both ways with
+  Hard Rain, with no owned brushes/pens, allocations or locks after shutdown.
+  Native rectangle comparisons cover null and one-pixel pens; ellipses retain
+  their software approximation. The owner approved direct RGB rendering in
+  place of historical palette matching. All **367 combined tests** pass,
+  including **259 public cases** and all ten supported modules.
+  See [evidence and preview reproduction](research/shapes-execution.md).
 
 - **Hard Rain playback:** fixed controls select five drops, size 20 and Clear
   Screen First. Original code executes 1,000 draws, 1,211 ellipses and 211
@@ -355,12 +380,15 @@ ten educational console lessons (06 needs the optional Watcom fixture;
   ABI layouts remain unproven. Two successful host exits/resumes do not establish
   compatibility with arbitrary Win16 guest code.
 - Supported application playback is limited to the analyzed Mondrian, Spiral
-  Gyra, Rainstorm, Fade Away, Lasers, Magic, String Theory, Zot! and Hard Rain artifacts, with Radar as the only
+  Gyra, Rainstorm, Fade Away, Lasers, Magic, String Theory, Zot!, Hard Rain and Shapes artifacts, with Radar as the only
   Fade Away style, Lasers fixed to three rays and Magic fixed to 100 lines with
   horizontal mirroring. String Theory uses three groups of 100 strings; Zot!
   uses Few Forks and Stormy frequency, with explicitly adapted flash timing.
   Hard Rain uses five drops, size 20 and square pixels; its software ellipse
   edges have a documented approximation relative to modern GDI.
+  Shapes enables Color/Clear Screen First and renders PALETTERGB directly as
+  RGB. Its arbitrary ellipse proportions retain the software approximation.
+  Shapes requires dimensions of at least 5x5.
   Lasers requires dimensions of at least 141x141; Magic and String Theory
   require at least 3x3 to avoid zero divisors in coordinate calculations.
   The whole-folder research probes supply narrower
@@ -394,11 +422,11 @@ String Theory/Zot! completed row 3 of the [sweep](research/module-readiness-swee
 The reassessment merged in PR #19 (`732b1f8`); its recommended order was
 Hard Rain, Shapes, then constrained Stained Glass. Later bitmap/sound candidates
 are provisional. See the [report](research/module-readiness-after-heap.md).
-Rainstorm's lightning fix merged in PR #20 (`05a435f`). The requested
-`codex/hard-rain` branch now implements Hard Rain and remains uncommitted for
-review. Pause after this module. Shapes is next, still requiring null pens,
-owned brushes, Rectangle and an explicit palette-request policy; this branch
-does not implement it.
+Rainstorm's lightning fix merged in PR #20 (`05a435f`) and Hard Rain in PR #21
+(`31042b2`). `codex/shapes` now implements Shapes and remains uncommitted for
+review. Pause after this module and the owner's visual assessment. Constrained
+Stained Glass is next; its coordinate, raster-operation and blit behavior still
+requires investigation.
 The heap guide and Tutorial 10 retain the focused allocation lesson; Zot!'s and
 Rainstorm's notes explain presentation inside an active call. Other Fade Away
 styles and historical pixel/timing comparisons remain explicit limitations.
@@ -412,6 +440,33 @@ Tutorial 04 implements the narrow host trap; the broader issue is not complete.
 See [the tutorial guide](tutorials.md).
 
 ## Session log
+
+### 2026-09-20 - Shapes and owned solid brushes
+
+- Created `codex/shapes` from clean main `31042b2`. The owner authorized direct
+  RGB treatment of PALETTERGB and requested rendered output for mobile review.
+- Added bounded brush ownership, null-pen selection and rectangle rendering to
+  the shared GDI layer. Shutdown and WPF diagnostics now include brushes.
+  Existing pen/brush slots and the far-call gateway remain shared.
+- The original code itself computes grayscale when Color is off (static finding).
+  The enabled profile keeps Color and Clear Screen First on. A 5x5 minimum
+  avoids the original uninitialized-coordinate path and possible zero divisors.
+- The owner explicitly chose color-only Shapes support. Grayscale is deliberately
+  out of scope and may be added by a future contributor; it is not a completion
+  requirement or planned follow-up for this module.
+- Six private cases pass; the 1,000-draw run checks all original random decisions
+  and keeps only one temporary brush alive at a time. WPF standalone and both
+  switch directions with Hard Rain pass, including restart, close and cleanup.
+- Full regression passes 367 cases, including 259 public cases, the compiled
+  Win16 fixture and all ten supported module profiles. Existing rectangle
+  inversion and outlined ellipse comparisons remain in the regression.
+- Captured 120 consecutive guest updates as exact PNGs. A six-second GIF at
+  20 updates/second slows the live 60-Hz policy for mobile inspection. Decoded
+  GIF colors were checked against the PNGs. Artifacts stay ignored.
+- Native comparisons established Rectangle's extra right/bottom contraction
+  with NULL_PEN and its empty 1x1 outlined case. Shapes' arbitrary ellipses
+  retain the existing software approximation; historical palette matching is
+  intentionally deferred. No heap or loader changes were needed.
 
 ### 2026-09-20 - Hard Rain and selected pen/brush geometry
 

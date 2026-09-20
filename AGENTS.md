@@ -49,6 +49,19 @@ Not initially in scope:
 - Perfect settings dialogs, sound, helper DLLs, or obscure GDI behavior before
   a target module demonstrates that they are required.
 
+### Color playback policy
+
+- Target color playback for every screensaver. Optional grayscale/monochrome
+  modes are outside the required compatibility scope.
+- If grayscale behavior adds implementation, palette, testing or UI complexity,
+  bypass that branch and force the module's color mode through profile controls
+  and advertised display capabilities where possible. This is authorized by the
+  owner; no additional confirmation is needed for that scope choice.
+- Document the color-mode choice as a host adaptation. Grayscale support may be
+  added independently by future contributors and must not block module completion.
+- Apply this policy to optional modes and capability branches; preserve the
+  guest's chosen RGB values, including intentional black, white and gray pixels.
+
 Native recreations may be used as behavioral oracles and educational examples,
 but they must be labeled clearly. A native recreation is not evidence that the
 original `.AD` code executed successfully.

@@ -87,11 +87,12 @@ public sealed class PixelSurface
     }
 
     /// <summary>Fill and outline a clipped ellipse with solid COLORREFs; return the number of changed pixels.</summary>
-    /// <remarks>The two-pixel stroke policy is documented in EllipseRasterizer and the Hard Rain execution guide.</remarks>
+    /// <remarks>Here penWidth zero means NULL_PEN, not CreatePen's zero-width cosmetic pen.
+    /// The two-pixel stroke policy is documented in EllipseRasterizer and the Hard Rain execution guide.</remarks>
     public int Ellipse(Rectangle16 rectangle, uint penColor, int penWidth, uint brushColor)
     {
-        if (penWidth is < 1 or > 2) throw new ArgumentOutOfRangeException(nameof(penWidth));
-        EllipseRasterizer.Row[] rows = EllipseRasterizer.BuildRows(rectangle, penWidth, Height);
+        if (penWidth is < 0 or > 2) throw new ArgumentOutOfRangeException(nameof(penWidth));
+        EllipseRasterizer.Row[] rows = EllipseRasterizer.BuildRows(rectangle, Math.Max(1, penWidth), Height);
         int changedPixels = 0;
         for (int rowIndex = 0; rowIndex < rows.Length; rowIndex++)
         {
@@ -99,13 +100,41 @@ public sealed class PixelSurface
             int firstColumn = Math.Max(0, row.Left), lastColumn = Math.Min(Width - 1, row.Right);
             for (int column = firstColumn; column <= lastColumn; column++)
             {
-                uint color = column >= row.BrushLeft && column <= row.BrushRight ? brushColor : penColor;
+                uint color = penWidth == 0 || column >= row.BrushLeft && column <= row.BrushRight ? brushColor : penColor;
                 int byteOffset = (rowIndex * Width + column) * 3;
                 byte red = (byte)color, green = (byte)(color >> 8), blue = (byte)(color >> 16);
                 if (pixels[byteOffset] == red && pixels[byteOffset + 1] == green && pixels[byteOffset + 2] == blue) continue;
                 pixels[byteOffset] = red; pixels[byteOffset + 1] = green; pixels[byteOffset + 2] = blue;
                 changedPixels++;
             }
+        }
+        if (changedPixels != 0 && Revision < long.MaxValue) Revision++;
+        return changedPixels;
+    }
+
+    /// <summary>Draw a solid rectangle with the tested GDI bounds and optional one-pixel outline.</summary>
+    /// <remarks>NULL_PEN contracts the right/bottom extent by one extra pixel in the native oracle.
+    /// Clip after deciding the original edges, so off-screen edges do not become visible borders.</remarks>
+    public int Rectangle(Rectangle16 rectangle, uint penColor, bool outline, uint brushColor)
+    {
+        int left = Math.Min(rectangle.Left, rectangle.Right), right = Math.Max(rectangle.Left, rectangle.Right);
+        int top = Math.Min(rectangle.Top, rectangle.Bottom), bottom = Math.Max(rectangle.Top, rectangle.Bottom);
+        // Native Rectangle differs from FillRect: a null pen removes the last
+        // row/column; a 1x1 outlined rectangle paints nothing. These are checked
+        // against Windows in SelectedRectangleRasterTests, including reversed bounds.
+        if (!outline) { right--; bottom--; }
+        else if (right - left == 1 && bottom - top == 1) return 0;
+        int changedPixels = 0;
+        for (int row = Math.Max(0, top); row < Math.Min(Height, bottom); row++)
+        for (int column = Math.Max(0, left); column < Math.Min(Width, right); column++)
+        {
+            bool boundary = row == top || row == bottom - 1 || column == left || column == right - 1;
+            uint color = outline && boundary ? penColor : brushColor;
+            int offset = (row * Width + column) * 3;
+            byte red = (byte)color, green = (byte)(color >> 8), blue = (byte)(color >> 16);
+            if (pixels[offset] == red && pixels[offset + 1] == green && pixels[offset + 2] == blue) continue;
+            pixels[offset] = red; pixels[offset + 1] = green; pixels[offset + 2] = blue;
+            changedPixels++;
         }
         if (changedPixels != 0 && Revision < long.MaxValue) Revision++;
         return changedPixels;

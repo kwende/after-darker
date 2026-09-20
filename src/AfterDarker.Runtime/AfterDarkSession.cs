@@ -93,6 +93,10 @@ public partial class AfterDarkSession<TState> : IAnimationSession
     public int LivePenCount => drawing?.LivePenCount ?? 0;
     /// <summary>Maximum concurrent owned pens in this session.</summary>
     public int PeakPenCount => drawing?.PeakPenCount ?? 0;
+    /// <summary>Owned brushes currently held by the guest, excluding stock objects.</summary>
+    public int LiveBrushCount => drawing?.LiveBrushCount ?? 0;
+    /// <summary>Maximum simultaneous owned brushes in this session.</summary>
+    public int PeakBrushCount => drawing?.PeakBrushCount ?? 0;
     /// <inheritdoc/>
     public event IntermediateFrameHandler? IntermediateFrameReady;
     void IAnimationSession.Initialize() => Initialize();
@@ -104,7 +108,8 @@ public partial class AfterDarkSession<TState> : IAnimationSession
         var result = GetResult();
         return new(ModuleName, result.Phases.Select(phase => new PlaybackPhase(phase.Name, phase.StoredAx, phase.Registers)).ToArray(),
             result.Instructions, result.OutstandingLocks, result.Calls.Count, LivePenCount, PeakPenCount, result.Diagnostics.ImportCalls)
-        { LocalHeap = result.LocalHeap, IntermediateFrames = intermediateFrames?.TotalVisits ?? 0 };
+        { LocalHeap = result.LocalHeap, IntermediateFrames = intermediateFrames?.TotalVisits ?? 0,
+            LiveBrushes = LiveBrushCount, PeakBrushes = PeakBrushCount };
     }
 
     /// <summary>Valid lifecycle stages; faults forbid further guest execution.</summary>
@@ -352,6 +357,7 @@ public partial class AfterDarkSession<TState> : IAnimationSession
             PhaseResult wep = RunPhase("WEP", WepCaller, wepEnd, WepResult, HostData);
             if (wep.StoredAx != 1) throw new InvalidOperationException("Module WEP did not return success.");
             if (LivePenCount != 0) throw new InvalidOperationException("Module shutdown leaked guest pens.");
+            if (LiveBrushCount != 0) throw new InvalidOperationException("Module shutdown leaked guest brushes.");
             if (services.State.LocalHeap?.Snapshot().Allocations.Count > 0)
                 throw new InvalidOperationException("Module shutdown leaked local heap allocations.");
             State = SessionState.Closed;

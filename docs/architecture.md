@@ -55,6 +55,13 @@ prioritizes original-code visuals with fixed options over dialogs or settings
 persistence. Supply options in guest records and preserve the guest's drawing
 logic; do not build unrelated Windows services in anticipation of other modules.
 
+The owner has chosen **color playback for every screensaver**. Optional grayscale
+or monochrome modes do not need implementation, UI or dedicated tests. When they
+complicate compatibility, select the color path through module controls and host
+display capabilities and document that adaptation. Future contributors may add
+grayscale independently. This selects a rendering mode while preserving original
+guest-selected RGB values, including intentional black, white and gray content.
+
 ## 3. Layered design
 
 For concrete files and a walkthrough of stack/register handling, start with
@@ -347,6 +354,15 @@ ring radii used by the fixed profile, with color differences bounded to a one-pi
 neighborhood. General ellipse proportions have no such measured fidelity bound.
 The profile also supplies the SDK pixel-aspect words, preventing division by zero
 in original code and describing the square-pixel destination honestly.
+
+[Shapes](research/shapes-execution.md) adds a separate bounded solid-brush pool,
+null pens and Rectangle drawing with native-tested bounds. Stock objects never
+consume owned capacity; a brush cannot be deleted while selected into any HDC.
+The runtime reports brush ownership and checks it at shutdown. `Win16Color`
+extracts RGB components from RGB/PALETTERGB colors under the owner's approved
+true-color policy; indexed palettes remain unsupported. Shapes' BLANK request
+is accepted explicitly by its profile without creating palette state. Ellipse
+filling retains its documented software approximation.
 
 A deterministic software surface remains the preferred backend. Pixel-exact tests
 are easier when antialiasing, GPU drivers, DPI, and presentation timing are not
