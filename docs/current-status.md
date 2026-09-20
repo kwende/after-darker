@@ -40,6 +40,10 @@ Stained Glass is the eleventh: per-DC origins and ROP2, rectangle helpers,
 explicit brush frames, SetPixel and SRCCOPY BitBlt support its original tiled
 patterns at fixed color controls. Width-three strokes extend the documented
 software raster approximation; scaled blits remain guarded and unexercised.
+Gravity is the twelfth: off-screen bitmap ownership, temporary memory DCs,
+PATCOPY and two mask blits support its original colored ball trails. The fixed
+four-ball profile runs silently through an unavailable AD_SND implementation;
+it still reaches sound calls even with the Sound control off.
 This remains narrow compatibility support, not general Win16 emulation.
 `AfterDarker.Core` contains two extracted binary-layout helpers, a Windows NE
 metadata reader, a CPU-independent load plan, and a separate After Dark
@@ -57,7 +61,8 @@ ten educational console lessons (06 needs the optional Watcom fixture;
   native/CFG publication concern and proposed acceptance milestones. Integration
   is not implemented or proven yet; AGENTS.md now preserves this direction.
   The owner subsequently parked packaging/integration until the current module
-  collection is rounded out. Stained Glass changes no consumer/session interface.
+  collection is rounded out. Gravity leaves the session interface unchanged and
+  adds bitmap/DC ownership diagnostics to playback results.
 - **Color playback across all modules (owner decision, 2026-09-20):** optional
   grayscale/monochrome paths are outside required support. If they complicate
   implementation, palette behavior, tests or UI, force the color path through
@@ -67,6 +72,25 @@ ten educational console lessons (06 needs the optional Watcom fixture;
   This generalizes the earlier Shapes-only decision and is recorded in AGENTS.md.
 
 ## Established evidence
+
+- **Gravity playback:** implemented on `codex/gravity` from reviewed main
+  `67a0bf7`, after Stained Glass merged. Four balls, size 20, Clear Screen and
+  Sound off execute 1,000 original drawing calls in 1,145,876 instructions
+  before final blanking/cleanup. The guest builds a 60x20 bitmap, creates and
+  releases a temporary memory DC on every draw, and performs 4,090 masked blits.
+  The shared layer now supports four additional GDI imports, bitmap selection
+  and lifetime rules, and seven named AD_SND functions with consistent failure/
+  null responses. No audio resources or playback jobs are created. All seven
+  private Gravity cases pass, including varied dimensions/seeds, independent
+  guests, live timing and clean CLOSE/WEP. Twelve new public cases exercise the
+  shared behavior; all **285 public cases** pass without proprietary input.
+  The full regression passes **407/407** cases with Watcom and all twelve private
+  modules enabled (7m 11s; report under `artifacts/gravity/full-regression/`).
+  Actual WPF checks pass switching both ways with Stained Glass, readback,
+  restart and close while playing, with no owned resources left. Native mask
+  blits and PATCOPY match exact pixels for the tested cases; the reused ellipse
+  raster remains an approximation. See [execution evidence, ABI details and
+  sound limits](research/gravity-execution.md).
 
 - **Stained Glass playback:** fixed Complexity/Duplication/Color controls
   `10/100/100` execute the original pattern and duplication code. Ten shared

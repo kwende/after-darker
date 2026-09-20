@@ -52,6 +52,9 @@
   <ItemGroup Condition="'$(TestLocalStainedGlass)' != 'true'">
     <Compile Remove="LocalStainedGlass/**/*.cs" />
   </ItemGroup>
+  <ItemGroup Condition="'$(TestLocalGravity)' != 'true'">
+    <Compile Remove="LocalGravity/**/*.cs" />
+  </ItemGroup>
   <ItemGroup Condition="'$(BuildWin16Fixture)' == 'true'">
     <None Include="../../artifacts/win16/hello42/hello42.dll" Link="Fixtures/hello42.dll" CopyToOutputDirectory="Always" />
   </ItemGroup>

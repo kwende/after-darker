@@ -4,14 +4,27 @@ namespace AfterDarker.Core.Win16;
 
 /// <summary>Persistent drawing state behind one guest HDC handle.</summary>
 /// <remarks>
-/// The supported subset uses identity coordinates, full-surface clipping, solid/null pens and solid brushes.
-/// Selecting a pen/brush or moving the current point changes this state without drawing pixels.
+/// The supported subset uses MM_TEXT coordinates with a window origin, full-surface clipping,
+/// solid/null pens and brushes. Memory DCs select separately owned color bitmaps.
+/// Selecting objects or moving the current point changes state without drawing pixels.
 /// See docs/win16-implementations.md; this is not a native Windows device context.
 /// </remarks>
-internal sealed class Win16DeviceContext(PixelSurface surface)
+internal sealed class Win16DeviceContext(PixelSurface? surface, bool isMemory = false)
 {
-    /// <summary>Deterministic pixel destination shared across this guest's drawing calls.</summary>
-    public PixelSurface Surface { get; } = surface;
+    private PixelSurface? selectedSurface = surface;
+    /// <summary>True for a guest-created DC which accepts bitmap selection; host display DCs do not.</summary>
+    public bool IsMemory { get; } = isMemory;
+    /// <summary>Selected bitmap identity, including the default stock placeholder for a memory DC.</summary>
+    public ushort SelectedBitmap { get; private set; } = isMemory ? Win16Drawing.DefaultBitmapHandle : (ushort)0;
+    /// <summary>Current pixel destination; unsupported default monochrome drawing fails explicitly.</summary>
+    public PixelSurface Surface => selectedSurface ?? throw new NotSupportedException(
+        "Select a color bitmap before drawing into a memory DC; default monochrome bitmap rendering is unsupported.");
+    /// <summary>Change only bitmap selection; drawing attributes remain owned by this DC.</summary>
+    public void SelectBitmap(ushort handle, PixelSurface? bitmapSurface)
+    {
+        SelectedBitmap = handle;
+        selectedSurface = bitmapSurface;
+    }
     /// <summary>Logical coordinate mapped to device pixel (0,0) in the supported MM_TEXT mode.</summary>
     public Point16 WindowOrigin { get; set; } = new(0, 0);
     /// <summary>Boolean combination used by pen strokes and filled shapes, initially ordinary copy.</summary>

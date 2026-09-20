@@ -193,6 +193,15 @@ with one display, then verify the chosen multi-monitor policy explicitly.
 
 ## Delivery milestones and proof
 
+Gravity's compatibility increment leaves `IAnimationSession` and frame delivery
+unchanged. `PlaybackResult` gains additive live/peak bitmap and memory-DC counts
+plus current bitmap bytes, and session shutdown verifies that owned GDI storage
+is released. These are host-independent diagnostics useful to the eventual
+adapter; existing scenes need no new hooks. Ocuvera's current synchronous scene
+interface and WriteableBitmap presentation were rechecked during this change.
+No Ocuvera source was changed. Packaging/integration remains parked while the
+module collection is completed.
+
 1. **Independent package/deployment proof:** pack Core/Runtime to a local feed;
    restore a small Windows x64 host outside this repository; execute a
    source-owned guest fixture through the packaged native engine. Verify both

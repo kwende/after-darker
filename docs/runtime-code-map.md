@@ -34,6 +34,10 @@ larger boundaries and proof requirements, see [architecture](architecture.md).
 | Where are guest RECTs moved, inflated and intersected? | [Win16Api.Rectangles](../src/AfterDarker.Core/Win16/Win16Api.Rectangles.cs) uses checked guest memory, signed words and alias-safe reads |
 | Where do explicit brushes and SetPixel paint? | [Win16Drawing.Brushes](../src/AfterDarker.Core/Win16/Win16Drawing.Brushes.cs) separates API behavior from [PixelSurface.Brushes](../src/AfterDarker.Core/Rendering/PixelSurface.Brushes.cs) |
 | Where does BitBlt preserve overlapping source pixels? | [Win16Drawing.Blits](../src/AfterDarker.Core/Win16/Win16Drawing.Blits.cs) validates DCs/ROP; [PixelSurface.Blit](../src/AfterDarker.Core/Rendering/PixelSurface.Blit.cs) snapshots and clips the copy |
+| Who owns off-screen bitmaps and temporary memory DCs? | [Win16Drawing.Bitmaps](../src/AfterDarker.Core/Win16/Win16Drawing.Bitmaps.cs) separates pixel storage from DC selection and enforces ownership/capacity; [Gravity's guide](research/gravity-execution.md) follows their lifetimes |
+| How do masks combine bitmap, brush and destination pixels? | [BitmapRasterOperation](../src/AfterDarker.Core/Rendering/BitmapRasterOperation.cs) names the ROP3 encodings; [PixelSurface.Blit](../src/AfterDarker.Core/Rendering/PixelSurface.Blit.cs) combines pixels and [PixelSurface.Pattern](../src/AfterDarker.Core/Rendering/PixelSurface.Pattern.cs) implements PATCOPY |
+| What happens when a module calls the sound helper? | [UnavailableAfterDarkSound](../src/AfterDarker.Core/AfterDark/UnavailableAfterDarkSound.cs) returns consistent unavailable-device/null-handle responses; the ordinary import registry and gateway marshal its named AD_SND calls |
+| Where are Gravity's controls and original ball positions? | [GravityProfile](../src/AfterDarker.Runtime/Modules/GravityProfile.cs) and [GravityState](../src/AfterDarker.Runtime/Modules/GravityState.cs); the host observes, rather than computes, the animation |
 | Where are three-pixel lines approximated? | [PixelSurface.WideLine](../src/AfterDarker.Core/Rendering/PixelSurface.WideLine.cs) covers a round-ended stroke, mixing each pixel once even at overlapping end caps |
 | Where are RGB and PALETTERGB interpreted? | [Win16Color](../src/AfterDarker.Core/Win16/Win16Color.cs); pens and brushes use the same explicit true-color policy |
 | Where are brushes allocated, selected and deleted? | [Win16Drawing](../src/AfterDarker.Core/Win16/Win16Drawing.cs) owns the bounded brush pool; [PlaybackResult](../src/AfterDarker.Runtime/PlaybackResult.cs) exposes live/peak brush counts |
@@ -160,6 +164,12 @@ Stained Glass's [execution guide](research/stained-glass-execution.md) explains
 which calls use ROP2, why XOR requires single coverage, and why overlapping
 BitBlt reads a source snapshot. These drawing services remain independent of
 module profiles and WPF.
+
+Gravity extends the same model with selected color bitmaps. A bitmap owns pixels;
+a memory DC owns attributes and a selection. Deleting a DC releases its selection
+without deleting its bitmap. Explicit ROP3 mask operations combine bitmap, brush
+and destination independently of ROP2. The [Gravity guide](research/gravity-execution.md)
+connects this lifetime to the original module's construction and drawing calls.
 
 ## Tutorials and contribution style
 

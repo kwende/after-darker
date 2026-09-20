@@ -545,6 +545,19 @@ and multi-monitor behavior need consumer acceptance tests. See the
 
 ## Shared module sessions
 
+[Gravity](research/gravity-execution.md) adds separately owned color bitmaps and
+memory DCs. A DC owns drawing attributes and a bitmap selection; deleting the DC
+releases the selection while the bitmap's pixels survive. Bitmap ownership,
+single-DC selection and shutdown cleanup are bounded and observable. Masked
+BitBlt combines source, destination and selected brush through explicit ROP3
+operations, independently of ROP2. These mechanisms remain in Core.
+
+Named AD_SND imports use the same gateway and Pascal return machinery. The
+shared `UnavailableAfterDarkSound` implementation consistently reports an
+unavailable device and null sound handles; it does not decode resources, start
+audio jobs or manufacture successful sound objects. Gravity's tolerance of that
+path is established; other modules still need their own execution proof.
+
 [Stained Glass](research/stained-glass-execution.md) extends the same shared GDI
 model with per-DC window origins and ROP2. Logical coordinates remain signed
 Win16 words; translation and clipping use wider host arithmetic. Selected pen

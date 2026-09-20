@@ -44,7 +44,9 @@ public static class Win16Imports
         SetWindowOrg,
         FrameRect,
         SetPixel,
-        BitBlt
+        BitBlt,
+        CreateCompatibleDC, CreateCompatibleBitmap, DeleteDC, PatBlt,
+        SoundOpen, SoundClose, SoundAsyncCapability, SoundLoadResource, SoundSetMode, SoundPlay, SoundFree
     }
     /// <summary>One NE import bound to our synthetic code address and its known ABI.</summary>
     /// <param name="Import">Original module/ordinal or module/name identity.</param>
@@ -100,8 +102,8 @@ public static class Win16Imports
             // Hard Rain reaches Ellipse. Fade Away's Radar path still does not.
             ("GDI", 24, "Ellipse", enableDrawing ? Handler.Ellipse : Handler.Unsupported, 10, Win16ReturnLayout.WordInAx),
             ("GDI", 27, "Rectangle", enableDrawing ? Handler.Rectangle : Handler.Unsupported, 10, Win16ReturnLayout.WordInAx),
-            // Fade Away's other styles import PatBlt; keep that unimplemented identity guarded.
-            ("GDI", 29, "PatBlt", Handler.Unsupported, null, null),
+            // Gravity constructs its masks with PATCOPY; other PatBlt operations remain guarded.
+            ("GDI", 29, "PatBlt", enableDrawing ? Handler.PatBlt : Handler.Unsupported, 14, Win16ReturnLayout.WordInAx),
             ("KERNEL", 5, "LocalAlloc", Handler.LocalAlloc, 4, Win16ReturnLayout.WordInAx),
             ("KERNEL", 7, "LocalFree", Handler.LocalFree, 2, Win16ReturnLayout.WordInAx),
             ("KERNEL", 8, "LocalLock", Handler.LocalLock, 2, Win16ReturnLayout.DwordInDxAx),
@@ -121,10 +123,33 @@ public static class Win16Imports
             ("USER", 78, "InflateRect", Handler.InflateRect, 8, Win16ReturnLayout.Void),
             ("USER", 79, "IntersectRect", Handler.IntersectRect, 12, Win16ReturnLayout.WordInAx),
             ("USER", 244, "EqualRect", Handler.EqualRect, 8, Win16ReturnLayout.WordInAx),
+            ("GDI", 52, "CreateCompatibleDC", enableDrawing ? Handler.CreateCompatibleDC : Handler.Unsupported, 2, Win16ReturnLayout.WordInAx),
+            ("GDI", 51, "CreateCompatibleBitmap", enableDrawing ? Handler.CreateCompatibleBitmap : Handler.Unsupported, 6, Win16ReturnLayout.WordInAx),
+            ("GDI", 68, "DeleteDC", enableDrawing ? Handler.DeleteDC : Handler.Unsupported, 2, Win16ReturnLayout.WordInAx),
+        };
+        // Recovered AD_SND.H uses named FAR PASCAL exports. Every BOOL/HSOUND
+        // return is a WORD; a resource name is a far pointer, not a host string.
+        var soundDefinitions = new (string Name, Handler Handler, int Bytes)[]
+        {
+            ("ADWOPENSOUND", Handler.SoundOpen, 0), ("ADWCLOSESOUND", Handler.SoundClose, 2),
+            ("ADWSOUNDASYNCCAP", Handler.SoundAsyncCapability, 0),
+            ("ADWLOADSOUNDRESOURCE", Handler.SoundLoadResource, 6),
+            ("ADWSETSOUNDMODE", Handler.SoundSetMode, 4), ("ADWPLAYSOUND", Handler.SoundPlay, 2),
+            ("ADWFREESOUND", Handler.SoundFree, 2)
         };
         const int firstGatewayOffset = 0x100, gatewaySpacing = 0x10;
         return Array.AsReadOnly(imports.Distinct().Select(import =>
         {
+            if (string.Equals(import.Module, "AD_SND", StringComparison.OrdinalIgnoreCase))
+            {
+                int soundIndex = Array.FindIndex(soundDefinitions, definition => import.Ordinal is null &&
+                    string.Equals(definition.Name, import.Name, StringComparison.OrdinalIgnoreCase));
+                if (soundIndex < 0) throw new NotSupportedException($"Unrecognized AD_SND import {import.Name ?? $"#{import.Ordinal}"}.");
+                var sound = soundDefinitions[soundIndex];
+                return new ImportEntry(import, $"AD_SND!{sound.Name}",
+                    new(gateway, (ushort)(firstGatewayOffset + (definitions.Length + soundIndex) * gatewaySpacing)),
+                    sound.Handler, sound.Bytes, Win16ReturnLayout.WordInAx);
+            }
             int index = Array.FindIndex(definitions, definition => import.Name is null && definition.Ordinal == import.Ordinal &&
                 string.Equals(definition.Module, import.Module, StringComparison.OrdinalIgnoreCase));
             if (index < 0) throw new NotSupportedException($"Unrecognized Win16 import {import.Module}!{import.Name ?? $"#{import.Ordinal}"}.");
