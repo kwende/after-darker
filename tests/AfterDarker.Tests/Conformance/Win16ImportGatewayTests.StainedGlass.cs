@@ -25,7 +25,7 @@ public sealed partial class Win16ImportGatewayTests
         Assert.AreEqual((ushort)1, setup.Word(0x24)); Assert.AreEqual((ushort)1, setup.Word(0x26));
         Assert.AreEqual(new Rectangle16(0, 8, 2, 12), Rectangle16.Decode(setup.Guest.Read(new(Data, 0x350), 8)));
         Assert.AreEqual((ushort)0x1000, returned.Sp);
-        foreach (var call in setup.Calls) AssertStainedGlassReturn(call);
+        foreach (var call in setup.Calls) AssertPascalReturn(call);
         CollectionAssert.AreEqual(new ushort[] { Data, 0x350, 0xFFFD, 4 }, setup.Calls[0].Arguments.ToArray());
         Assert.AreEqual(Win16ReturnLayout.Void, setup.Calls[0].Binding.ReturnLayout);
         Assert.AreEqual(Win16ReturnLayout.Void, setup.Calls[1].Binding.ReturnLayout);
@@ -61,7 +61,7 @@ public sealed partial class Win16ImportGatewayTests
         Assert.AreEqual(ushort.MaxValue, setup.Word(0x34)); Assert.AreEqual(ushort.MaxValue, setup.Word(0x36));
         Assert.IsTrue(setup.Surface.CopyRgb().AsSpan((1 * 8 + 5) * 3, 3).SequenceEqual(new byte[] { 0x11, 0x22, 0x33 }));
         Assert.AreEqual((ushort)0x1000, returned.Sp);
-        foreach (var call in setup.Calls) AssertStainedGlassReturn(call);
+        foreach (var call in setup.Calls) AssertPascalReturn(call);
         var copy = setup.Calls.Single(call => call.Binding.Implementation == Win16Imports.Handler.BitBlt);
         Assert.AreEqual(20, copy.Binding.ArgumentBytes);
         CollectionAssert.AreEqual(new ushort[] { 0x103, 3, 4, 2, 1, 0x103, 0xFFFF, 4, 0x00CC, 0x0020 }, copy.Arguments.ToArray());
@@ -79,7 +79,7 @@ public sealed partial class Win16ImportGatewayTests
         StringAssert.Contains(error.Message, name); Assert.AreEqual((ushort)0xCCCC, setup.Word(0x20));
     }
 
-    private static void AssertStainedGlassReturn(AfterDarker.Runtime.Win16CallTrace call)
+    private static void AssertPascalReturn(AfterDarker.Runtime.Win16CallTrace call)
     {
         Assert.AreEqual(call.Before.Sp + 4 + call.Binding.ArgumentBytes, (int?)call.After.Sp);
         Assert.AreEqual(Code, call.After.Cs); Assert.AreEqual(Data, call.After.Ds); Assert.AreEqual(Stack, call.After.Ss);

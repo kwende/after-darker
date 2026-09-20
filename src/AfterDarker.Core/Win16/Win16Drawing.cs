@@ -3,7 +3,7 @@ using AfterDarker.Core.Rendering;
 namespace AfterDarker.Core.Win16;
 
 /// <summary>
-/// The supported device-context state: one persistent surface per guest HDC,
+/// The supported device-context state: a display surface or selected bitmap per guest HDC,
 /// MM_TEXT coordinates with a translated window origin, full-surface clip, stock objects,
 /// selected solid pens/brushes, current drawing position and per-DC binary raster mixing.
 /// Extend explicitly when a module needs other objects, widths or raster modes.
@@ -57,6 +57,8 @@ public sealed partial class Win16Drawing
     public void Register(ushort hdc, PixelSurface surface)
     {
         if (hdc == 0) throw new ArgumentException("A null HDC is not a surface.");
+        if (hdc >= FirstPen && hdc < FirstMemoryDc + MemoryDcCapacity)
+            throw new ArgumentException("Host HDC identity overlaps the reserved guest GDI object ranges.");
         contexts.Add(hdc, new(surface));
     }
     /// <summary>Return the signed logical origin packed as Y:X, as required by Win16 GetWindowOrg.</summary>
@@ -120,6 +122,7 @@ public sealed partial class Win16Drawing
     public ushort SelectObject(ushort hdc, ushort handle)
     {
         Win16DeviceContext deviceContext = RequireDeviceContext(hdc);
+        if (handle == DefaultBitmapHandle || bitmaps.ContainsKey(handle)) return SelectBitmap(deviceContext, handle);
         if (handle is BlackBrushHandle or WhiteBrushHandle or NullBrushHandle || brushColors.ContainsKey(handle))
         {
             ushort previousBrush = deviceContext.SelectedBrush;
@@ -131,9 +134,14 @@ public sealed partial class Win16Drawing
         deviceContext.SelectedPen = handle;
         return previouslySelectedPen;
     }
-    /// <summary>Release an owned pen/brush only when no HDC selects it; stock lifetimes remain host-owned.</summary>
+    /// <summary>Release an unselected pen, brush or bitmap, or delete a memory DC; stock lifetimes remain host-owned.</summary>
     public bool DeleteObject(ushort handle)
     {
+        // Gravity deletes its per-frame memory DC with DeleteObject. GDI permits
+        // this alias of DeleteDC; removing the DC releases its bitmap selection.
+        if (contexts.ContainsKey(handle)) return DeleteDC(handle);
+        if (handle == DefaultBitmapHandle) return true;
+        if (bitmaps.ContainsKey(handle)) return DeleteBitmap(handle);
         if (handle is BlackPenHandle or NullPenHandle or BlackBrushHandle or WhiteBrushHandle or NullBrushHandle) return true;
         if (contexts.Values.Any(context => context.SelectedPen == handle || context.SelectedBrush == handle)) return false;
         return pens.Remove(handle) || brushColors.Remove(handle);

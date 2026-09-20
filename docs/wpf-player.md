@@ -3,11 +3,17 @@
 Open `AfterDarker.sln`, set **AfterDarker.Wpf** as the startup project, and press
 F5. With the analyzed `ad/Mondrian.ad` present, the window starts automatically.
 Choose **File > Load AD file…** to select **Mondrian**, **Spiral Gyra**, **Rainstorm**,
-**Fade Away**, **Lasers**, **Magic**, **String Theory**, **Zot!**, **Hard Rain**, **Shapes**, or **Stained Glass**. Loading
+**Fade Away**, **Lasers**, **Magic**, **String Theory**, **Zot!**, **Hard Rain**, **Shapes**, **Stained Glass**, or **Gravity**. Loading
 starts playback automatically; the menu can also switch modules while playing.
 The previous guest shuts down before the new one starts. Unsupported files or
 versions are rejected by their content hash before stopping an active guest.
 Stop lets you change speed and Run a fresh guest. No original modules are distributed.
+
+Gravity uses four balls, size 20, Clear Screen and Sound off; the generic speed
+selector is disabled. Its original code constructs a bitmap mask strip and draws
+colored ball trails through it. Sound calls receive explicit unavailable-device
+responses even when the module calls them with Sound off. Supported guest sizes
+start at 64x64. See [the bitmap/sound behavior and verification](research/gravity-execution.md).
 
 Stained Glass uses Complexity 10, Duplication 100 and Color 100; its generic speed
 selector is disabled. The original code draws and copies repeated patterns using
@@ -65,10 +71,10 @@ dotnet run --project src/AfterDarker.Wpf --no-launch-profile
 dotnet run --project src/AfterDarker.Wpf --no-launch-profile -- C:\path\Mondrian.ad
 ```
 
-All eleven supported modules execute their original, hash-checked Win16 code through
+All twelve supported modules execute their original, hash-checked Win16 code through
 `AfterDarkSession<TState>`. Mondrian's tutorial facade uses that same runtime.
 Spiral adds five pen/line imports; see the [execution notes](research/spiral-gyra-execution.md).
-The file picker accepts AD files generally, but only the eleven analyzed versions
+The file picker accepts AD files generally, but only the twelve analyzed versions
 are executable today. A renamed supported file works; an unknown file named
 Mondrian.ad does not bypass validation.
 
@@ -168,8 +174,8 @@ halfway through would leave its stack unsuitable for another CALL FAR to CLOSE.
 If execution or cleanup fails, no further guest calls are attempted, and the
 native engine is still disposed. The UI shows the symbolic failure. Cleanup
 ignores the cancelled pacing token but retains bounded native execution: 50,000
-instructions per Mondrian/Fade Away/Magic invocation, 200,000 for
-Spiral Gyra/Rainstorm/Lasers/String Theory, or 2,000,000 for Zot!/Stained Glass. Native slices
+instructions per Mondrian/Fade Away/Magic/Hard Rain/Shapes invocation, 200,000 for
+Spiral Gyra/Rainstorm/Lasers/String Theory/Gravity, or 2,000,000 for Zot!/Stained Glass. Native slices
 are one second normally and three seconds for Zot!'s original CPU delay loops;
 all retain a five-second cumulative native execution budget. Managed image holds
 have the separate bound described above. These are cooperative runtime safeguards,
@@ -193,7 +199,11 @@ and retains no owned pens between drawing calls.
 String Theory also uses 128 services and frees its history at CLOSE. Zot! allows
 4,096 exits for its bolt/fork work and releases both fixed allocations before
 each DRAWFRAME returns. Stained Glass also allows 4,096 service exits for its
-pattern construction and duplication. All profiles check allocation, lock and pen cleanup.
+pattern construction and duplication. Gravity allows 512 service exits, retains
+one bitmap between draws and deletes each temporary memory DC before returning.
+All profiles check allocation, lock, pen, brush, bitmap and memory-DC cleanup.
+Playback diagnostics and smoke reports expose live/peak bitmap/DC counts and
+owned bitmap bytes; clean shutdown must leave all owned storage released.
 For Mondrian, with the current system record, CLOSE optionally clears then inverts the saved
 rectangles; it does not necessarily leave black pixels. The UI retains the last
 presented frame after Stop. Console lessons still end at their original boundary

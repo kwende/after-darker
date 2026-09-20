@@ -102,8 +102,8 @@ public sealed partial class Win16ImportGatewayTests
     }
 
     [TestMethod]
-    [DataRow("PatBlt")]
-    public void ImportsFromUnsupportedFadeStylesStopByNameBeforeReadingArguments(string name)
+    [DataRow("StretchBlt")]
+    public void UnsupportedDrawingImportsStopByNameBeforeReadingArguments(string name)
     {
         using var setup = new Probe(drawing: true);
         var code = new List<byte>();
@@ -520,6 +520,10 @@ public sealed partial class Win16ImportGatewayTests
                 new("KERNEL", 131, null), new("USER", 13, null), new("USER", 82, null), new("USER", 72, null), new("USER", 81, null), new("GDI", 87, null),
                 new("GDI", 61, null), new("GDI", 45, null), new("GDI", 69, null), new("GDI", 20, null), new("GDI", 19, null), new("USER", 76, null),
                 new("GDI", 24, null), new("GDI", 27, null), new("GDI", 29, null), new("GDI", 66, null),
+                new("GDI", 51, null), new("GDI", 52, null), new("GDI", 68, null), new("GDI", 35, null),
+                new("AD_SND", null, "ADWOPENSOUND"), new("AD_SND", null, "ADWCLOSESOUND"),
+                new("AD_SND", null, "ADWSOUNDASYNCCAP"), new("AD_SND", null, "ADWLOADSOUNDRESOURCE"),
+                new("AD_SND", null, "ADWSETSOUNDMODE"), new("AD_SND", null, "ADWPLAYSOUND"), new("AD_SND", null, "ADWFREESOUND"),
                 new("GDI", 97, null), new("GDI", 11, null), new("GDI", 4, null), new("GDI", 31, null), new("GDI", 34, null),
                 new("USER", 77, null), new("USER", 78, null), new("USER", 79, null), new("USER", 244, null), new("USER", 83, null),
                 new("KERNEL", 5, null), new("KERNEL", 7, null), new("KERNEL", 8, null), new("KERNEL", 9, null), new("USER", 15, null) };
@@ -546,7 +550,7 @@ public sealed partial class Win16ImportGatewayTests
         public void EmitCall(List<byte> code, string name, params ushort[] args)
         {
             foreach (ushort arg in args) code.AddRange([0x68, (byte)arg, (byte)(arg >> 8)]);
-            var entry = Bindings.Single(b => b.Name.Contains("!" + name + " ", StringComparison.Ordinal));
+            var entry = Bindings.Single(b => b.Name.Split('!')[1].Split(' ')[0] == name);
             code.AddRange([0x9A, (byte)entry.Address.Offset, (byte)(entry.Address.Offset >> 8), (byte)Gateway, 0]);
         }
         public SegmentedGuest.CpuState Run(List<byte> code)

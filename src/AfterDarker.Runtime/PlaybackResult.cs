@@ -24,6 +24,16 @@ public sealed record PlaybackResult(string ModuleName, IReadOnlyList<PlaybackPha
     public int LiveBrushes { get; init; }
     /// <summary>Maximum simultaneous owned brushes, excluding stock objects.</summary>
     public int PeakBrushes { get; init; }
+    /// <summary>Guest bitmap objects remaining, excluding default stock placeholders.</summary>
+    public int LiveBitmaps { get; init; }
+    /// <summary>Largest number of simultaneously owned bitmaps.</summary>
+    public int PeakBitmaps { get; init; }
+    /// <summary>Guest-created memory DCs remaining; host display contexts are excluded.</summary>
+    public int LiveMemoryDcs { get; init; }
+    /// <summary>Largest number of simultaneously owned memory DCs.</summary>
+    public int PeakMemoryDcs { get; init; }
+    /// <summary>Bytes currently owned by guest bitmap storage.</summary>
+    public int BitmapBytes { get; init; }
     /// <summary>Detached local-heap ownership, including remaining allocations and locks at shutdown.</summary>
     public LocalHeapSnapshot? LocalHeap { get; init; }
     /// <summary>Reached image checkpoints inside DRAWFRAME; zero for profiles that present only after return.</summary>

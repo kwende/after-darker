@@ -122,6 +122,7 @@ public partial class MainWindow : Window
             "Hard Rain" => "Hard Rain uses five drops, size 20 and Clear Screen First in this version.",
             "Shapes" => "Shapes uses Color and Clear Screen First; each update draws one original shape.",
             "Stained Glass" => "Stained Glass uses Complexity 10, Duplication 100 and Color 100 in this version.",
+            "Gravity" => "Gravity uses four colored balls, size 20 and Clear Screen, with audio unavailable.",
             _ => "Original module speed; applies on Run"
         };
         Title = $"After Darker — {name}";
@@ -197,7 +198,7 @@ public partial class MainWindow : Window
     private void SetBusy(bool busy)
     {
         ModulePath.IsEnabled = BrowseButton.IsEnabled = RunButton.IsEnabled = !busy && !loading && !closing;
-        Speed.IsEnabled = !busy && !loading && !closing && selectedModuleName is not ("Rainstorm" or "Fade Away" or "Lasers" or "Magic" or "String Theory" or "Zot!" or "Hard Rain" or "Shapes" or "Stained Glass");
+        Speed.IsEnabled = !busy && !loading && !closing && selectedModuleName is not ("Rainstorm" or "Fade Away" or "Lasers" or "Magic" or "String Theory" or "Zot!" or "Hard Rain" or "Shapes" or "Stained Glass" or "Gravity");
         StopButton.IsEnabled = busy;
     }
     private async void OnClosing(object? sender, CancelEventArgs e)
@@ -317,6 +318,9 @@ public partial class MainWindow : Window
                 Module = lastResult?.ModuleName, SwitchedFrom = switchedFrom, Instructions = lastResult?.Instructions, OutstandingLocks = lastResult?.OutstandingLocks,
                 LivePens = lastResult?.LivePens, PeakPens = lastResult?.PeakPens,
                 LiveBrushes = lastResult?.LiveBrushes, PeakBrushes = lastResult?.PeakBrushes,
+                LiveBitmaps = lastResult?.LiveBitmaps, PeakBitmaps = lastResult?.PeakBitmaps,
+                LiveMemoryDcs = lastResult?.LiveMemoryDcs, PeakMemoryDcs = lastResult?.PeakMemoryDcs,
+                BitmapBytes = lastResult?.BitmapBytes,
                 LocalHeap = lastResult?.LocalHeap,
                 IntermediateFrames = lastResult?.IntermediateFrames,
                 UiThread = Environment.CurrentManagedThreadId
@@ -344,6 +348,7 @@ public partial class MainWindow : Window
             var result = completed ?? lastResult;
             if (result is null || result.Phases.Count < 2 || result.Phases[^2].Name != "CLOSE" ||
                 result.Phases[^1].Name != "WEP" || result.Phases[^1].StoredAx != 1 || result.OutstandingLocks != 0 || result.LivePens != 0 || result.LiveBrushes != 0 ||
+                result.LiveBitmaps != 0 || result.LiveMemoryDcs != 0 || result.BitmapBytes != 0 ||
                 result.LocalHeap?.Allocations.Count > 0 || result.LocalHeap?.OutstandingLocks > 0)
                 throw new InvalidOperationException("Original guest shutdown did not complete with WEP success and balanced locks.");
         }

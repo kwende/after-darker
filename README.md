@@ -50,12 +50,16 @@ entire desktop.
 Set **AfterDarker.Wpf** as the startup project and press F5. It finds your local
 `ad/Mondrian.ad` automatically. Use **File > Load AD file…** to play
 **Mondrian**, **Spiral Gyra**, **Rainstorm**, **Fade Away**, **Lasers**, **Magic**,
-**String Theory**, **Zot!**, **Hard Rain**, **Shapes**, or **Stained Glass**, or switch between them while running. See the [WPF player guide](docs/wpf-player.md)
+**String Theory**, **Zot!**, **Hard Rain**, **Shapes**, **Stained Glass**, or **Gravity**, or switch between them while running. See the [WPF player guide](docs/wpf-player.md)
 for controls, command-line launch and the original-code execution boundary.
 
 ## Status
 
-The repository now runs eleven original modules in a live WPF window.
+The repository now runs twelve original modules in a live WPF window.
+[Gravity](docs/research/gravity-execution.md) adds separately owned off-screen
+bitmaps, temporary memory DCs and masked blits for its original colored ball
+trails. Its four-ball profile runs silently through an explicit unavailable-audio
+implementation, including sound calls which still occur with Sound disabled.
 [Stained Glass](docs/research/stained-glass-execution.md) adds per-DC coordinate
 origins and raster mixing, rectangle helpers, pixels, explicit brush frames and
 overlap-safe image copying. Its original code constructs repeated colored patterns

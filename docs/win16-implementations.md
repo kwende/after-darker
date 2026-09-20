@@ -40,18 +40,23 @@ not yet been placed into CPU registers.
 | GetDOSEnvironment | Returns the address of a supplied empty guest environment; rejects absent or unsupported contents. |
 | GetTickCount | Reads the per-guest clock: deterministic stepping for tests/captures or monotonic elapsed time for live playback. USER #15 GetCurrentTime uses this same method. |
 | SetRect | Writes the four signed corners unchanged to checked guest memory. |
-| GetStockObject | Returns stock black brush (4), black pen (7) or null pen (8); rejects other indices. Stock objects do not consume created-object capacity. |
+| GetStockObject | Returns stock white/black/null brushes (0/4/5) and black/null pens (7/8); rejects other indices. Stock objects do not consume created-object capacity. |
 | PtInRect | Reads a checked guest RECT and tests a signed by-value POINT; left/top inclusive, right/bottom exclusive. Empty/inverted rectangles return false. |
-| FillRect | Resolves the HDC and black brush; fills the clipped rectangle on its persistent surface. |
+| FillRect / FrameRect | Use the explicit brush to fill or border a clipped rectangle, independently of the selected brush and ROP2. |
 | InvertRect | Resolves the HDC; inverts the clipped rectangle's RGB bits. |
-| CreatePen | Allocates a bounded, reusable guest identity retaining solid RGB color and width 0/1/2. Width zero becomes one. |
+| CreatePen | Allocates a bounded, reusable guest identity retaining solid RGB color and width 0–3. Width zero becomes one. |
 | CreateSolidBrush | Allocates a bounded guest brush using RGB/PALETTERGB components directly; palette-index colors fail before allocation. |
-| SelectObject | Selects a supported pen or brush into its own HDC slot and returns the previous object of the same kind. |
-| DeleteObject | Releases an owned pen/brush only when no HDC selects it; keeps stock objects host-owned. |
+| SelectObject | Selects a supported pen/brush/bitmap into its own HDC slot and returns the previous object of that kind. A bitmap requires a memory DC and cannot be selected by two DCs. |
+| DeleteObject | Releases an owned pen/brush/bitmap only when no HDC selects it; also supports deleting an owned memory DC. Stock objects stay host-owned. |
 | MoveTo | Updates the HDC current point and returns its previous coordinates. |
-| LineTo | Draws with a one-pixel pen and advances the current point. A null pen only moves the point; a width-two pen fails before mutation. |
+| LineTo | Draws with a one-pixel pen or approximated width-three pen and advances the current point. A null pen only moves the point; a width-two pen fails before mutation. |
 | Ellipse | Uses the selected solid brush and optional pen without changing the current point; software raster policy is documented in the Hard Rain/Shapes guides. |
 | Rectangle | Uses the selected solid brush and null/one-pixel pen, preserving the current point; native-tested bounds include NULL_PEN's additional right/bottom contraction. |
+| CreateCompatibleDC / DeleteDC | Allocate/release a bounded memory DC with default attributes; deleting it releases selections but retains separately owned bitmap pixels. |
+| CreateCompatibleBitmap | Allocate bounded RGB storage against a color DC, returning an owned guest handle; unsupported monochrome requests fail explicitly. |
+| BitBlt | Combine clipped source/destination pixels using SRCCOPY, SRCAND or the supported brush-through-mask operation; preserve overlapping source pixels. |
+| PatBlt | Fill using the selected brush and PATCOPY, independently of ROP2; reject other operation codes. |
+| AD_SND named calls | Report unavailable audio and null sound resources through the separate stateless implementation; no decoding, playback or audio handles. |
 
 State is in [Win16ApiState.cs](../src/AfterDarker.Core/Win16/Win16ApiState.cs).
 One instance per guest keeps handles, initialized heaps, versions, and clocks
@@ -110,7 +115,7 @@ boundaries and the Win16 void-return distinction.
 
 The direct [Win16ApiTests](../tests/AfterDarker.Tests/Unit/Win16ApiTests.cs) need
 no emulator. Existing CPU/gateway tests verify the marshaling around the same
-methods, and the opt-in tests exercise all ten supported original modules.
+methods, and the opt-in tests exercise all twelve supported original modules.
 
 Zot! adds the `USER!GetCurrentTime` identity with zero Pascal argument bytes
 and a DWORD return in DX:AX. Both it and `GetTickCount` bind to `Handler.Ticks`;
@@ -121,7 +126,7 @@ register results and stack cleanup. See [Zot!'s execution notes](research/zot-ex
 
 Fade Away's Radar path adds no Windows API behavior. Its other styles import
 Ellipse, Rectangle and PatBlt. Hard Rain implements Ellipse and Shapes adds
-Rectangle; PatBlt remains guarded before argument decoding. This does not
+Rectangle; Gravity adds the PATCOPY subset of PatBlt. This does not
 enable other Fade Away styles. Initial white pixels are supplied
 by the host through `PixelSurface.LoadRgb`, not by a fake Windows call. See the
 [Fade Away notes](research/fade-away-execution.md).
@@ -135,9 +140,24 @@ Shapes adds GDI #66 CreateSolidBrush (four argument bytes, HBRUSH in AX) and
 GDI #27 Rectangle (ten argument bytes, BOOL in AX). Both preserve DX and use the
 existing far-return cleanup. `Win16Color` holds the RGB/PALETTERGB policy;
 `Win16Drawing` owns separate bounded brush and pen handle pools. Playback results
-and shutdown checks include both kinds. FillRect remains limited to its existing
-black-brush behavior. See [Shapes' evidence and limits](research/shapes-execution.md).
+and shutdown checks include both kinds. Stained Glass subsequently extends
+FillRect to other explicit brushes. See [Shapes' evidence and limits](research/shapes-execution.md).
 See [the pen/brush, aspect-ratio and raster walkthrough](research/hard-rain-execution.md).
+
+## Bitmaps and silent sound helpers
+
+[Win16Api.Bitmaps](../src/AfterDarker.Core/Win16/Win16Api.Bitmaps.cs) exposes the
+typed API methods; [Win16Drawing.Bitmaps](../src/AfterDarker.Core/Win16/Win16Drawing.Bitmaps.cs)
+owns storage, handle ranges and selection checks. The
+[Gravity execution guide](research/gravity-execution.md) follows its retained
+bitmap across short-lived DCs and explains the native-tested ROP3 mask formulas.
+
+[UnavailableAfterDarkSound](../src/AfterDarker.Core/AfterDark/UnavailableAfterDarkSound.cs)
+is static because it owns no devices, handles or queues. It implements seven
+named SDK functions with consistent failure/null results. The same registry,
+argument reader and far-return mechanism used for ordinal Windows imports serve
+these named helper imports. It is a tested unavailable-audio path, not a working
+audio implementation or a generic success fallback.
 
 ## POINT by value
 

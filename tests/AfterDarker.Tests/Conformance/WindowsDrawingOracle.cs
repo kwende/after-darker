@@ -61,15 +61,17 @@ internal sealed class WindowsDrawingOracle : IDisposable
         public uint Size; public int Width, Height; public ushort Planes, BitCount;
         public uint Compression, ImageSize; public int XPixelsPerMeter, YPixelsPerMeter; public uint UsedColors, ImportantColors, Color;
     }
-    [DllImport("gdi32.dll")] private static extern nint CreateCompatibleDC(nint context);
+    [DllImport("gdi32.dll")] internal static extern nint CreateCompatibleDC(nint context);
+    [DllImport("gdi32.dll")] internal static extern nint CreateCompatibleBitmap(nint context, int width, int height);
     [DllImport("gdi32.dll")] private static extern nint CreateDIBSection(nint context, ref BitmapInfo info, uint usage, out nint bits, nint section, uint offset);
-    [DllImport("gdi32.dll")] private static extern nint SelectObject(nint context, nint value);
+    [DllImport("gdi32.dll")] internal static extern nint SelectObject(nint context, nint value);
     [DllImport("gdi32.dll")] private static extern nint GetStockObject(int index);
     [DllImport("gdi32.dll")] private static extern nint CreatePen(int style, int width, uint color);
     [DllImport("gdi32.dll")] private static extern nint CreateSolidBrush(uint color);
     [DllImport("gdi32.dll")] private static extern bool GdiFlush();
-    [DllImport("gdi32.dll")] private static extern bool DeleteObject(nint value);
-    [DllImport("gdi32.dll")] private static extern bool DeleteDC(nint context);
+    [DllImport("gdi32.dll")] internal static extern bool DeleteObject(nint value);
+    [DllImport("gdi32.dll")] internal static extern bool DeleteDC(nint context);
+    [DllImport("gdi32.dll")] internal static extern bool PatBlt(nint context, int x, int y, int width, int height, uint operation);
     [DllImport("gdi32.dll")] internal static extern int SetROP2(nint context, int mode);
     [DllImport("gdi32.dll")] internal static extern bool SetWindowOrgEx(nint context, int horizontal, int vertical, nint previous);
     [DllImport("gdi32.dll")] internal static extern bool MoveToEx(nint context, int horizontal, int vertical, nint previous);

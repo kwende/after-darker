@@ -109,7 +109,10 @@ public partial class AfterDarkSession<TState> : IAnimationSession
         return new(ModuleName, result.Phases.Select(phase => new PlaybackPhase(phase.Name, phase.StoredAx, phase.Registers)).ToArray(),
             result.Instructions, result.OutstandingLocks, result.Calls.Count, LivePenCount, PeakPenCount, result.Diagnostics.ImportCalls)
         { LocalHeap = result.LocalHeap, IntermediateFrames = intermediateFrames?.TotalVisits ?? 0,
-            LiveBrushes = LiveBrushCount, PeakBrushes = PeakBrushCount };
+            LiveBrushes = LiveBrushCount, PeakBrushes = PeakBrushCount,
+            LiveBitmaps = drawing?.LiveBitmapCount ?? 0, PeakBitmaps = drawing?.PeakBitmapCount ?? 0,
+            LiveMemoryDcs = drawing?.LiveMemoryDcCount ?? 0, PeakMemoryDcs = drawing?.PeakMemoryDcCount ?? 0,
+            BitmapBytes = drawing?.BitmapBytes ?? 0 };
     }
 
     /// <summary>Valid lifecycle stages; faults forbid further guest execution.</summary>
@@ -358,6 +361,8 @@ public partial class AfterDarkSession<TState> : IAnimationSession
             if (wep.StoredAx != 1) throw new InvalidOperationException("Module WEP did not return success.");
             if (LivePenCount != 0) throw new InvalidOperationException("Module shutdown leaked guest pens.");
             if (LiveBrushCount != 0) throw new InvalidOperationException("Module shutdown leaked guest brushes.");
+            if (drawing?.LiveMemoryDcCount > 0 || drawing?.LiveBitmapCount > 0 || drawing?.BitmapBytes > 0)
+                throw new InvalidOperationException("Module shutdown leaked guest bitmap/DC resources.");
             if (services.State.LocalHeap?.Snapshot().Allocations.Count > 0)
                 throw new InvalidOperationException("Module shutdown leaked local heap allocations.");
             State = SessionState.Closed;

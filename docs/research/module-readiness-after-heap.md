@@ -22,9 +22,12 @@ raster. The subsequent [Shapes increment](shapes-execution.md) adds owned
 brushes, null pens and rectangles, accepting its palette request with the owner's
 approved direct-RGB policy. [Stained Glass](stained-glass-execution.md) now runs
 with fixed color controls, adding origins, raster mixing, geometry helpers and
-SRCCOPY BitBlt. Gravity remains a provisional later candidate; its sound and
-off-screen bitmap requirements have not been implemented. The original
-probe results below remain historical evidence.
+SRCCOPY BitBlt. [Gravity](gravity-execution.md) subsequently adds separate bitmap
+and memory-DC lifetimes, masked blits and an explicit unavailable-audio helper.
+Its fixed color profile now completes drawing and shutdown in WPF. GeoBounce
+is the next provisional candidate for re-probing against these shared services;
+Polygon and any newly reached sound/resource calls still need evidence. The
+original probe results and ranking below remain historical evidence.
 
 ## What was checked again
 

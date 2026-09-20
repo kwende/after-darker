@@ -6,6 +6,8 @@ namespace AfterDarker.Runtime;
 /// <summary>Verified artifact identities, not file names or a claim of general AD compatibility.</summary>
 public static class SupportedModules
 {
+    /// <summary>Analyzed Gravity artifact, using four colored balls and unavailable audio.</summary>
+    public const string GravitySha256 = "ADDF0B0A5A9F2341C2EE094398F02AC98BC7306BB2938A41905AE66F734E0482";
     /// <summary>Exact Stained Glass artifact analyzed with fixed color controls.</summary>
     public const string StainedGlassSha256 = "694BDDF2C92E84A2171D3C3885CBBD2A02067D934B9C6F8CE6E298B40AB4096C";
     /// <summary>Exact Shapes artifact verified with Color and Clear Screen First enabled.</summary>
@@ -40,7 +42,8 @@ public static class SupportedModules
         HardRainSha256 => "Hard Rain",
         ShapesSha256 => "Shapes",
         StainedGlassSha256 => "Stained Glass",
-        _ => throw new NotSupportedException("This AD file is not supported yet. Supported modules: the analyzed Mondrian, Spiral Gyra, Rainstorm, Fade Away, Lasers, Magic, String Theory, Zot!, Hard Rain, Shapes and Stained Glass versions. File names alone do not identify a supported version.")
+        GravitySha256 => "Gravity",
+        _ => throw new NotSupportedException("This AD file is not supported yet. Supported modules: the analyzed Mondrian, Spiral Gyra, Rainstorm, Fade Away, Lasers, Magic, String Theory, Zot!, Hard Rain, Shapes, Stained Glass and Gravity versions. File names alone do not identify a supported version.")
     };
     /// <summary>Construct the selected profile and shared session without yet executing guest code.</summary>
     public static IAnimationSession Open(byte[] file, PlaybackOptions options, SessionTiming? timing = null,
@@ -69,6 +72,8 @@ public static class SupportedModules
                 timing: timing, diagnostics: diagnostics, output: output),
             "Stained Glass" => new AfterDarkSession<StainedGlassState>(file, new StainedGlassProfile(), options,
                 instructionLimit: 2_000_000, timing: timing, diagnostics: diagnostics, output: output),
+            "Gravity" => new AfterDarkSession<GravityState>(file, new GravityProfile(), options,
+                instructionLimit: 200_000, timing: timing, diagnostics: diagnostics, output: output),
             _ => throw new InvalidOperationException()
         };
 }

@@ -1,4 +1,5 @@
 using AfterDarker.Core.Ne;
+using AfterDarker.Core.AfterDark;
 
 namespace AfterDarker.Core.Win16;
 
@@ -145,6 +146,29 @@ public static class Win16ApiDispatcher
                     api.SetRect(destination, left, top, right, bottom);
                     return new Win16Imports.Reply(0); // Void: the register convention ignores Value.
                 }
+            case Win16Imports.Handler.CreateCompatibleDC:
+                return new(api.CreateCompatibleDC(arguments.ReadWord()));
+            case Win16Imports.Handler.CreateCompatibleBitmap:
+                return new(api.CreateCompatibleBitmap(arguments.ReadWord(), arguments.ReadWord(), arguments.ReadWord()));
+            case Win16Imports.Handler.DeleteDC:
+                return BooleanResult(api.DeleteDC(arguments.ReadWord()));
+            case Win16Imports.Handler.PatBlt:
+                return BooleanResult(api.PatBlt(arguments.ReadWord(), arguments.ReadSignedWord(), arguments.ReadSignedWord(),
+                    arguments.ReadSignedWord(), arguments.ReadSignedWord(), arguments.ReadDoubleWord()));
+            case Win16Imports.Handler.SoundOpen:
+                return BooleanResult(UnavailableAfterDarkSound.Open());
+            case Win16Imports.Handler.SoundAsyncCapability:
+                return BooleanResult(UnavailableAfterDarkSound.HasAsyncPlayback());
+            case Win16Imports.Handler.SoundLoadResource:
+                return new(UnavailableAfterDarkSound.LoadResource(arguments.ReadWord(), arguments.ReadFarPointer()));
+            case Win16Imports.Handler.SoundSetMode:
+                return BooleanResult(UnavailableAfterDarkSound.SetMode(arguments.ReadWord(), arguments.ReadSignedWord()));
+            case Win16Imports.Handler.SoundPlay:
+                return BooleanResult(UnavailableAfterDarkSound.Play(arguments.ReadWord()));
+            case Win16Imports.Handler.SoundFree:
+                return BooleanResult(UnavailableAfterDarkSound.Free(arguments.ReadWord()));
+            case Win16Imports.Handler.SoundClose:
+                return BooleanResult(UnavailableAfterDarkSound.Close(arguments.ReadSignedWord()));
             case Win16Imports.Handler.GetStockObject:
                 return new Win16Imports.Reply(api.GetStockObject(arguments.ReadSignedWord()));
             case Win16Imports.Handler.PtInRect:
