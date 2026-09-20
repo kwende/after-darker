@@ -13,6 +13,10 @@ The [original sweep](module-readiness-sweep.md) remains historical evidence.
 The [new machine-readable census and probe results](module-readiness-after-heap.json)
 record the present registry hash and fresh first failures.
 
+**Follow-up, 2026-09-20:** [Rainstorm's lightning presentation](rainstorm-execution.md)
+is now implemented using the shared checkpoint mechanism. The next-module
+ranking and historical probe results below are unchanged.
+
 ## What was checked again
 
 - **Artifact facts:** the folder still contains 29 NE modules, all matching the
@@ -148,10 +152,10 @@ using the production clock implementation.
 
 ## Small improvements to already-supported modules
 
-- **Rainstorm's visible lightning** is now a plausible small follow-up to Zot!'s
-  presentation work. Its paired inversions already execute; it needs its own
-  checkpoint locations, hold policy and visible-image/cancellation tests.
-  This improves fidelity without adding a ninth module.
+- **Rainstorm's visible lightning** was the first follow-up chosen and is now
+  implemented. Its paired inversions use a verified first-return checkpoint,
+  an explicit hold policy and visible-image/cancellation tests. This improves
+  presentation without adding a ninth module.
 - **More Fade Away styles:** the old bounded probes already exercised Plain,
   Blinds and Mesh as well as Radar on a supplied image. They need production
   profiles/selection and completion tests; other styles may benefit from the

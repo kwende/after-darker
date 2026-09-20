@@ -1,6 +1,13 @@
 namespace AfterDarker.Runtime;
 
-public sealed record FrameInfo(long DrawCalls, long ChangedFrames);
+/// <summary>Counters and provenance transferred atomically with one published image.</summary>
+/// <param name="DrawCalls">Current guest drawing call, including an active call for an intermediate image.</param>
+/// <param name="ChangedFrames">Lifetime image changes published by the worker.</param>
+public sealed record FrameInfo(long DrawCalls, long ChangedFrames)
+{
+    /// <summary>True when captured at a profile checkpoint inside an unfinished DRAWFRAME.</summary>
+    public bool IsIntermediate { get; init; }
+}
 
 /// <summary>
 /// One pending frame, not a queue. The producer and consumer own their buffers;

@@ -100,8 +100,9 @@ severely stalled UI can still miss a transient image. Cancellation wakes the
 hold and suppresses further intermediate publication, lets the current bounded
 guest call finish, and then runs CLOSE/WEP.
 
-The mechanism is reusable, but only Zot! opts into these artifact-specific
-checkpoints. Rainstorm's intermediate-lightning gap remains a separate task.
+The mechanism is reusable. The [Rainstorm follow-up](rainstorm-execution.md)
+now uses it for the first of its paired InvertRect calls, with its own verified
+return address and the same explicit 80-ms live hold.
 
 ## Execution bounds and static anchors
 

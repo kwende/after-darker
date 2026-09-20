@@ -47,18 +47,18 @@ is verified; an interactive Test Explorer session remains a manual check.
 | **With Watcom + Mondrian** | **287** | Requires the pinned compiler and local analyzed Mondrian file |
 | LocalSpiralGyra (opt-in) | 7 | Original colored line rendering, five speeds, independent deterministic guests, pen reuse and CLOSE/WEP |
 | **With compiler + Mondrian + Spiral** | **294** | Requires the compiler and those two private modules |
-| LocalRainstorm (opt-in) | 5 | 300 draws including paired lightning inversions, deterministic independent guests, dimension extremes, cleanup and exact-artifact rejection |
-| **With compiler + Mondrian + Spiral + Rainstorm** | **299** | Requires the compiler and those three private modules |
+| LocalRainstorm (opt-in) | 9 | 300 draws with unchanged instruction count, exact intermediate flash pixels at three sizes, 452 deterministic draws through two flashes, cancellation during a live flash, dimension extremes, cleanup and exact-artifact rejection |
+| **With compiler + Mondrian + Spiral + Rainstorm** | **303** | Requires the compiler and those three private modules |
 | LocalFadeAway (opt-in) | 7 | Original Radar completion at five sizes, white restart, deterministic guests, idle/BLANK after completion, cleanup and artifact rejection |
-| **With compiler + first four modules** | **306** | Requires the compiler and the four earlier private modules |
+| **With compiler + first four modules** | **310** | Requires the compiler and the four earlier private modules |
 | LocalLasers (opt-in) | 6 | Local-heap growth, 1,100 draws including regeneration, independent guests, dimensions, cleanup and artifact rejection |
-| **With compiler + first five modules** | **312** | Requires the compiler and the five earlier private modules |
+| **With compiler + first five modules** | **316** | Requires the compiler and the five earlier private modules |
 | LocalMagic (opt-in) | 6 | 1,700 draws through history/motion/color wraps, independent deterministic guests, dimension bounds, heap/pen cleanup and artifact rejection |
-| **With compiler + first six modules** | **318** | Requires the compiler and those six private modules |
+| **With compiler + first six modules** | **322** | Requires the compiler and those six private modules |
 | LocalStringTheory (opt-in) | 6 | 1,500 draws through group history, motion and color cycles, independent guests, dimensions and heap/pen cleanup |
-| **With compiler + first seven modules** | **324** | Requires the compiler and those seven private modules |
+| **With compiler + first seven modules** | **328** | Requires the compiler and those seven private modules |
 | LocalZot (opt-in) | 9 | 30 timed strikes, fixed-block ABI, strict clock boundary, independent intermediate images, dimensions/seeds, cleanup, cancellation and callback reentry rejection |
-| **With all nine opt-ins** | **333** | Requires the compiler and all eight supported private modules |
+| **With all nine opt-ins** | **337** | Requires the compiler and all eight supported private modules |
 
 Conformance tests use the native engine and a test-only Windows GDI raster oracle; they are not isolated unit tests or a
 mock of Unicorn. Categories make the distinction explicit. All fixtures are
@@ -228,7 +228,10 @@ host whose CFG setting we deliberately leave alone.
 ## Actual WPF acceptance
 
 The [player guide](wpf-player.md#local-acceptance-run) describes the opt-in
-`--smoke` mode. It drives the real dispatcher/WriteableBitmap and validates RGB
+`--smoke` mode. The `--smoke-intermediate` variant requires presentation of an
+image captured inside DRAWFRAME, allowing Rainstorm's flash to be verified
+instead of stopping after the first 30 ordinary rain images.
+It drives the real dispatcher/WriteableBitmap and validates RGB
 readback, then Stop, fresh Run and Closing while playback is active. Both guest
 shutdowns must finish CLOSE/WEP with no outstanding locks. Its local PNG/report
 artifacts are ignored and require the private analyzed module. This supplements
@@ -267,26 +270,29 @@ Runtime consumers; documentation references are compiler-checked.
 ```powershell
 $env:AFTER_DARKER_RAINSTORM = (Resolve-Path ad/Rainstorm.ad).Path
 dotnet test -p:TestLocalRainstorm=true --filter "TestCategory=LocalRainstorm"
-# Compiler, Mondrian, Spiral and Rainstorm (299 cases), with the other module variables also set:
+# Compiler, Mondrian, Spiral and Rainstorm (303 cases), with the other module variables also set:
 dotnet test -p:TestLocalRainstorm=true -p:TestLocalSpiralGyra=true -p:TestLocalMondrian=true -p:BuildWin16Fixture=true
 ```
 
-The five cases are excluded from default compilation and never copy the original
+The nine cases are excluded from default compilation and never copy the original
 module into outputs. Missing/wrong input fails explicitly. The 300-draw case
 reaches the lightning countdown, verifies 15,600 point tests and two inversions,
-checks bounded diagnostics and pen lifetime, and completes CLOSE/WEP. Additional
-cases exercise independent deterministic guests, 1x1/2048x2048 surfaces and
-artifact rejection. Nineteen new public cases cover PtInRect geometry/ABI and
+checks the unchanged guest instruction count, bounded diagnostics and pen
+lifetime, and completes CLOSE/WEP. Three sizes (1x1, 321x239, 2048x2048) verify
+that draw 226 exposes the exact inverted image. Independent guests match through
+two flashes, and cancellation during a live flash still restores the image and
+completes cleanup. Other cases exercise dimension bounds and artifact rejection.
+Nineteen public cases from the initial increment cover PtInRect geometry/ABI and
 stock-pen behavior without needing any original module. See the
-[Rainstorm notes](research/rainstorm-execution.md) for the intermediate-flash
-presentation limitation and actual WPF acceptance commands.
+[Rainstorm notes](research/rainstorm-execution.md) for the explicit 80-ms
+presentation policy and actual WPF acceptance commands.
 
 ## Optional local Fade Away tests
 
 ```powershell
 $env:AFTER_DARKER_FADE_AWAY = (Resolve-Path 'ad/Fade Away.ad').Path
 dotnet test -p:TestLocalFadeAway=true --filter "TestCategory=LocalFadeAway"
-# Suites through Fade Away (306 cases), with the other three module variables also set:
+# Suites through Fade Away (310 cases), with the other three module variables also set:
 dotnet test -p:BuildWin16Fixture=true -p:TestLocalMondrian=true -p:TestLocalSpiralGyra=true -p:TestLocalRainstorm=true -p:TestLocalFadeAway=true
 ```
 
@@ -316,7 +322,7 @@ dotnet test -p:TestLocalLasers=true --filter TestCategory=LocalLasers
 ```
 
 `TestLocalLasers=true` compiles six private integration cases. The module is
-read in place, never copied into test output. The 312-case run through Lasers uses
+read in place, never copied into test output. The 316-case run through Lasers uses
 `BuildWin16Fixture`, `TestLocalMondrian`, `TestLocalSpiralGyra`,
 `TestLocalRainstorm`, `TestLocalFadeAway`, and `TestLocalLasers`, all set to true,
 with the corresponding `AFTER_DARKER_*` environment variables set as shown
@@ -336,7 +342,7 @@ and clean shutdown even without drawing. See [the evidence](research/magic-execu
 No new public API behavior is introduced; the existing public heap and
 pen/gateway conformance tests cover the reused services.
 
-For the **318-case** regression through Magic, add `TestLocalMagic=true` to the six
+For the **322-case** regression through Magic, add `TestLocalMagic=true` to the six
 opt-ins above and set `AFTER_DARKER_MAGIC` alongside their environment variables.
 
 
@@ -363,7 +369,7 @@ real far-call ABI including DWORD wrap, one checks bounded larger service budget
 and three check intermediate image matching, copied ownership and visit/hold bounds.
 The normal `dotnet test` command remains **241 cases**, with no compiler or AD file.
 
-For the complete **333-case** regression:
+For the complete **337-case** regression:
 
 ```powershell
 $env:AFTER_DARKER_MONDRIAN = (Resolve-Path ad/Mondrian.ad).Path
@@ -380,4 +386,4 @@ dotnet test -p:BuildWin16Fixture=true -p:TestLocalMondrian=true -p:TestLocalSpir
 See the [String Theory evidence](research/string-theory-execution.md) and
 [Zot! presentation/heap evidence](research/zot-execution.md). WPF acceptance
 passed each module alone and switching both ways. Those actual-window runs
-are separate from the 333 automated test cases.
+are separate from the 337 automated test cases.

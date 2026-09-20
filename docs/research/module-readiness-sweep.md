@@ -9,7 +9,8 @@ order; the new report also identifies the palette decision for Shapes and a
 potentially narrow loader issue in Hall of Mirrors.
 
 **Follow-up:** [Rainstorm playback is now implemented](rainstorm-execution.md)
-with tested fixed controls and a documented lightning-presentation limitation.
+with tested fixed controls. Its initially missing intermediate lightning image
+is now presented by the follow-up described in those execution notes.
 The census/probes below remain the historical pre-Rainstorm baseline, including
 their original registry hash. Their supported-module counts are not current UI state.
 

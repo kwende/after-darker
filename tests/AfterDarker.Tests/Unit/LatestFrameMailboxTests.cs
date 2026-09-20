@@ -14,14 +14,15 @@ public sealed class LatestFrameMailboxTests
         Assert.IsFalse(mailbox.TryCopyTo(destination, out _));
         mailbox.Publish(source, new(1, 1));
         source[0] = 4;
-        mailbox.Publish(source, new(2, 2));
+        mailbox.Publish(source, new(2, 2) { IsIntermediate = true });
         source[0] = 9;
         Assert.IsTrue(mailbox.TryCopyTo(destination, out var frame));
         CollectionAssert.AreEqual(new byte[] { 4, 2, 3 }, destination);
-        Assert.AreEqual(new FrameInfo(2, 2), frame);
+        Assert.AreEqual(new FrameInfo(2, 2) { IsIntermediate = true }, frame);
         mailbox.Publish(source, new(3, 3));
         Assert.AreEqual((byte)4, destination[0]);
-        Assert.IsTrue(mailbox.TryCopyTo(destination, out _));
+        Assert.IsTrue(mailbox.TryCopyTo(destination, out frame));
+        Assert.IsFalse(frame!.IsIntermediate); // Completed images cannot inherit the flash marker.
         Assert.IsFalse(mailbox.TryCopyTo(destination, out _));
         Assert.Throws<ArgumentException>(() => mailbox.Publish(new byte[2], new(0, 0)));
         Assert.Throws<ArgumentException>(() => mailbox.TryCopyTo(new byte[2], out _));
@@ -37,7 +38,7 @@ public sealed class LatestFrameMailboxTests
             for (int i = 1; i <= 10_000; i++)
             {
                 Array.Fill(source, (byte)(i % 256));
-                mailbox.Publish(source, new(i, i));
+                mailbox.Publish(source, new(i, i) { IsIntermediate = i % 2 == 0 });
             }
         });
         byte[] destination = new byte[1024];
@@ -48,6 +49,7 @@ public sealed class LatestFrameMailboxTests
             {
                 Assert.IsGreaterThan(last, frame!.DrawCalls);
                 Assert.IsTrue(destination.All(b => b == frame.DrawCalls % 256));
+                Assert.AreEqual(frame.DrawCalls % 2 == 0, frame.IsIntermediate);
                 last = frame.DrawCalls;
             }
             await Task.Yield();

@@ -71,7 +71,8 @@ the [heap ownership and handle walkthrough](docs/win16-local-heap.md), or run
 See [Lasers' execution evidence](docs/research/lasers-execution.md) for its fixed settings and limits.
 Fade Away runs its Radar effect over a white starting image and remains black when
 the original fade finishes (see [execution notes](docs/research/fade-away-execution.md)).
-Rainstorm uses fixed controls; its intermediate lightning flash is not yet presented
+Rainstorm uses fixed controls and now presents its intermediate lightning flash
+with an explicit 80-ms host hold
 (see [execution evidence and limits](docs/research/rainstorm-execution.md)). Its C# tutorials run real-mode
 addition and near calls, a 16-bit protected-mode `CALL FAR`/`RETF` round trip,
 and a synthetic C# host gateway with stop, dispatch, and guest resume in Unicorn.

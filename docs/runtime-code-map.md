@@ -41,6 +41,8 @@ larger boundaries and proof requirements, see [architecture](architecture.md).
 | What may a UI call? | [IAnimationSession](../src/AfterDarker.Runtime/IAnimationSession.cs), [PlaybackOptions](../src/AfterDarker.Runtime/PlaybackOptions.cs), [PlaybackResult](../src/AfterDarker.Runtime/PlaybackResult.cs) |
 | Who paces frames and owns the background guest? | [AfterDarkPlayback](../src/AfterDarker.Runtime/AfterDarkPlayback.cs) and [WPF guide](wpf-player.md) |
 | How can an image be presented before DRAWFRAME returns? | [ImportFrameCheckpoint](../src/AfterDarker.Runtime/Presentation/ImportFrameCheckpoint.cs) describes a profile's image boundary; [ImportFrameCapture](../src/AfterDarker.Runtime/Presentation/ImportFrameCapture.cs) matches it after gateway dispatch and emits `IntermediateFrameReady` |
+| Where is Rainstorm's brief inverted image made visible? | [RainstormProfile.FrameCheckpoints](../src/AfterDarker.Runtime/Modules/RainstormProfile.cs) identifies the first InvertRect return; [the evidence](research/rainstorm-execution.md) explains its 80-ms hold |
+| Can a presenter identify an intermediate image? | [FrameInfo.IsIntermediate](../src/AfterDarker.Runtime/LatestFrameMailbox.cs) is copied atomically with the pixels; WPF's `--smoke-intermediate` mode requires that marker |
 | Where are selected pens and the current point stored? | [Win16Drawing](../src/AfterDarker.Core/Win16/Win16Drawing.cs) and [Win16DeviceContext](../src/AfterDarker.Core/Win16/Win16DeviceContext.cs) |
 | Where do operations become pixels? | [PixelSurface](../src/AfterDarker.Core/Rendering/PixelSurface.cs) and [CosmeticLineRasterizer](../src/AfterDarker.Core/Rendering/CosmeticLineRasterizer.cs) |
 
