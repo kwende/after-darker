@@ -28,6 +28,7 @@ public partial class MainWindow : Window
     private bool closeAllowed, closing, smokeFinishing, loading;
     private readonly string? smokeDirectory;
     private readonly string? smokeSwitchPath;
+    private readonly bool smokeRequiresIntermediateImage;
     private int presented;
     private FrameInfo? latest;
     private string? selectedModuleName;
@@ -39,11 +40,12 @@ public partial class MainWindow : Window
         foreach (ushort speed in new ushort[] { 0, 25, 50, 75, 100 })
             Speed.Items.Add(new ComboBoxItem { Content = $"Speed {speed}", Tag = speed });
         Speed.SelectedIndex = 4;
-        if (args.Length is 3 or 4 && args[0] == "--smoke")
+        if (args.Length is 3 or 4 && args[0] is "--smoke" or "--smoke-intermediate")
         {
             ModulePath.Text = args[1];
             smokeDirectory = Path.GetFullPath(args[2]);
             smokeSwitchPath = args.Length == 4 ? args[3] : null;
+            smokeRequiresIntermediateImage = args[0] == "--smoke-intermediate";
             Application.Current.ShutdownMode = ShutdownMode.OnExplicitShutdown;
         }
         else ModulePath.Text = args.Length == 1 ? args[0] : FindLocalModule();
@@ -184,7 +186,8 @@ public partial class MainWindow : Window
         Status.Text = $"Running · 640 × 480 · {frame!.ChangedFrames:N0} image changes · {frame.DrawCalls:N0} guest calls";
         // Transient effects legitimately alternate with black. Capture an actual
         // visible effect after the presentation threshold, not its erased image.
-        if (smokeDirectory is not null && presented >= 30 && frame.ChangedFrames > 0 && display.Any(component => component != 0))
+        if (smokeDirectory is not null && presented >= 30 && frame.ChangedFrames > 0 &&
+            (!smokeRequiresIntermediateImage || frame.IsIntermediate) && display.Any(component => component != 0))
             _ = FinishSmokeAsync(null);
     }
 
@@ -219,7 +222,10 @@ public partial class MainWindow : Window
     private async Task WatchSmokeTimeoutAsync()
     {
         await Task.Delay(TimeSpan.FromSeconds(30));
-        if (!smokeFinishing) await FinishSmokeAsync(new TimeoutException("WPF did not present 30 frames within 30 seconds."));
+        if (!smokeFinishing) await FinishSmokeAsync(new TimeoutException(
+            smokeRequiresIntermediateImage
+                ? "WPF did not present a visible intermediate image after at least 30 presentations within 30 seconds."
+                : "WPF did not present 30 frames within 30 seconds."));
     }
     private async Task FinishSmokeAsync(Exception? error)
     {
@@ -301,6 +307,7 @@ public partial class MainWindow : Window
             File.WriteAllText(Path.Combine(smokeDirectory!, "report.json"), JsonSerializer.Serialize(new
             {
                 Status = error is null ? "passed" : "failed", Error = error?.Message,
+                RequiredIntermediateImage = smokeRequiresIntermediateImage,
                 Presented = firstPresented, Frame = firstFrame, RgbSha256 = firstHash,
                 RestartPresented = presented, ClosedWhilePlaying = windowClosed.Task.IsCompletedSuccessfully,
                 ShutdownPhases = lastResult?.Phases.TakeLast(2).Select(p => new { p.Name, p.StoredAx, p.Registers.Sp, p.Registers.Ds }),

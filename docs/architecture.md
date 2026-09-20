@@ -390,9 +390,9 @@ never receives a direct pointer into the modern process.
 
 Some modules perform large synchronous GDI bursts inside one `DRAWFRAME` call.
 Publishing only after the call returns can hide progressive construction that
-was visible on slower historical hardware. The renderer should eventually
-support deterministic intermediate publication by elapsed host time, operation
-count, or explicit flush points.
+was visible on slower historical hardware. Profiles now support explicit
+import-return checkpoints for intermediate images. Rainstorm and Zot! use this
+mechanism; generic elapsed-time or operation-count publication is not implemented.
 
 ## 5. Reverse callbacks
 
@@ -523,10 +523,11 @@ five Win16 imports without introducing a module-specific drawing backend.
 The third target, [Rainstorm](research/rainstorm-execution.md), adds a stock
 black-pen lookup and a by-value POINT geometry import through the same gateway.
 Its profile supplies fixed controls and SDK-sized module storage. Its lightning
-path exposes a presentation boundary: two inversions occur within one DRAWFRAME,
-whereas its profile publishes only the final surface after the call.
-Intermediate effects and their historical timing require a separate presentation
-policy; executing the calls alone does not establish visible fidelity.
+path exposes a presentation boundary: two inversions occur within one DRAWFRAME.
+Its profile now captures the image after the first InvertRect at `S2:02EB`,
+using the shared mechanism below and an explicit 80-ms live hold. The second
+inversion and subsequent rain updates execute normally; the completed frame
+restores normal presentation. Guest countdown and completed pixels are unchanged.
 
 [Zot!](research/zot-execution.md) now opts into such a policy. It draws and
 erases lightning within one DRAWFRAME. Its hash-specific profile names two
@@ -537,8 +538,9 @@ changing guest code or registers. Reentrancy is rejected. The live worker
 publishes through the existing mailbox and gives each changed image an 80-ms
 hold, an explicit modern adaptation. Checkpoint counts and holds are bounded;
 cancellation wakes the hold but still lets the guest return before CLOSE/WEP.
-No GDI method contains Zot!-specific presentation logic. Rainstorm has not yet
-been given its own checkpoint policy.
+No GDI method contains module-specific presentation logic. `FrameInfo.IsIntermediate`
+travels with the image through the mailbox, letting diagnostics distinguish a
+checkpoint image from a completed call without inspecting its colors.
 
 [Fade Away](research/fade-away-execution.md) adds host-provided initial pixels.
 Profiles may supply an RGB image which the session copies before guest execution;

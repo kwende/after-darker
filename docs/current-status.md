@@ -1,6 +1,6 @@
 # Current Status
 
-Last updated: 2026-09-19
+Last updated: 2026-09-20
 
 ## Project phase
 
@@ -16,7 +16,8 @@ through BLANK and DRAWFRAME, producing changed PNG frames on a deterministic
 software surface. The WPF host now also executes Spiral Gyra through a shared
 module session, adding five pen/line imports to the original nine-service slice.
 Rainstorm is the third playable module, with fixed controls, shared black-pen
-lookup and PtInRect support; its intermediate lightning image is not presented.
+lookup and PtInRect support; its intermediate lightning image is now presented
+with an explicit 80-ms host hold.
 Fade Away is the fourth, running its original Radar effect on host-supplied
 white pixels and remaining black after the fade completes.
 Lasers is the fifth: its original three-ray drawing owns a movable allocation
@@ -36,6 +37,19 @@ ten educational console lessons (06 needs the optional Watcom fixture;
 08/09 need the analyzed local Mondrian file).
 
 ## Established evidence
+
+- **Rainstorm lightning presentation:** the profile now captures the original
+  inverted image when USER!InvertRect returns to S2:02EB. It reuses Zot!'s
+  bounded intermediate-image path and 80-ms live hold; no Win16 API or guest
+  machine code changed. Tests verify exact inverted pixels at three sizes,
+  unchanged completed images through two flashes, the original 300-draw
+  instruction count, and cancellation during a flash followed by restoration
+  and CLOSE/WEP. Actual WPF acceptance captured the intermediate image on draw
+  226 with exact RGB readback, then passed restart/close and a second run
+  switching to Zot! with no outstanding locks, allocations or pens.
+  All **337 combined cases** passed, including the **241 public cases** and
+  **nine Rainstorm cases**; no original module is needed for the public subset.
+  See [the mechanism and timing boundary](research/rainstorm-execution.md).
 
 - **Post-heap reassessment:** a fresh census confirms the same 29 artifact
   hashes; all 21 unsupported modules were probed against reviewed `2a276f0`.
@@ -101,8 +115,9 @@ ten educational console lessons (06 needs the optional Watcom fixture;
   tests pass with every opt-in enabled. Actual WPF acceptance verifies RGB
   readback, restart, switching to/from Spiral Gyra and close during playback.
   Final locks/pens are zero. See [execution notes](research/rainstorm-execution.md).
-  The original lightning path inverts twice inside one DRAWFRAME; our final-frame
-  presentation omits the intermediate flash. This is a documented fidelity gap.
+  The original lightning path inverts twice inside one DRAWFRAME; that initial
+  increment omitted the intermediate image. The follow-up above presents it
+  with an explicit modern timing policy.
 - **Whole-folder readiness sweep:** all 29 local module hashes match the prior
   census. Eighteen pass the current load plan with guarded unknown import slots;
   eleven stop in the loader. Research-only adapters let Rainstorm produce
@@ -355,17 +370,16 @@ explicitly.
 
 ## Next planning point
 
-String Theory/Zot! merged in PR #18 (`2a276f0`), completing row 3 of the
-[sweep](research/module-readiness-sweep.md). The owner requested a pause and
-reassessment before another implementation. The documentation-only
-`codex/module-reassessment` branch records fresh probes and the recommended
-order: Hard Rain, Shapes, then constrained Stained Glass. Later bitmap/sound
-candidates are provisional. See the [new report](research/module-readiness-after-heap.md).
-Stop for the owner's choice; no next module is being implemented. These notes
-remain uncommitted. The heap guide and Tutorial 10 retain the focused allocation
-lesson; Zot!'s notes explain fixed blocks and presentation inside an active call.
-Other Fade Away styles, Rainstorm's intermediate lightning presentation, and
-historical pixel/timing comparisons remain explicit limitations.
+String Theory/Zot! completed row 3 of the [sweep](research/module-readiness-sweep.md).
+The reassessment merged in PR #19 (`732b1f8`); its recommended order remains
+Hard Rain, Shapes, then constrained Stained Glass. Later bitmap/sound candidates
+are provisional. See the [report](research/module-readiness-after-heap.md).
+At the owner's request, `codex/rainstorm-lightning` fixes the earlier presentation
+gap first. These changes remain uncommitted for review; no next module has been
+started. Continue down the list only after this work is merged.
+The heap guide and Tutorial 10 retain the focused allocation lesson; Zot!'s and
+Rainstorm's notes explain presentation inside an active call. Other Fade Away
+styles and historical pixel/timing comparisons remain explicit limitations.
 
 The project keeps one F5-able console app, with separate tutorial classes
 invoked through `ITutorial`, alongside the live WPF host. Future expansion
@@ -376,6 +390,33 @@ Tutorial 04 implements the narrow host trap; the broader issue is not complete.
 See [the tutorial guide](tutorials.md).
 
 ## Session log
+
+### 2026-09-20 - present Rainstorm's original lightning image
+
+- Created `codex/rainstorm-lightning` from reviewed main `732b1f8` (PR #19).
+  The profile now captures the first InvertRect's return at NE S2:02EB, USER
+  ordinal 82. The second inversion and subsequent rain updates complete
+  normally. No new Win16 behavior, machine-code patch or budget increase.
+- Reused the shared 80-ms cancellable live hold. The duration is a modern
+  adaptation, not measured period-hardware timing. Added `FrameInfo.IsIntermediate`
+  so pixels and their provenance cross the mailbox together; existing ownership
+  and concurrent-transfer tests now check that metadata too.
+- Expanded Rainstorm from five to nine private cases. Tests verify the exact
+  inverse on draw 226 at 1x1, 321x239 and 2048x2048; two independent guests match
+  through 452 draws/two flashes. The original 300-draw instruction total remains
+  5,255,349. Cancellation during a published flash still runs the second inversion,
+  publishes the restored image and completes CLOSE/WEP with balanced resources.
+- All **337 cases** passed with Watcom and all eight module opt-ins enabled,
+  including the 241 public cases. The TRX report remains ignored under
+  `artifacts/rainstorm/lightning-all-tests.trx`.
+- Added `--smoke-intermediate` to actual WPF acceptance. Rainstorm alone and
+  Rainstorm-to-Zot! both captured a marked intermediate image on draw 226 with
+  exact bitmap RGB readback, then passed Stop, restart and close while playing.
+  Captures were inspected; reports and PNGs remain ignored under
+  `artifacts/wpf-smoke/rainstorm-lightning*`. A stalled UI can still miss a flash
+  under the bounded latest-frame policy; no historical fidelity claim is made.
+- Implementation, tests and documentation remain uncommitted for review.
+  The next module has not been started.
 
 ### 2026-09-19 - reassess after eight supported modules
 

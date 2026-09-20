@@ -1,6 +1,7 @@
 # Rainstorm: original-code playback
 
-Verified on 2026-09-19. Supported artifact SHA-256:
+Playback verified on 2026-09-19; lightning presentation added on 2026-09-20.
+Supported artifact SHA-256:
 
 `41611FED9E314B2F4F1C0653D1A5B948E41E70E464293D2F6489691E4C8DF5C7`
 
@@ -66,7 +67,7 @@ these fields names. The profile validates them after original initialization;
 it does not manufacture the observations. Dimensions 1x1 and 2048x2048 were
 exercised in addition to 320x240 and the player's 640x480.
 
-## The novel presentation boundary: lightning within a frame
+## Lightning presentation inside a drawing call
 
 **Artifact fact:** S2:02B2–030A decrements the lightning countdown and, when
 due, calls `InvertRect` twice in succession over the drawing rectangle, then
@@ -77,32 +78,62 @@ resets the countdown. With lightning 50 the first pair occurs on draw 226.
 created pen, retains bounded diagnostics, and returns from CLOSE/WEP with no
 outstanding locks or created pens. Inversion restores pixels when applied twice.
 
-**Modern presentation behavior:** WPF publishes pixels after a whole DRAWFRAME
-returns. The intermediate inverted image is therefore not presented as a
-lightning flash. Rain motion is visible; faithful lightning timing is not
-implemented. Behavior on period hardware has not been measured, so we do not
-assert the original flash duration.
+The initial player published only after DRAWFRAME returned, which hid the
+intermediate inverted image. Rainstorm now reuses the intermediate-image
+mechanism introduced for [Zot!](zot-execution.md):
 
-Correct API effects and correct final pixels can still omit an intermediate
-visual effect. Preserving it would require an explicit presentation/timing
-policy inside a guest call, with bounded queuing and cancellation, rather than
-changing `InvertRect`. No arbitrary flash duration or fabricated animation was
-added in this milestone.
+```text
+draw 226
+    -> first InvertRect at S2:02E6
+    -> return to S2:02EB: capture the inverted image
+    -> live playback publishes it and waits up to 80 ms
+    -> second InvertRect at S2:02F4 restores the image
+    -> original code resets the countdown and updates the rain
+    -> DRAWFRAME returns: publish the completed rain image
+```
+
+The profile's checkpoint identifies NE segment 2, offset 02EB and USER ordinal
+82. Matching happens after normal import dispatch, outside the native hook.
+Only the first inversion has a checkpoint: the normal completed-frame path
+already publishes the restored rain. The flash is the exact bytewise inverse
+of the **preceding** completed image; the current draw updates its drops after
+the two inversions.
+
+**Modern adaptation:** the 80-ms live hold makes this original transient image
+visible on the modern display. It is not a measured period-hardware duration.
+The module's code, countdown, `InvertRect` semantics and execution budgets are
+unchanged. Direct session tests receive the checkpoint without sleeping.
+
+`FrameInfo.IsIntermediate` travels with its pixels through the one-slot mailbox,
+so WPF acceptance can distinguish a flash from ordinary rain. Stop wakes the hold
+and lets the current drawing call finish, including the second inversion, before
+CLOSE/WEP. There is no frame queue to drain. A sufficiently stalled UI can still
+miss a transient image; this is the existing bounded latest-frame policy.
 
 ## Verification and limits
 
-- Nineteen new public cases cover geometry, stock-pen identity/lifetime,
+- The initial increment added nineteen public cases for geometry, stock-pen identity/lifetime,
   by-value POINT marshaling, return registers, invalid pointers and stack cleanup.
-- Five opt-in Rainstorm cases cover 300 draws including lightning, independent
-  deterministic guests, the irrelevant speed option, dimension extremes,
-  cleanup and rejection of a modified artifact.
-- All **261 cases** passed with Watcom, Mondrian, Spiral Gyra and Rainstorm
-  enabled. The **203 public cases** require no private module.
-- Actual WPF acceptance presented 30 frames, verified exact RGB readback,
+- Nine opt-in Rainstorm cases cover 300 draws including lightning, independent
+  deterministic guests through two flashes (452 draws), the irrelevant speed
+  option, dimension extremes, cleanup and rejection of a modified artifact.
+  At 1x1, 321x239 and 2048x2048, the first checkpoint occurs on draw 226 and
+  contains the exact inverse of the preceding image. A live cancellation case
+  stops during the flash, then checks the restored image and clean CLOSE/WEP.
+- The initial playback increment passed **261 combined / 203 public cases**.
+  The lightning follow-up passed **337 combined cases**, including all **241
+  public cases** and the nine Rainstorm cases. See [suite details](../testing.md).
+- Initial WPF acceptance presented 30 frames, verified exact RGB readback,
   stopped/restarted, rejected unsupported input while playing, switched in
   both directions with Spiral Gyra, and closed during playback. Both directions
   returned CLOSE/WEP with zero locks/pens. The captured rain image was inspected.
   The native file-picker interaction itself remains a manual check.
+- The lightning acceptance mode requires a visible **intermediate** image after
+  at least 30 presentations. Its report records that provenance, and bitmap
+  readback must match the published RGB bytes. It then exercises Stop, restart
+  and close; the optional second module also exercises switching.
+  Rainstorm alone and Rainstorm-to-Zot! both passed, capturing the flash on draw
+  226. Captures were inspected; all guest shutdowns balanced resources.
 
 Each Rainstorm invocation allows at most 200,000 instructions and 1,024 managed
 exits, with the existing per-invocation time bounds. A draw processes 52 drops
@@ -112,12 +143,13 @@ are unchanged.
 ```powershell
 $env:AFTER_DARKER_RAINSTORM = (Resolve-Path ad/Rainstorm.ad).Path
 dotnet test -p:TestLocalRainstorm=true --filter "TestCategory=LocalRainstorm"
+dotnet run --project src/AfterDarker.Wpf --no-launch-profile -- --smoke-intermediate ad/Rainstorm.ad artifacts/wpf-smoke/rainstorm-lightning
 dotnet run --project src/AfterDarker.Wpf --no-launch-profile -- --smoke ad/Rainstorm.ad artifacts/wpf-smoke/rainstorm-to-spiral "ad/Spiral Gyra.ad"
 dotnet run --project src/AfterDarker.Wpf --no-launch-profile -- --smoke "ad/Spiral Gyra.ad" artifacts/wpf-smoke/spiral-to-rainstorm ad/Rainstorm.ad
 ```
 
 Original modules and local captures remain ignored. This is bounded execution
 evidence, not historical pixel/timing fidelity, all-settings coverage, another
-Rainstorm revision, or indefinite endurance. The Rainstorm playback increment
-is complete with the lightning limitation recorded; the next module has not
-been started.
+Rainstorm revision, or indefinite endurance. The hidden lightning image is now
+presented with an explicit modern timing policy; the next module has not been
+started.

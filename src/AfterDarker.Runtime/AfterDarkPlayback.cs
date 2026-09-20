@@ -30,7 +30,7 @@ public static class AfterDarkPlayback
             // Stop wakes this short wait, but never interrupts the guest stack:
             // the current DRAWFRAME must still finish before CLOSE/WEP.
             long currentDraw = drawCalls == long.MaxValue ? long.MaxValue : drawCalls + 1;
-            if (stop.IsCancellationRequested || !PublishChanged(pixels, currentDraw)) return;
+            if (stop.IsCancellationRequested || !PublishChanged(pixels, currentDraw, isIntermediate: true)) return;
             stop.WaitHandle.WaitOne(minimumDisplayTime);
         };
         try
@@ -57,11 +57,11 @@ public static class AfterDarkPlayback
         session.Shutdown();
         return session.GetPlaybackResult();
 
-        bool PublishChanged(ReadOnlySpan<byte> pixels, long currentDraw)
+        bool PublishChanged(ReadOnlySpan<byte> pixels, long currentDraw, bool isIntermediate = false)
         {
             if (pixels.SequenceEqual(previousFrame)) return false;
             if (changedFrames < long.MaxValue) changedFrames++;
-            frames.Publish(pixels, new(currentDraw, changedFrames));
+            frames.Publish(pixels, new(currentDraw, changedFrames) { IsIntermediate = isIntermediate });
             pixels.CopyTo(previousFrame);
             return true;
         }

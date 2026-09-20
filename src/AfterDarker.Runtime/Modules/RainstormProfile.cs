@@ -27,6 +27,16 @@ internal sealed class RainstormProfile : ModuleProfile<RainstormState>
     // 52 drops can each issue geometry, drawing and pen-lifetime calls in one frame.
     public override int ServiceExitLimit => 1024;
 
+    // The first InvertRect returns here with the whole image inverted. The next
+    // InvertRect restores it before rain drawing continues in the same DRAWFRAME.
+    // Only the flash needs a hold; the ordinary completed frame restores the UI.
+    // This 80-ms host hold makes the effect visible, without claiming historical
+    // timing or modifying the original countdown, drawing calls or machine code.
+    public override IReadOnlyList<ImportFrameCheckpoint> FrameCheckpoints { get; } = Array.AsReadOnly(new[]
+    {
+        new ImportFrameCheckpoint(new(2, 0x02EB), new("USER", 82, null), TimeSpan.FromMilliseconds(80))
+    });
+
     public override (byte[] System, byte[] Module) CreateRecords(PlaybackOptions options)
     {
         byte[] system = AfterDarkHostContract.CreateSystemRecord();

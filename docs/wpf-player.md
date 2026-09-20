@@ -10,10 +10,11 @@ versions are rejected by their content hash before stopping an active guest.
 Stop lets you change speed and Run a fresh guest. No original modules are distributed.
 
 Rainstorm uses fixed strength/lightning/drops/wind controls (`60/50/52/40`);
-its speed selector is disabled because that module has no speed control. Rain
-is visible, but its two inversions within a DRAWFRAME are presented only after
-both complete, so the brief lightning image is not displayed. See the
-[Rainstorm evidence and presentation boundary](research/rainstorm-execution.md).
+its speed selector is disabled because that module has no speed control.
+Lightning is now visible: the worker presents the first inverted image for
+80 ms, then the original code restores it and continues drawing rain. The
+countdown remains controlled by the guest; the hold is a modern presentation
+choice. See [Rainstorm's evidence and timing boundary](research/rainstorm-execution.md).
 
 Fade Away uses its **Radar** effect on an all-white starting image. The original
 code erases it in two sweeps, finishes with black, and then leaves the screen
@@ -70,19 +71,22 @@ mailbox atomically transfers pixels with their counters. A slow presenter
 receives the newest pending frame; it cannot accumulate stale queued frames.
 An unchanged guest image does not produce another transfer.
 
-Zot! also publishes images **during** DRAWFRAME. Its code draws and erases a
-bolt before returning, so the completed surface alone is black. A profile can
+Rainstorm and Zot! also publish images **during** DRAWFRAME. Rainstorm inverts
+and restores the surface; Zot! draws and erases a bolt before returning. A profile can
 name original import-return addresses where an image is ready;
 `ImportFrameCapture` matches those addresses and import identities after normal
 gateway dispatch, outside the native hook. The worker copies the supplied RGB
-image to the same mailbox. The callback cannot reenter or dispose the session.
+image to the same mailbox, marked `FrameInfo.IsIntermediate`. That marker and
+the pixels move atomically together. Completed images have the marker cleared.
+The callback cannot reenter or dispose the session.
 
 For Zot!, the worker holds a changed image for 80 ms to give the dispatcher time
 to present it. This is an explicit modern pacing adaptation. The guest's CPU
 delay loops still execute. There are at most 32 checkpoint visits per DRAWFRAME,
 each with a configured hold of at most 100 ms; the mailbox still retains just
-one image. A heavily stalled dispatcher can miss a transient image. Other
-profiles retain their completed-call presentation, including Rainstorm.
+one image. Rainstorm uses the same 80-ms hold only for its inverted flash;
+normal drawing resumes without a second hold. A heavily stalled dispatcher can
+miss a transient image. Other profiles retain completed-call presentation.
 
 The UI owns the bitmap and calls
 [`WritePixels`](https://learn.microsoft.com/en-us/dotnet/api/system.windows.media.imaging.writeablebitmap.writepixels?view=windowsdesktop-10.0)
@@ -118,6 +122,18 @@ saves `frame.png`, a rendering of the window's own content (`window.png`), and
 `report.json`. Outputs stay in ignored local artifacts. A nonzero exit signals
 failure. This proves actual WPF presentation of original-code output; it does
 not establish Windows 3.1 visual fidelity or indefinite endurance.
+
+To require an actual intermediate image rather than ordinary rain, use:
+
+```powershell
+dotnet run --project src/AfterDarker.Wpf --no-launch-profile -- --smoke-intermediate ad/Rainstorm.ad artifacts/wpf-smoke/rainstorm-lightning
+```
+
+This variant waits for a nonblack image marked `IsIntermediate`, after at least
+30 presentations, before readback and capture. It retains the 30-second deadline,
+Stop/restart, optional module switch and close checks. The report records
+`RequiredIntermediateImage` and the captured frame's marker. The ordinary
+`--smoke` mode still suffices for modules without intermediate checkpoints.
 
 ## Stop, close and restart
 
