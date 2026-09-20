@@ -26,6 +26,21 @@ public sealed class PixelSurface
     /// <summary>Create a detached RGB snapshot owned by the caller.</summary>
     public byte[] CopyRgb() => (byte[])pixels.Clone();
 
+    /// <summary>Copy a complete host-provided RGB image into this surface, without retaining the source buffer.</summary>
+    /// <remarks>
+    /// This supplies initial content for modules that erase an existing image. It is not a guest GDI call.
+    /// Bytes are tightly packed R,G,B rows in top-to-bottom order; dimensions must already match.
+    /// See docs/research/fade-away-execution.md for the white-image policy and future desktop input boundary.
+    /// </remarks>
+    public void LoadRgb(ReadOnlySpan<byte> source)
+    {
+        if (source.Length != pixels.Length)
+            throw new ArgumentException("Source must match the surface's RGB byte count.", nameof(source));
+        if (source.SequenceEqual(pixels)) return;
+        source.CopyTo(pixels);
+        if (Revision < long.MaxValue) Revision++;
+    }
+
     /// <summary>Draw a solid COLORREF line, excluding its endpoint and clipping only the generated pixels.</summary>
     /// <returns>The count of pixels whose RGB value changed.</returns>
     public int Line(short startX, short startY, short endX, short endY, uint color)

@@ -27,14 +27,14 @@
             </Grid.ColumnDefinitions>
             <TextBox x:Name="ModulePath" VerticalContentAlignment="Center" Padding="8" ToolTip="Path to a supported local AD module"/>
             <Button x:Name="BrowseButton" Grid.Column="1" Content="Browse…" Padding="12,6" Margin="8,0,0,0" Click="Browse_Click"/>
-            <ComboBox x:Name="Speed" Grid.Column="2" Width="100" Margin="8,0,0,0" VerticalContentAlignment="Center" ToolTip="Original module speed; applies on Run"/>
+            <ComboBox x:Name="Speed" Grid.Column="2" Width="100" Margin="8,0,0,0" VerticalContentAlignment="Center" ToolTip="Original module speed; applies on Run" ToolTipService.ShowOnDisabled="True"/>
             <Button x:Name="RunButton" Grid.Column="3" Content="Run" Padding="18,6" Margin="8,0,0,0" Click="Run_Click"/>
             <Button x:Name="StopButton" Grid.Column="4" Content="Stop" Padding="18,6" Margin="8,0,0,0" IsEnabled="False" Click="Stop_Click"/>
         </Grid>
         <Border Grid.Row="2" Background="Black" BorderBrush="#39404C" BorderThickness="1">
             <Image x:Name="Screen" Stretch="Uniform" RenderOptions.BitmapScalingMode="NearestNeighbor"/>
         </Border>
-        <TextBlock x:Name="Status" Grid.Row="3" Text="File → Load AD file… to play Mondrian, Spiral Gyra or Rainstorm." TextWrapping="Wrap"
+        <TextBlock x:Name="Status" Grid.Row="3" Text="File → Load AD file… to play Mondrian, Spiral Gyra, Rainstorm or Fade Away." TextWrapping="Wrap"
                    Margin="0,14,0,0" Foreground="#BFC9D8" FontSize="13"/>
     </Grid>
     </DockPanel>

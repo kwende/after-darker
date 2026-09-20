@@ -17,6 +17,8 @@ software surface. The WPF host now also executes Spiral Gyra through a shared
 module session, adding five pen/line imports to the original nine-service slice.
 Rainstorm is the third playable module, with fixed controls, shared black-pen
 lookup and PtInRect support; its intermediate lightning image is not presented.
+Fade Away is the fourth, running its original Radar effect on host-supplied
+white pixels and remaining black after the fade completes.
 This remains narrow compatibility support, not general Win16 emulation.
 `AfterDarker.Core` contains two extracted binary-layout helpers, a Windows NE
 metadata reader, a CPU-independent load plan, and a separate After Dark
@@ -26,6 +28,15 @@ nine educational console lessons (06 needs the optional Watcom fixture;
 
 ## Established evidence
 
+- **Fade Away Radar playback:** a fresh session starts white, then the original
+  code erases it in coarse and fine sweeps and finishes with a black fill.
+  At 640x480 the tested path completes in 3,376 draws; further draws and BLANK
+  keep it black. Seven private cases cover completion at five sizes, restart,
+  cleanup and artifact rejection. Six public cases cover initial RGB ownership
+  and unused-import guards. All 274 tests pass with every opt-in. WPF acceptance
+  passes standalone Fade Away plus switching to/from Rainstorm, readback,
+  restart and close. See [execution notes](research/fade-away-execution.md).
+  Radar is the only exposed effect; desktop capture is still future work.
 - **Rainstorm playback:** the shared session executes startup, initialization,
   rain drawing and CLOSE/WEP for the verified artifact. Nineteen public cases
   add signed rectangle/POINT and stock-pen coverage; five private cases include
@@ -255,7 +266,8 @@ nine educational console lessons (06 needs the optional Watcom fixture;
   ABI layouts remain unproven. Two successful host exits/resumes do not establish
   compatibility with arbitrary Win16 guest code.
 - Supported application playback is limited to the analyzed Mondrian, Spiral
-  Gyra and Rainstorm artifacts. The whole-folder research probes supply narrower
+  Gyra, Rainstorm and Fade Away artifacts, with Radar as the only Fade Away style.
+  The whole-folder research probes supply narrower
   observations for other modules without making them supported application
   playback. Other revisions and historical visual/pacing fidelity remain unproven.
 - Production profiles supply the observed fields for their supported paths.
@@ -281,14 +293,15 @@ explicitly.
 
 ## Next planning point
 
-The Rainstorm increment is on `codex/rainstorm-player`, carrying the uncommitted
-readiness sweep forward without discarding it. Rainstorm now joins Mondrian and
-Spiral Gyra in WPF. Other files/versions are still rejected explicitly. The
-owner requested one module at a time, followed by a pause and a short account
-of novel findings. Stop here for review; no Fade Away implementation has begun.
-The [sweep](research/module-readiness-sweep.md) retains the remaining candidates.
-Lightning's intermediate presentation is an explicit remaining fidelity issue,
-and no multi-hour endurance or historical timing comparison has been performed.
+The Fade Away increment is on `codex/fade-away-player`, created from clean main
+after the Rainstorm merge (`c668f63`). Its Radar effect now runs on the requested
+white initial image. The owner intends to use a desktop-style snapshot in a
+future actual screensaver host; initial image loading is separate from guest
+drawing, but no capture or fullscreen integration was added here. Stop after
+this module and report novel findings before starting another. The
+[sweep](research/module-readiness-sweep.md) retains the remaining candidates.
+Other Fade Away styles, Rainstorm's intermediate lightning presentation, and
+historical pixel/timing comparisons remain explicit limitations.
 
 The project keeps one F5-able console app, with separate tutorial classes
 invoked through `ITutorial`, alongside the live WPF host. Future expansion
@@ -299,6 +312,29 @@ Tutorial 04 implements the narrow host trap; the broader issue is not complete.
 See [the tutorial guide](tutorials.md).
 
 ## Session log
+
+### 2026-09-19 - Fade Away Radar and the starting-image boundary
+
+- Created `codex/fade-away-player` from clean main after PR #14. Added the
+  verified Fade Away artifact to the shared session/catalog/WPF path, with
+  fixed Radar settings, typed observations and a white initial image.
+- Added `ModuleProfile.CreateInitialPixels` and checked copying through
+  `PixelSurface.LoadRgb`. Other profiles retain black initial pixels. The
+  image is supplied once per session, not restored per frame or on completion.
+- No Windows API implementation was added. Ellipse/Rectangle/PatBlt imports
+  from unused styles now bind to explicit unsupported entries and fail by name
+  if reached; native tests verify those guards before argument decoding.
+- Observed two sweep passes (step 2 then step 1), the original completion flag
+  and one final black FillRect. Five sizes reach completion; the standard
+  640x480 run takes 3,376 draws and 515,335 instructions through completion.
+  Subsequent calls stay black. Fresh sessions start white and reproduce pixels.
+- All 274 tests pass with compiler and four private-module suites. Actual WPF
+  checks pass standalone Fade Away (no switching) and both switching directions
+  with Rainstorm, including RGB readback, unsupported-file rejection, restart
+  and close during playback. All completed guests release locks/pens.
+- Preserved original one-time fade behavior rather than inventing a repeat
+  animation. Only Radar is exposed. Original files and local captures remain
+  ignored; work stops here for the owner's review.
 
 ### 2026-09-19 - Rainstorm, one module at a time
 

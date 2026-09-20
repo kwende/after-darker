@@ -144,6 +144,8 @@ public partial class AfterDarkSession<TState> : IAnimationSession
         if (enableDrawing)
         {
             surface = new PixelSurface(options.Width, options.Height);
+            byte[]? initialPixels = profile.CreateInitialPixels(options);
+            if (initialPixels is not null) surface.LoadRgb(initialPixels);
             drawing = new Win16Drawing();
             drawing.Register(AfterDarkHostContract.ReservedHdc, surface);
         }

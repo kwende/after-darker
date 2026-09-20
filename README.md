@@ -49,12 +49,14 @@ entire desktop.
 
 Set **AfterDarker.Wpf** as the startup project and press F5. It finds your local
 `ad/Mondrian.ad` automatically. Use **File > Load AD file…** to play
-**Mondrian**, **Spiral Gyra**, or **Rainstorm**, or switch between them while running. See the [WPF player guide](docs/wpf-player.md)
+**Mondrian**, **Spiral Gyra**, **Rainstorm**, or **Fade Away**, or switch between them while running. See the [WPF player guide](docs/wpf-player.md)
 for controls, command-line launch and the original-code execution boundary.
 
 ## Status
 
-The repository now runs original Mondrian, Spiral Gyra and Rainstorm in a live WPF window.
+The repository now runs original Mondrian, Spiral Gyra, Rainstorm and Fade Away in a live WPF window.
+Fade Away runs its Radar effect over a white starting image and remains black when
+the original fade finishes (see [execution notes](docs/research/fade-away-execution.md)).
 Rainstorm uses fixed controls; its intermediate lightning flash is not yet presented
 (see [execution evidence and limits](docs/research/rainstorm-execution.md)). Its C# tutorials run real-mode
 addition and near calls, a 16-bit protected-mode `CALL FAR`/`RETF` round trip,
