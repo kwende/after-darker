@@ -2,7 +2,8 @@
 
 Open `AfterDarker.sln`, set **AfterDarker.Wpf** as the startup project, and press
 F5. With the analyzed `ad/Mondrian.ad` present, the window starts automatically.
-Choose **File > Load AD file…** to select **Mondrian**, **Spiral Gyra**, **Rainstorm**, **Fade Away**, **Lasers**, or **Magic**. Loading
+Choose **File > Load AD file…** to select **Mondrian**, **Spiral Gyra**, **Rainstorm**,
+**Fade Away**, **Lasers**, **Magic**, **String Theory**, or **Zot!**. Loading
 starts playback automatically; the menu can also switch modules while playing.
 The previous guest shuts down before the new one starts. Unsupported files or
 versions are rejected by their content hash before stopping an active guest.
@@ -31,6 +32,13 @@ code manages a circular line history through the same heap and draws/erases
 the mirrored lines through the existing pen services. See
 [Magic's execution evidence](research/magic-execution.md).
 
+String Theory uses three groups of 100 strings, color-speed control 96 and
+Clear Screen First. Zot! uses Few Forks (33) and Stormy frequency (100).
+Both disable the generic speed selector. String Theory reuses the existing
+movable heap/line-history mechanism; Zot! uses fixed blocks for each bolt.
+See [String Theory](research/string-theory-execution.md) and
+[Zot!](research/zot-execution.md) for the tested settings and proof boundaries.
+
 From the repository root:
 
 ```powershell
@@ -39,10 +47,10 @@ dotnet run --project src/AfterDarker.Wpf --no-launch-profile
 dotnet run --project src/AfterDarker.Wpf --no-launch-profile -- C:\path\Mondrian.ad
 ```
 
-All six supported modules execute their original, hash-checked Win16 code through
+All eight supported modules execute their original, hash-checked Win16 code through
 `AfterDarkSession<TState>`. Mondrian's tutorial facade uses that same runtime.
 Spiral adds five pen/line imports; see the [execution notes](research/spiral-gyra-execution.md).
-The file picker accepts AD files generally, but only the six analyzed versions
+The file picker accepts AD files generally, but only the eight analyzed versions
 are executable today. A renamed supported file works; an unknown file named
 Mondrian.ad does not bypass validation.
 
@@ -62,6 +70,20 @@ mailbox atomically transfers pixels with their counters. A slow presenter
 receives the newest pending frame; it cannot accumulate stale queued frames.
 An unchanged guest image does not produce another transfer.
 
+Zot! also publishes images **during** DRAWFRAME. Its code draws and erases a
+bolt before returning, so the completed surface alone is black. A profile can
+name original import-return addresses where an image is ready;
+`ImportFrameCapture` matches those addresses and import identities after normal
+gateway dispatch, outside the native hook. The worker copies the supplied RGB
+image to the same mailbox. The callback cannot reenter or dispose the session.
+
+For Zot!, the worker holds a changed image for 80 ms to give the dispatcher time
+to present it. This is an explicit modern pacing adaptation. The guest's CPU
+delay loops still execute. There are at most 32 checkpoint visits per DRAWFRAME,
+each with a configured hold of at most 100 ms; the mailbox still retains just
+one image. A heavily stalled dispatcher can miss a transient image. Other
+profiles retain their completed-call presentation, including Rainstorm.
+
 The UI owns the bitmap and calls
 [`WritePixels`](https://learn.microsoft.com/en-us/dotnet/api/system.windows.media.imaging.writeablebitmap.writepixels?view=windowsdesktop-10.0)
 on its dispatcher, respecting WPF's
@@ -69,7 +91,7 @@ on its dispatcher, respecting WPF's
 Window resizing scales the fixed 640x480 guest image with nearest-neighbor
 sampling; it does not change the dimensions the module sees.
 
-Live `GetTickCount` follows monotonic elapsed milliseconds. DOS date/time and
+Live `GetTickCount` and its `GetCurrentTime` alias follow monotonic elapsed milliseconds. DOS date/time and
 the initial random seed derive from civil time captured at session creation.
 The host requests approximately 60 draws per second, accounting for time
 already spent drawing; it never issues a catch-up burst. The original module
@@ -89,8 +111,9 @@ needed; WPF ships in the .NET Windows desktop framework.
 dotnet run --project src/AfterDarker.Wpf --no-launch-profile -- --smoke ad/Mondrian.ad artifacts/wpf-smoke/manual
 ```
 
-This opt-in mode drives the real WPF dispatcher and presenter, waits for 30
-presentations, reads the bitmap back to check exact published RGB bytes, and
+This opt-in mode drives the real WPF dispatcher and presenter, waits for at least
+30 presentations and a currently visible nonblack image, reads the bitmap back
+to check exact published RGB bytes, and
 saves `frame.png`, a rendering of the window's own content (`window.png`), and
 `report.json`. Outputs stay in ignored local artifacts. A nonzero exit signals
 failure. This proves actual WPF presentation of original-code output; it does
@@ -98,7 +121,9 @@ not establish Windows 3.1 visual fidelity or indefinite endurance.
 
 ## Stop, close and restart
 
-Stop cancels the host loop and pacing wait. An in-flight guest call is allowed
+Stop cancels the host loop and pacing wait, and wakes any intermediate-image
+hold. It suppresses subsequent intermediate publication while the active call
+finishes. An in-flight guest call is allowed
 to finish under its existing instruction and time budgets. The worker then
 calls original MODULE(CLOSE), followed by WEP(1), verifies their return frames
 and balanced locks, and releases Unicorn. Closing the window awaits that same
@@ -110,9 +135,11 @@ halfway through would leave its stack unsuitable for another CALL FAR to CLOSE.
 If execution or cleanup fails, no further guest calls are attempted, and the
 native engine is still disposed. The UI shows the symbolic failure. Cleanup
 ignores the cancelled pacing token but retains bounded native execution: 50,000
-instructions per Mondrian/Fade Away/Magic invocation or 200,000 for Spiral Gyra/Rainstorm/Lasers, one-second
-native slices and a five-second
-cumulative native execution budget. These are cooperative runtime safeguards,
+instructions per Mondrian/Fade Away/Magic invocation, 200,000 for
+Spiral Gyra/Rainstorm/Lasers/String Theory, or 2,000,000 for Zot!. Native slices
+are one second normally and three seconds for Zot!'s original CPU delay loops;
+all retain a five-second cumulative native execution budget. Managed image holds
+have the separate bound described above. These are cooperative runtime safeguards,
 not an out-of-process watchdog for a defective native library.
 
 CLOSE uses the existing MODULE ABI (three WORD arguments, RETF 6). WEP is a
@@ -130,6 +157,9 @@ and CLOSE. Shutdown verifies that its local allocation and locks were released;
 native memory is still disposed if the guest faults before it can clean up.
 Magic fits the default 128-service budget, releases its line history at CLOSE
 and retains no owned pens between drawing calls.
+String Theory also uses 128 services and frees its history at CLOSE. Zot! allows
+4,096 exits for its bolt/fork work and releases both fixed allocations before
+each DRAWFRAME returns. All profiles check allocation, lock and pen cleanup.
 For Mondrian, with the current system record, CLOSE optionally clears then inverts the saved
 rectangles; it does not necessarily leave black pixels. The UI retains the last
 presented frame after Stop. Console lessons still end at their original boundary
@@ -159,5 +189,6 @@ dotnet run --project src/AfterDarker.Wpf --no-launch-profile -- --smoke "ad/Spir
 
 The acceptance run also checks that unsupported content leaves the active guest
 untouched. `report.json` records the module names, completed CLOSE/WEP phases,
-remaining/peak pen counts, and local-heap capacity/live allocations/locks.
+remaining/peak pen counts, local-heap capacity/live allocations/locks, and
+`IntermediateFrames` (checkpoint visits, not a count of UI presentations).
 The native file dialog itself is not automated.

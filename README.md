@@ -49,12 +49,19 @@ entire desktop.
 
 Set **AfterDarker.Wpf** as the startup project and press F5. It finds your local
 `ad/Mondrian.ad` automatically. Use **File > Load AD file…** to play
-**Mondrian**, **Spiral Gyra**, **Rainstorm**, **Fade Away**, **Lasers**, or **Magic**, or switch between them while running. See the [WPF player guide](docs/wpf-player.md)
+**Mondrian**, **Spiral Gyra**, **Rainstorm**, **Fade Away**, **Lasers**, **Magic**,
+**String Theory**, or **Zot!**, or switch between them while running. See the [WPF player guide](docs/wpf-player.md)
 for controls, command-line launch and the original-code execution boundary.
 
 ## Status
 
-The repository now runs original Mondrian, Spiral Gyra, Rainstorm, Fade Away, Lasers and Magic in a live WPF window.
+The repository now runs eight original modules in a live WPF window.
+[String Theory](docs/research/string-theory-execution.md) reuses the local heap
+for three groups of 100 strings. [Zot!](docs/research/zot-execution.md) uses fixed
+local allocations and draws/erases its lightning inside one DRAWFRAME call;
+explicit presentation checkpoints make those transient images visible.
+Both use fixed, tested controls. This completes the four-module heap group
+from the readiness sweep.
 Magic reuses the shared heap and pen/line services for a 100-line trail with
 horizontal mirroring; it adds no new Windows APIs. See its
 [execution evidence and fixed settings](docs/research/magic-execution.md).

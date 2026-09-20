@@ -24,6 +24,10 @@ in the new shared local heap. Tutorial 10 exposes allocation, locking, guest
 writes, freeing and reuse in a small source-authored program.
 Magic is the sixth: its original 100-line history and horizontal mirroring reuse
 that heap and the existing pen/line APIs without new Win16 implementations.
+String Theory is the seventh, with three groups of 100 strings using that same
+heap and renderer. Zot! is the eighth: fixed local blocks and a clock alias
+support its original lightning, with explicit intermediate presentation because
+it draws and erases inside a single DRAWFRAME. These complete row 3 of the sweep.
 This remains narrow compatibility support, not general Win16 emulation.
 `AfterDarker.Core` contains two extracted binary-layout helpers, a Windows NE
 metadata reader, a CPU-independent load plan, and a separate After Dark
@@ -32,6 +36,19 @@ ten educational console lessons (06 needs the optional Watcom fixture;
 08/09 need the analyzed local Mondrian file).
 
 ## Established evidence
+
+- **String Theory and Zot! complete the heap group:** six String Theory and
+  nine Zot! private cases pass, alongside all earlier tests: **333 combined
+  cases** and **241 public cases**. String Theory runs 1,500 draws through its
+  history/motion/color cycles; Zot! runs 30 forced strikes with 60 allocations
+  and frees and 45 visible/45 erased intermediate images. Actual WPF acceptance
+  passes both alone and switching both ways, with RGB readback, restart and
+  close while playing. All shutdowns leave no allocations, locks or pens.
+  String Theory adds no API; Zot! adds USER #15 GetCurrentTime as an alias of
+  the existing tick service. Profile-owned import-return checkpoints expose
+  transient images outside the native hook, with bounded, cancellable 80-ms
+  live holds as a modern adaptation. See [String Theory](research/string-theory-execution.md)
+  and [Zot!](research/zot-execution.md) for settings, hashes and proof limits.
 
 - **Magic playback through shared services:** one 1,520-byte movable allocation
   holds the original line history. Six private tests pass, including 1,700 draws
@@ -53,7 +70,8 @@ ten educational console lessons (06 needs the optional Watcom fixture;
   Actual standalone WPF and switching checks pass with clean shutdown. See
   [the heap guide](win16-local-heap.md) and [Lasers proof and limits](research/lasers-execution.md).
   No Windows arena reconstruction, compaction, global allocator or indexed
-  palette implementation is claimed. String Theory and Zot! remain future work.
+  palette implementation is claimed. String Theory and Zot! now reuse this heap
+  as recorded above.
 
 - **Fade Away Radar playback:** a fresh session starts white, then the original
   code erases it in coarse and fine sweeps and finishes with a black fill.
@@ -293,10 +311,12 @@ ten educational console lessons (06 needs the optional Watcom fixture;
   ABI layouts remain unproven. Two successful host exits/resumes do not establish
   compatibility with arbitrary Win16 guest code.
 - Supported application playback is limited to the analyzed Mondrian, Spiral
-  Gyra, Rainstorm, Fade Away, Lasers and Magic artifacts, with Radar as the only
+  Gyra, Rainstorm, Fade Away, Lasers, Magic, String Theory and Zot! artifacts, with Radar as the only
   Fade Away style, Lasers fixed to three rays and Magic fixed to 100 lines with
-  horizontal mirroring. Lasers requires dimensions of at least 141x141; Magic
-  requires at least 3x3 to avoid zero divisors in its coordinate calculation.
+  horizontal mirroring. String Theory uses three groups of 100 strings; Zot!
+  uses Few Forks and Stormy frequency, with explicitly adapted flash timing.
+  Lasers requires dimensions of at least 141x141; Magic and String Theory
+  require at least 3x3 to avoid zero divisors in coordinate calculations.
   The whole-folder research probes supply narrower
   observations for other modules without making them supported application
   playback. Other revisions and historical visual/pacing fidelity remain unproven.
@@ -323,13 +343,13 @@ explicitly.
 
 ## Next planning point
 
-The Magic increment is on `codex/magic-player`, created from clean reviewed
-main after Lasers merged (`7427aaf`, PR #16). Magic reuses the heap introduced
-for Lasers, following row 3 of the [sweep](research/module-readiness-sweep.md).
-Stop here for review before String Theory or Zot!. Changes remain local and
-uncommitted; publication was not requested. The heap guide and Tutorial 10
-still provide the focused allocation lesson; Magic's profile and execution
-notes show that mechanism reused by another original module.
+The String Theory/Zot! increment is on `codex/string-theory-zot`, created from
+reviewed main after Magic merged (`082ebcc`, PR #17). It completes row 3 of the
+[sweep](research/module-readiness-sweep.md), following the owner's request to
+finish both remaining entries. Stop here for review. Changes remain local and
+uncommitted; publication was not requested. Row 4 (Hard Rain and Shapes) is a
+future step. The heap guide and Tutorial 10 retain the focused allocation
+lesson; Zot!'s notes explain fixed blocks and presentation inside an active call.
 Other Fade Away styles, Rainstorm's intermediate lightning presentation, and
 historical pixel/timing comparisons remain explicit limitations.
 
@@ -342,6 +362,36 @@ Tutorial 04 implements the narrow host trap; the broader issue is not complete.
 See [the tutorial guide](tutorials.md).
 
 ## Session log
+
+### 2026-09-19 - String Theory and Zot! complete the heap group
+
+- Created `codex/string-theory-zot` from reviewed main `082ebcc`. Added two
+  hash-specific profiles, typed state observations, a shared SDK-record builder,
+  WPF selection and opt-in integration tests. Proprietary inputs/captures remain ignored.
+- String Theory requests 4,560 movable, zeroed bytes for three groups of history.
+  Controls `2/60/96/1` select three groups, 100 strings, a 21-update color cycle
+  step and initial clearing. No Win16 API implementation changed for this module.
+  Its 1,500-draw run observes 2,208,250 instructions and 9,000 LineTo calls.
+- Zot! controls `33/0/100/0` select Few Forks/Stormy. USER #15 aliases the shared
+  DWORD tick clock. Its strict deadline gate, two fixed allocations (800/1,600
+  bytes) and same-call frees are checked with original import traces. No timer
+  or threading service is required on this path.
+- Zot! draws white/gray bolts, delays and erases black before returning. Added
+  generic bounded import-return image checkpoints, configured only by Zot!'s
+  profile, plus a short cancellable WPF hold. Guest code and CPU delays still
+  execute. Callback reentry is rejected; Stop finishes the active call before
+  CLOSE/WEP. This is explicitly adapted presentation, not historical timing.
+- Six new public cases check the clock alias ABI, larger bounded service limits,
+  and checkpoint matching/ownership/bounds. Six String Theory and nine Zot!
+  private cases cover long runs, independent guests, dimensions, exact clock
+  boundaries, fixed allocation traces, cancellation and reentrancy. Full suite:
+  333 passing; compiler/module-free suite: 241 passing.
+- Actual WPF acceptance passes String Theory alone, Zot! alone and switching
+  both ways, with exact visible-image readback, restart and close while playing.
+  Captured windows were inspected. All guests complete CLOSE/WEP with no live
+  allocations, locks or pens. Research notes record hashes and local evidence.
+- Group 3 is complete at its fixed tested settings. Hard Rain/Shapes, other
+  settings, Rainstorm's flash presentation and historical fidelity remain open.
 
 ### 2026-09-19 - Magic reuses the heap and line renderer
 

@@ -12,6 +12,10 @@ public abstract class ModuleProfile<TState>
     public virtual int ServiceExitLimit => SegmentedGuest.DefaultServiceExitLimit;
     /// <summary>CLOSE may need extra calls to undo all outstanding drawing operations.</summary>
     public virtual int CloseServiceExitLimit => ServiceExitLimit;
+    /// <summary>Maximum time for one uninterrupted native slice; the invocation also retains its five-second total budget.</summary>
+    public virtual TimeSpan NativeSliceTimeout => TimeSpan.FromSeconds(1);
+    /// <summary>Opt-in image boundaries inside DRAWFRAME; ordinary profiles present only completed calls.</summary>
+    public virtual IReadOnlyList<ImportFrameCheckpoint> FrameCheckpoints => [];
     /// <summary>Reserve the remaining 64-KiB data-segment tail for bounded local-heap growth before execution.</summary>
     /// <remarks>False retains the NE's initial reservation only. This changes backing capacity, not the startup CX input.</remarks>
     public virtual bool AllowLocalHeapGrowth => false;

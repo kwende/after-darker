@@ -12,6 +12,8 @@ public interface IAnimationSession : IDisposable
     string ModuleName { get; }
     /// <summary>Required size of a tightly packed RGB snapshot buffer.</summary>
     int PixelByteCount { get; }
+    /// <summary>Optional images inside a guest draw call. Consume synchronously; never call back into the session.</summary>
+    event IntermediateFrameHandler? IntermediateFrameReady;
     /// <summary>Execute DLL startup, PREINITIALIZE and INITIALIZE once.</summary>
     void Initialize();
     /// <summary>Execute the original BLANK handler before drawing.</summary>

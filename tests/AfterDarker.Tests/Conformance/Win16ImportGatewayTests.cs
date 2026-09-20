@@ -14,6 +14,33 @@ namespace AfterDarker.Tests.Conformance;
 [TestCategory("Conformance")]
 public sealed class Win16ImportGatewayTests
 {
+    [TestMethod]
+    [DataRow(0x12345678u, 0x12345688u)]
+    [DataRow(0xFFFFFFF8u, 8u)]
+    public void CurrentTimeAndTickCountShareOneDwordClockAndPreserveTheFarReturn(uint initial, uint next)
+    {
+        using var setup = new Probe(initialTick: initial);
+        var code = new List<byte>();
+        setup.EmitCall(code, "GetCurrentTime");
+        code.AddRange([0xA3, 0x20, 0, 0x89, 0x16, 0x22, 0]); // Store AX and DX, no host-written result.
+        setup.EmitCall(code, "GetTickCount");
+        code.AddRange([0xA3, 0x24, 0, 0x89, 0x16, 0x26, 0]);
+        var final = setup.Run(code);
+        Assert.AreEqual(initial, ((uint)setup.Word(0x22) << 16) | setup.Word(0x20));
+        Assert.AreEqual(next, ((uint)setup.Word(0x26) << 16) | setup.Word(0x24));
+        Assert.AreEqual((ushort)0x1000, final.Sp);
+        foreach (var call in setup.Calls)
+        {
+            Assert.AreEqual(0, call.Arguments.Count);
+            Assert.AreEqual(call.Before.Sp + 4, (int)call.After.Sp);
+            Assert.AreEqual(Code, call.After.Cs);
+            Assert.AreEqual(Data, call.After.Ds);
+            Assert.AreEqual(Stack, call.After.Ss);
+            Assert.AreEqual(call.Before.Bp, call.After.Bp);
+            Assert.AreEqual(call.Before.Es, call.After.Es);
+        }
+    }
+
     private const ushort Code = MondrianSession.Caller, Gateway = MondrianSession.Gateway;
     private const ushort Data = MondrianSession.HostData, Stack = MondrianSession.Stack, DllData = 0x28;
 
@@ -354,13 +381,13 @@ public sealed class Win16ImportGatewayTests
         public IReadOnlyList<Win16Imports.ImportEntry> Bindings { get; }
         public List<Win16CallTrace> Calls { get; } = [];
         public PixelSurface Surface { get; } = new(8, 6);
-        public Probe(bool drawing = false)
+        public Probe(bool drawing = false, uint initialTick = Win16ApiState.DefaultInitialTick)
         {
             var imports = new[] { new NeImport("KERNEL", 4, null), new("KERNEL", 18, null), new("KERNEL", 19, null),
                 new("KERNEL", 131, null), new("USER", 13, null), new("USER", 82, null), new("USER", 72, null), new("USER", 81, null), new("GDI", 87, null),
                 new("GDI", 61, null), new("GDI", 45, null), new("GDI", 69, null), new("GDI", 20, null), new("GDI", 19, null), new("USER", 76, null),
                 new("GDI", 24, null), new("GDI", 27, null), new("GDI", 29, null),
-                new("KERNEL", 5, null), new("KERNEL", 7, null), new("KERNEL", 8, null), new("KERNEL", 9, null) };
+                new("KERNEL", 5, null), new("KERNEL", 7, null), new("KERNEL", 8, null), new("KERNEL", 9, null), new("USER", 15, null) };
             var image = NeReader.Read(RelocationDemo.Create()) with
             {
                 Relocations = imports.Select(i => new NeRelocation(1, 0, 3, 1, 0, 0, 0, i)).ToArray()
@@ -377,7 +404,7 @@ public sealed class Win16ImportGatewayTests
             Guest.Map(Gateway, 0x70000, new byte[4096], true);
             var contexts = new Win16Drawing();
             contexts.Register(0x103, Surface);
-            Services = new(new Win16ApiState(Guest, new(new(DllData, 64), 1024), new(Data, 0x300))
+            Services = new(new Win16ApiState(Guest, new(new(DllData, 64), 1024), new(Data, 0x300), initialTick: initialTick)
             { Drawing = drawing ? contexts : null });
             Services.State.Blocks.Register(0x102, new(Data, 0x200), records.Module.Length);
         }

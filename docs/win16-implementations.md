@@ -37,7 +37,7 @@ not yet been placed into CPU registers.
 | GlobalLock | Looks up a resident guest block, checks its backing memory, increments its lock count, and returns its guest address. |
 | GlobalUnlock | Releases one lock and reports how many remain. |
 | GetDOSEnvironment | Returns the address of a supplied empty guest environment; rejects absent or unsupported contents. |
-| GetTickCount | Returns the current virtual tick and advances it by a configured amount. |
+| GetTickCount | Reads the per-guest clock: deterministic stepping for tests/captures or monotonic elapsed time for live playback. USER #15 GetCurrentTime uses this same method. |
 | SetRect | Writes the four signed corners unchanged to checked guest memory. |
 | GetStockObject | Returns stock black brush (index 4) or black pen (index 7); rejects other indices. Stock objects do not consume created-object capacity. |
 | PtInRect | Reads a checked guest RECT and tests a signed by-value POINT; left/top inclusive, right/bottom exclusive. Empty/inverted rectangles return false. |
@@ -105,7 +105,14 @@ boundaries and the Win16 void-return distinction.
 
 The direct [Win16ApiTests](../tests/AfterDarker.Tests/Unit/Win16ApiTests.cs) need
 no emulator. Existing CPU/gateway tests verify the marshaling around the same
-methods, and the opt-in tests exercise all five supported original modules.
+methods, and the opt-in tests exercise all eight supported original modules.
+
+Zot! adds the `USER!GetCurrentTime` identity with zero Pascal argument bytes
+and a DWORD return in DX:AX. Both it and `GetTickCount` bind to `Handler.Ticks`;
+there is no second clock or additional timer service. Wine 10.0's
+[Win16 USER declarations](https://raw.githubusercontent.com/wine-mirror/wine/wine-10.0/dlls/user.exe16/user.exe16.spec)
+establish this alias. Public gateway tests check clock sharing, unsigned wrap,
+register results and stack cleanup. See [Zot!'s execution notes](research/zot-execution.md).
 
 Fade Away's Radar path adds no Windows API behavior. Its other styles import
 Ellipse, Rectangle and PatBlt; their named registry entries remain unsupported
