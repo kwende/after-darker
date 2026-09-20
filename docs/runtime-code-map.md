@@ -19,6 +19,11 @@ larger boundaries and proof requirements, see [architecture](architecture.md).
 | Which import corresponds to this ordinal and signature? | [Win16Imports](../src/AfterDarker.Core/Win16/Win16Imports.cs) |
 | How do words become handles, signed coordinates, or pointers? | [Win16ApiDispatcher](../src/AfterDarker.Core/Win16/Win16ApiDispatcher.cs) and [Win16ArgumentReader](../src/AfterDarker.Core/Win16/Win16ArgumentReader.cs) |
 | What does the Windows method actually do? | [Win16Api](../src/AfterDarker.Core/Win16/Win16Api.cs) and [its implementation guide](win16-implementations.md) |
+| How do allocation, handles, locks, freeing and reuse work? | [Win16LocalHeap](../src/AfterDarker.Core/Win16/Win16LocalHeap.cs) and the [heap walkthrough](win16-local-heap.md) |
+| Can I watch x86 write to an allocated block? | [Tutorial10LocalHeap](../src/AfterDarker.Tutorials/Lessons/Tutorial10LocalHeap.cs), F5 profile **Tutorial 10 - local heap and guest writes** |
+| Which heap does a local handle belong to? | [Win16CallContext](../src/AfterDarker.Core/Win16/Win16CallContext.cs) carries caller DS from the gateway; `Win16LocalHeap.RequireOwner` verifies it |
+| Where can I inspect live allocations? | [LocalHeapSnapshot](../src/AfterDarker.Core/Win16/LocalHeapSnapshot.cs), exposed by session and playback results |
+| What makes Lasers different? | [LasersProfile](../src/AfterDarker.Runtime/Modules/LasersProfile.cs), [LasersState](../src/AfterDarker.Runtime/Modules/LasersState.cs) and [execution evidence](research/lasers-execution.md) |
 | Who runs and resumes machine code? | [SegmentedGuest.RunUntil](../src/AfterDarker.Runtime/SegmentedGuest.cs) |
 | What do the register snapshots mean? | [SegmentedGuest diagnostics](../src/AfterDarker.Runtime/SegmentedGuest.Diagnostics.cs) |
 | How do we make the initial call into the DLL? | [GuestCallerBuilder](../src/AfterDarker.Runtime/Calls/GuestCallerBuilder.cs) |

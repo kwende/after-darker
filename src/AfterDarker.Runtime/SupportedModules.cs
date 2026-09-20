@@ -6,6 +6,8 @@ namespace AfterDarker.Runtime;
 /// <summary>Verified artifact identities, not file names or a claim of general AD compatibility.</summary>
 public static class SupportedModules
 {
+    /// <summary>Exact Lasers artifact verified with three rays and its movable local-heap history.</summary>
+    public const string LasersSha256 = "8B800EABA0E1F121EF52947BB116FC6254724CEEB5E460315DF0F21E347AC430";
     /// <summary>Exact known Spiral Gyra artifact; names and extensions are insufficient evidence.</summary>
     public const string SpiralGyraSha256 = "8098AC464BA204E81719828ECDDB9DC78058231EF105F8B512072C21E3167529";
     /// <summary>Exact Rainstorm artifact exercised by the local integration suite.</summary>
@@ -19,7 +21,8 @@ public static class SupportedModules
         SpiralGyraSha256 => "Spiral Gyra",
         RainstormSha256 => "Rainstorm",
         FadeAwaySha256 => "Fade Away",
-        _ => throw new NotSupportedException("This AD file is not supported yet. Supported modules: the analyzed Mondrian, Spiral Gyra, Rainstorm and Fade Away versions. File names alone do not identify a supported version.")
+        LasersSha256 => "Lasers",
+        _ => throw new NotSupportedException("This AD file is not supported yet. Supported modules: the analyzed Mondrian, Spiral Gyra, Rainstorm, Fade Away and Lasers versions. File names alone do not identify a supported version.")
     };
     /// <summary>Construct the selected profile and shared session without yet executing guest code.</summary>
     public static IAnimationSession Open(byte[] file, PlaybackOptions options, SessionTiming? timing = null,
@@ -34,6 +37,8 @@ public static class SupportedModules
                 instructionLimit: 200_000, timing: timing, diagnostics: diagnostics, output: output),
             "Fade Away" => new AfterDarkSession<FadeAwayState>(file, new FadeAwayProfile(), options,
                 timing: timing, diagnostics: diagnostics, output: output),
+            "Lasers" => new AfterDarkSession<LasersState>(file, new LasersProfile(), options,
+                instructionLimit: 200_000, timing: timing, diagnostics: diagnostics, output: output),
             _ => throw new InvalidOperationException()
         };
 }

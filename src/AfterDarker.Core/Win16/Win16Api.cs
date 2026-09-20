@@ -66,12 +66,12 @@ public sealed class Win16Api(Win16ApiState state)
     private Win16Drawing Drawing => State.Drawing ?? throw new NotSupportedException("No drawing surface was supplied.");
 
     /// <summary>
-    /// Accept the loader's reserved local heap. This is a checked test double:
-    /// no Windows heap metadata, LocalAlloc, or LocalFree exists yet.
+    /// Validate the loader's reserved local heap and publish its per-guest allocator.
+    /// Memory is already mapped; this call establishes ownership, not an OS allocation.
     /// </summary>
     public bool LocalInit(ushort dataSelector, ushort start, ushort bytes)
     {
-        // Both current DLLs request LocalInit(DS, 0, heapBytes). The loader has
+        // Supported DLLs request LocalInit(DS, 0, heapBytes). The loader has
         // already allocated a zero-filled tail after the data segment's static
         // storage. A successful reply is justified only for that exact request.
         LocalHeapReservation reserved = State.ReservedHeap;
@@ -84,8 +84,30 @@ public sealed class Win16Api(Win16ApiState state)
         // Tutorial 06 can exercise the DLL's own failure path without changing
         // guest machine code. A failed initialization publishes no usable heap.
         if (!State.LocalInitSucceeds) return false;
+        State.LocalHeap = new Win16LocalHeap(State.Memory, reserved, State.LocalHeapCapacityBytes);
         State.InitializedHeap = reserved;
         return true;
+    }
+
+    /// <summary>Allocate from the heap selected by caller DS; return a Win16 handle or zero for exhaustion.</summary>
+    public ushort LocalAlloc(ushort dataSelector, LocalMemoryFlags flags, ushort bytes)
+        => GetLocalHeap(dataSelector).Allocate(flags, bytes);
+
+    /// <summary>Resolve a local handle. AX is the near offset; DX carries the owning selector for Win16 compatibility.</summary>
+    public FarPointer16 LocalLock(ushort dataSelector, ushort handle)
+        => new(dataSelector, GetLocalHeap(dataSelector).Lock(handle));
+
+    /// <summary>Release a movable lock; a zero result after the last lock is normal.</summary>
+    public ushort LocalUnlock(ushort dataSelector, ushort handle) => GetLocalHeap(dataSelector).Unlock(handle);
+
+    /// <summary>Return an allocation to the guest free list. The underlying mapped segment remains alive.</summary>
+    public ushort LocalFree(ushort dataSelector, ushort handle) => GetLocalHeap(dataSelector).Free(handle);
+
+    private Win16LocalHeap GetLocalHeap(ushort dataSelector)
+    {
+        Win16LocalHeap heap = State.LocalHeap ?? throw new InvalidOperationException("LocalInit has not established a local heap.");
+        heap.RequireOwner(dataSelector);
+        return heap;
     }
 
     /// <summary>Resolve a handle to its resident guest block and acquire a lock.</summary>

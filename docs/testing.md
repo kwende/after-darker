@@ -37,20 +37,22 @@ is verified; an interactive Test Explorer session remains a manual check.
 
 | Category | Cases | What is established |
 | --- | ---: | --- |
-| Unit | 139 | Descriptor/frame layout, NE metadata/SDK plans/relocations, host record fields, lock lifetime, DOS date/time packing, invalid-input rejection, lossless PNG encoding, ring retention, reusable pixel buffers, initial-image ownership/validation, monotonic timing, pacing, concurrent latest-frame transfer, pen ownership/capacity and supported-file rejection |
-| Conformance | 59 | Actual Unicorn execution: arithmetic, near/far calls, imported-call marshaling/results/cleanup, guest dereferences of locked blocks, protected-mode DOS interrupt stop/resume, bounded failures, rectangle and pen/line ABIs, and software rectangles compared with native Windows PatBlt, bounded interrupt history with per-call budgets, and 1,500 line cases compared with native GDI, plus explicit startup-register and checked stack-frame contracts, by-value POINT arguments, stock black-pen lookup and unused Fade Away import guards |
-| Tutorial | 11 | Four CPU lessons, NE inspection, and six relocation report/step/cancel/file-path checks using generated input |
-| **Default total** | **209** | All passing on the current Windows x64 development host; no Watcom or private file required |
+| Unit | 154 | Descriptor/frame layout, NE metadata/SDK plans/relocations, host record fields, lock lifetime, DOS date/time packing, invalid-input rejection, lossless PNG encoding, ring retention, reusable pixel buffers, initial-image ownership/validation, monotonic timing, pacing, concurrent latest-frame transfer, pen ownership/capacity, supported-file rejection, and local-heap identity, locking, fragmentation, growth, reuse and bounds |
+| Conformance | 69 | Actual Unicorn execution: arithmetic, near/far calls, imported-call marshaling/results/cleanup, guest dereferences of locked blocks, protected-mode DOS interrupt stop/resume, bounded failures, rectangle and pen/line ABIs, and software rectangles compared with native Windows PatBlt, bounded interrupt history with per-call budgets, and 1,500 line cases compared with native GDI, plus explicit startup-register and checked stack-frame contracts, by-value POINT arguments, stock black-pen lookup, unused Fade Away import guards, local-heap implicit DS, guest writes, unsigned allocation failure and Pascal cleanup |
+| Tutorial | 12 | Five CPU/heap lessons, NE inspection, and six relocation report/step/cancel/file-path checks using generated input |
+| **Default total** | **235** | All passing on the current Windows x64 development host; no Watcom or private file required |
 | Toolchain (opt-in) | 12 | Three real-DLL metadata cases plus nine startup/export/exit execution, ABI, failure, mutation, trace, and console checks |
-| **With Watcom** | **221** | Includes rebuilding the project-owned Win16 fixture |
+| **With Watcom** | **247** | Includes rebuilding the project-owned Win16 fixture |
 | LocalModule (opt-in) | 34 | Original initialization plus deterministic 30-frame capture, 180-frame removal path, slower timing gate, capture-budget failure, eight session lifetime/state/failure cases, and six retention/buffer cases including 5,000 draws; live timing, CLOSE/WEP, failure, cancellation and restart |
-| **With Watcom + Mondrian** | **255** | Requires the pinned compiler and local analyzed Mondrian file |
+| **With Watcom + Mondrian** | **281** | Requires the pinned compiler and local analyzed Mondrian file |
 | LocalSpiralGyra (opt-in) | 7 | Original colored line rendering, five speeds, independent deterministic guests, pen reuse and CLOSE/WEP |
-| **With compiler + Mondrian + Spiral** | **262** | Requires the compiler and those two private modules |
+| **With compiler + Mondrian + Spiral** | **288** | Requires the compiler and those two private modules |
 | LocalRainstorm (opt-in) | 5 | 300 draws including paired lightning inversions, deterministic independent guests, dimension extremes, cleanup and exact-artifact rejection |
-| **With compiler + Mondrian + Spiral + Rainstorm** | **267** | Requires the compiler and those three private modules |
+| **With compiler + Mondrian + Spiral + Rainstorm** | **293** | Requires the compiler and those three private modules |
 | LocalFadeAway (opt-in) | 7 | Original Radar completion at five sizes, white restart, deterministic guests, idle/BLANK after completion, cleanup and artifact rejection |
-| **With all five opt-ins** | **274** | Requires the compiler and all four supported private modules |
+| **With compiler + first four modules** | **300** | Requires the compiler and the four earlier private modules |
+| LocalLasers (opt-in) | 6 | Local-heap growth, 1,100 draws including regeneration, independent guests, dimensions, cleanup and artifact rejection |
+| **With all six opt-ins** | **306** | Requires the compiler and all five supported private modules |
 
 Conformance tests use the native engine and a test-only Windows GDI raster oracle; they are not isolated unit tests or a
 mock of Unicorn. Categories make the distinction explicit. All fixtures are
@@ -100,7 +102,7 @@ dotnet test -p:BuildWin16Fixture=true
 dotnet test -p:BuildWin16Fixture=true --filter "TestCategory=Toolchain"
 ```
 
-This builds the DLL and adds 12 `Toolchain` cases, for 221 passing cases in
+This builds the DLL and adds 12 `Toolchain` cases, for 247 passing cases in
 the combined suite. Three check metadata; nine exercise tutorial 06, including
 real startup/HELLOWORLD/WEP execution, AX and guest stores, different caller/DLL
 DS, import argument order and cleanup, DX:AX returns, initialization failure,
@@ -108,14 +110,15 @@ bad selector rejection, the error gateway, instruction bounds, and tracing.
 Changing the compiled return constant to 77 produces 77 in both register and
 memory; the host does not manufacture the expected result. The source and build
 instructions are tracked; outputs live in ignored `artifacts/`. Default runs
-remain compiler-free with 209 cases. Do not pass `--no-build` when changing this
+remain compiler-free with 235 cases. Do not pass `--no-build` when changing this
 opt-in property, since it changes which tests are compiled.
 
 `NeLoadPlanTests` adds 17 pure unit cases using generated metadata bytes, so
 chain safety and unsupported-input rejection can be tested without an emulator
 or Watcom. The opt-in `Toolchain` category now includes native execution as
-well as file inspection. Its LocalInit behavior is a checked test double; the
-suite does not establish a Windows allocator or MessageBox implementation.
+well as file inspection. Its LocalInit behavior checks the reservation and can inject failure. The
+fixture does not call LocalAlloc; separate heap tests establish allocation behavior.
+No general Windows allocator or MessageBox implementation is claimed.
 
 Tutorial 07 adds 22 `NeInternalRelocationTests` cases and six
 `RelocationTutorialTests` cases. These use a small original three-segment NE
@@ -223,14 +226,14 @@ The [player guide](wpf-player.md#local-acceptance-run) describes the opt-in
 readback, then Stop, fresh Run and Closing while playback is active. Both guest
 shutdowns must finish CLOSE/WEP with no outstanding locks. Its local PNG/report
 artifacts are ignored and require the private analyzed module. This supplements
-the 274 tests; it is not counted as a unit test or an interactive F5 observation.
+the 300 tests; it is not counted as a unit test or an interactive F5 observation.
 
 ## Optional local Spiral Gyra tests
 
 ```powershell
 $env:AFTER_DARKER_SPIRAL_GYRA = (Resolve-Path 'ad/Spiral Gyra.ad').Path
 dotnet test -p:TestLocalSpiralGyra=true
-# Compiler, Mondrian and Spiral suites together (262 cases):
+# Compiler, Mondrian and Spiral suites together (288 cases):
 $env:AFTER_DARKER_MONDRIAN = (Resolve-Path ad/Mondrian.ad).Path
 dotnet test -p:TestLocalSpiralGyra=true -p:TestLocalMondrian=true -p:BuildWin16Fixture=true
 ```
@@ -258,7 +261,7 @@ Runtime consumers; documentation references are compiler-checked.
 ```powershell
 $env:AFTER_DARKER_RAINSTORM = (Resolve-Path ad/Rainstorm.ad).Path
 dotnet test -p:TestLocalRainstorm=true --filter "TestCategory=LocalRainstorm"
-# Compiler, Mondrian, Spiral and Rainstorm (267 cases), with the other module variables also set:
+# Compiler, Mondrian, Spiral and Rainstorm (293 cases), with the other module variables also set:
 dotnet test -p:TestLocalRainstorm=true -p:TestLocalSpiralGyra=true -p:TestLocalMondrian=true -p:BuildWin16Fixture=true
 ```
 
@@ -277,7 +280,7 @@ presentation limitation and actual WPF acceptance commands.
 ```powershell
 $env:AFTER_DARKER_FADE_AWAY = (Resolve-Path 'ad/Fade Away.ad').Path
 dotnet test -p:TestLocalFadeAway=true --filter "TestCategory=LocalFadeAway"
-# All suites (274 cases), with the other three module variables also set:
+# All suites (300 cases), with the other three module variables also set:
 dotnet test -p:BuildWin16Fixture=true -p:TestLocalMondrian=true -p:TestLocalSpiralGyra=true -p:TestLocalRainstorm=true -p:TestLocalFadeAway=true
 ```
 
@@ -290,3 +293,25 @@ unused Ellipse/Rectangle/PatBlt imports remain guarded. Three unit cases verify
 owned initial RGB copies, mutation/revision behavior and invalid-size rejection.
 See the [Fade Away execution notes](research/fade-away-execution.md) for the
 fixed effect, future desktop-image boundary and standalone WPF acceptance.
+
+
+## Local heap and optional Lasers tests
+
+Tutorial 10 and the public heap tests require no original AD file. They use
+`Win16LocalHeap` directly for allocator invariants and the real gateway for
+DS ownership, Pascal frames, unsigned sizes, return registers and guest writes.
+See [the memory ownership walkthrough](win16-local-heap.md).
+
+```powershell
+dotnet run --project src/AfterDarker.Tutorials --no-launch-profile -- 10
+dotnet test --filter "FullyQualifiedName~LocalHeap"
+$env:AFTER_DARKER_LASERS = (Resolve-Path ad/Lasers.ad).Path
+dotnet test -p:TestLocalLasers=true --filter TestCategory=LocalLasers
+```
+
+`TestLocalLasers=true` compiles six private integration cases. The module is
+read in place, never copied into test output. The full 306-case run uses
+`BuildWin16Fixture`, `TestLocalMondrian`, `TestLocalSpiralGyra`,
+`TestLocalRainstorm`, `TestLocalFadeAway`, and `TestLocalLasers`, all set to true,
+with the corresponding `AFTER_DARKER_*` environment variables set as shown
+above and in the earlier sections. The public suite alone has 235 cases.

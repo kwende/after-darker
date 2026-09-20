@@ -12,7 +12,7 @@ public static class Win16ApiDispatcher
 {
     /// <summary>Invoke exactly the service described by a known binding using its Pascal argument order.</summary>
     public static Win16Imports.Reply Invoke(Win16Api api, Win16Imports.ImportEntry entry,
-        IReadOnlyList<ushort> argumentWords)
+        IReadOnlyList<ushort> argumentWords, Win16CallContext context = default)
     {
         if (entry.Implementation == Win16Imports.Handler.Unsupported)
         {
@@ -26,7 +26,21 @@ public static class Win16ApiDispatcher
         var arguments = new Win16ArgumentReader(argumentWords);
         switch (entry.Implementation)
         {
-            case Win16Imports.Handler.LocalInitReservation:
+            case Win16Imports.Handler.LocalAlloc:
+                {
+                    var flags = (LocalMemoryFlags)arguments.ReadWord();
+                    ushort bytes = arguments.ReadWord();
+                    ushort handle = api.LocalAlloc(context.DataSelector, flags, bytes);
+                    // The Win16 reference also returns the handle in CX.
+                    return new Win16Imports.Reply(handle, handle);
+                }
+            case Win16Imports.Handler.LocalLock:
+                return new Win16Imports.Reply(PackFarPointer(api.LocalLock(context.DataSelector, arguments.ReadWord())));
+            case Win16Imports.Handler.LocalUnlock:
+                return new Win16Imports.Reply(api.LocalUnlock(context.DataSelector, arguments.ReadWord()));
+            case Win16Imports.Handler.LocalFree:
+                return new Win16Imports.Reply(api.LocalFree(context.DataSelector, arguments.ReadWord()));
+            case Win16Imports.Handler.LocalInit:
                 {
                     ushort dataSelector = arguments.ReadWord();
                     ushort heapStart = arguments.ReadWord();

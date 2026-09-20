@@ -99,7 +99,8 @@ public partial class AfterDarkSession<TState> : IAnimationSession
     {
         var result = GetResult();
         return new(ModuleName, result.Phases.Select(phase => new PlaybackPhase(phase.Name, phase.StoredAx, phase.Registers)).ToArray(),
-            result.Instructions, result.OutstandingLocks, result.Calls.Count, LivePenCount, PeakPenCount, result.Diagnostics.ImportCalls);
+            result.Instructions, result.OutstandingLocks, result.Calls.Count, LivePenCount, PeakPenCount, result.Diagnostics.ImportCalls)
+        { LocalHeap = result.LocalHeap };
     }
 
     /// <summary>Valid lifecycle stages; faults forbid further guest execution.</summary>
@@ -215,8 +216,17 @@ public partial class AfterDarkSession<TState> : IAnimationSession
         {
             // MemMap creates storage; MemWrite copies ALREADY relocated machine
             // code/data. Unicorn later fetches those bytes without any C# opcode enum.
-            guest.Map(segment.Placement.Selector, segment.Placement.LinearBase, segment.Bytes, !segment.Source.IsData);
-            output.WriteLine($"   S{segment.Source.Number} -> {segment.Placement.Selector:X4}:0000 at linear {segment.Placement.LinearBase:X5}, {segment.Bytes.Length} bytes");
+            byte[] mappedBytes = segment.Bytes;
+            if (segment == automaticDataSegment && profile.AllowLocalHeapGrowth)
+            {
+                // A Win16 local heap stays in DGROUP. Reserve its full bounded
+                // address space now so later growth needs no moving native pointers
+                // or descriptor reloads. Startup still receives the NE's INITIAL size.
+                mappedBytes = new byte[65536];
+                segment.Bytes.CopyTo(mappedBytes, 0);
+            }
+            guest.Map(segment.Placement.Selector, segment.Placement.LinearBase, mappedBytes, !segment.Source.IsData);
+            output.WriteLine($"   S{segment.Source.Number} -> {segment.Placement.Selector:X4}:0000 at linear {segment.Placement.LinearBase:X5}, {mappedBytes.Length} mapped bytes");
         }
 
     }
@@ -255,7 +265,9 @@ public partial class AfterDarkSession<TState> : IAnimationSession
         var heapAddress = new FarPointer16(libraryDataSelector, checked((ushort)heapStart));
         var heapReservation = new LocalHeapReservation(heapAddress, heapBytes);
         var environmentAddress = new FarPointer16(HostData, EnvironmentOffset);
-        var apiState = new Win16ApiState(guest, heapReservation, environmentAddress, clock: timing.Clock)
+        int heapCapacity = profile.AllowLocalHeapGrowth ? 65536 - heapStart : heapBytes;
+        var apiState = new Win16ApiState(guest, heapReservation, environmentAddress, clock: timing.Clock,
+            localHeapCapacityBytes: heapCapacity)
         {
             Drawing = drawing
         };
@@ -285,6 +297,7 @@ public partial class AfterDarkSession<TState> : IAnimationSession
             // PREINITIALIZE's AX is incidental in this binary; the compatibility
             // variable above is the meaningful proof, not an invented success code.
             PhaseResult initialized = RunPhase("INITIALIZE", InitializeCaller, initializeEnd, InitializeResult, HostData);
+            if (initialized.StoredAx != 0) throw new InvalidOperationException($"{ModuleName} INITIALIZE failed with code {initialized.StoredAx}.");
             profile.ValidateInitialized(initialized.State, options, HostData, services.State.LastReturnedTick);
             if (guest.InterruptCount != 3 || services.State.Blocks.OutstandingLocks != 0)
                 throw new InvalidOperationException("Initialization clock/lock invariants failed.");
@@ -332,6 +345,8 @@ public partial class AfterDarkSession<TState> : IAnimationSession
             PhaseResult wep = RunPhase("WEP", WepCaller, wepEnd, WepResult, HostData);
             if (wep.StoredAx != 1) throw new InvalidOperationException("Module WEP did not return success.");
             if (LivePenCount != 0) throw new InvalidOperationException("Module shutdown leaked guest pens.");
+            if (services.State.LocalHeap?.Snapshot().Allocations.Count > 0)
+                throw new InvalidOperationException("Module shutdown leaked local heap allocations.");
             State = SessionState.Closed;
         }
         catch
@@ -385,7 +400,8 @@ public partial class AfterDarkSession<TState> : IAnimationSession
             guest.Interrupts, services.State.InitializedHeap!,
             services.State.Blocks.OutstandingLocks, guest.Instructions, (guest.Get(X86.UC_X86_REG_CR0) & 1) != 0,
             new(diagnostics.HistoryCapacity, calls.TotalCount, phases.TotalCount, guest.InterruptCount,
-                new ReadOnlyDictionary<string, long>(new Dictionary<string, long>(importCalls))));
+                new ReadOnlyDictionary<string, long>(new Dictionary<string, long>(importCalls))))
+        { LocalHeap = services.State.LocalHeap?.Snapshot() };
     }
 
     /// <summary>Execute BLANK or DRAWFRAME and transition to Ready, or Faulted on failure.</summary>
@@ -394,6 +410,8 @@ public partial class AfterDarkSession<TState> : IAnimationSession
         try
         {
             PhaseResult result = RunPhase(name, begin, end, DrawingResult, HostData);
+            if (name == "BLANK") profile.ValidateBlankResult(result.StoredAx);
+            else if (result.StoredAx != 0) throw new NotSupportedException($"{ModuleName} DRAWFRAME returned unsupported code {result.StoredAx}.");
             State = SessionState.Ready;
             return result;
         }

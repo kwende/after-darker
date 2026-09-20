@@ -11,6 +11,11 @@ their original registry hash. Their supported-module counts are not current UI s
 using the requested white starting image and tests through original completion.
 Other styles in this sweep are still research observations, not selectable modes.
 
+[Lasers is now integrated](lasers-execution.md) with the shared bounded local
+heap. The owner chose to complete Lasers first from row 3. Magic, String Theory
+and Zot! still require their own execution and integration work; their old
+first-blocker observations below are retained as the historical baseline.
+
 **Rainstorm and selected Fade Away modes are the closest additions.** Four
 more modules share a local-heap gap; two more share basic drawing gaps. Those
 eight are a useful expansion target. The evidence does not support calling all

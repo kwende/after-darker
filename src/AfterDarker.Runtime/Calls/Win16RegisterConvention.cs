@@ -46,7 +46,7 @@ public static class Win16RegisterConvention
     /// <summary>Place a mocked API's result in the registers specified by its import contract.</summary>
     /// <remarks>
     /// A word uses AX; a DWORD or far pointer uses DX:AX (high:low).
-    /// Void APIs preserve both. GlobalLock additionally supplies its selector in CX.
+    /// Void APIs preserve both. GlobalLock also supplies its selector in CX; LocalAlloc supplies its handle there.
     /// Register writes communicate results; they do not pop the return address.
     /// </remarks>
     public static void WriteReturnRegisters(
@@ -64,9 +64,9 @@ public static class Win16RegisterConvention
             guest.Set(X86.UC_X86_REG_DX, highWord);
         }
 
-        if (reply.Cx is ushort additionalSelector)
+        if (reply.Cx is ushort additionalResult)
         {
-            guest.Set(X86.UC_X86_REG_CX, additionalSelector);
+            guest.Set(X86.UC_X86_REG_CX, additionalResult);
         }
     }
 }

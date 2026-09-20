@@ -1,3 +1,5 @@
+using AfterDarker.Core.Win16;
+
 namespace AfterDarker.Runtime;
 
 /// <summary>Evidence from one completed lifecycle call.</summary>
@@ -16,4 +18,8 @@ public sealed record PlaybackPhase(string Name, ushort StoredAx, SegmentedGuest.
 /// <param name="PeakPens">Maximum simultaneous owned pens during this session.</param>
 /// <param name="ImportCalls">Lifetime call counts keyed by symbolic import name.</param>
 public sealed record PlaybackResult(string ModuleName, IReadOnlyList<PlaybackPhase> Phases, long Instructions,
-    int OutstandingLocks, int RetainedCalls, int LivePens, int PeakPens, IReadOnlyDictionary<string, long> ImportCalls);
+    int OutstandingLocks, int RetainedCalls, int LivePens, int PeakPens, IReadOnlyDictionary<string, long> ImportCalls)
+{
+    /// <summary>Detached local-heap ownership, including remaining allocations and locks at shutdown.</summary>
+    public LocalHeapSnapshot? LocalHeap { get; init; }
+}

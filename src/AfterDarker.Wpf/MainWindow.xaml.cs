@@ -59,7 +59,7 @@ public partial class MainWindow : Window
 
     private async void Browse_Click(object sender, RoutedEventArgs e)
     {
-        var dialog = new OpenFileDialog { Filter = "After Dark module (*.ad)|*.ad|All files (*.*)|*.*", Title = "Load AD file — Mondrian, Spiral Gyra, Rainstorm or Fade Away" };
+        var dialog = new OpenFileDialog { Filter = "After Dark module (*.ad)|*.ad|All files (*.*)|*.*", Title = "Load AD file — Mondrian, Spiral Gyra, Rainstorm, Fade Away or Lasers" };
         if (dialog.ShowDialog(this) != true) return;
         try { await LoadModuleAsync(dialog.FileName); }
         catch (Exception error) { MessageBox.Show(this, error.Message, "Unable to load AD file", MessageBoxButton.OK, MessageBoxImage.Information); }
@@ -113,6 +113,7 @@ public partial class MainWindow : Window
         {
             "Rainstorm" => "Rainstorm uses fixed strength, lightning, drop count and wind settings; it has no speed control.",
             "Fade Away" => "Fade Away uses its Radar effect on a white starting image; it has no speed control.",
+            "Lasers" => "Lasers uses three rays, a fixed trail width and fixed color-change speed in this version.",
             _ => "Original module speed; applies on Run"
         };
         Title = $"After Darker — {name}";
@@ -184,7 +185,7 @@ public partial class MainWindow : Window
     private void SetBusy(bool busy)
     {
         ModulePath.IsEnabled = BrowseButton.IsEnabled = RunButton.IsEnabled = !busy && !loading && !closing;
-        Speed.IsEnabled = !busy && !loading && !closing && selectedModuleName is not ("Rainstorm" or "Fade Away");
+        Speed.IsEnabled = !busy && !loading && !closing && selectedModuleName is not ("Rainstorm" or "Fade Away" or "Lasers");
         StopButton.IsEnabled = busy;
     }
     private async void OnClosing(object? sender, CancelEventArgs e)
@@ -299,6 +300,7 @@ public partial class MainWindow : Window
                 ShutdownPhases = lastResult?.Phases.TakeLast(2).Select(p => new { p.Name, p.StoredAx, p.Registers.Sp, p.Registers.Ds }),
                 Module = lastResult?.ModuleName, SwitchedFrom = switchedFrom, Instructions = lastResult?.Instructions, OutstandingLocks = lastResult?.OutstandingLocks,
                 LivePens = lastResult?.LivePens, PeakPens = lastResult?.PeakPens,
+                LocalHeap = lastResult?.LocalHeap,
                 UiThread = Environment.CurrentManagedThreadId
             }, new JsonSerializerOptions { WriteIndented = true }));
         }
@@ -323,7 +325,8 @@ public partial class MainWindow : Window
             if (runError is not null) throw new InvalidOperationException("Playback failed during shutdown.", runError);
             var result = completed ?? lastResult;
             if (result is null || result.Phases.Count < 2 || result.Phases[^2].Name != "CLOSE" ||
-                result.Phases[^1].Name != "WEP" || result.Phases[^1].StoredAx != 1 || result.OutstandingLocks != 0 || result.LivePens != 0)
+                result.Phases[^1].Name != "WEP" || result.Phases[^1].StoredAx != 1 || result.OutstandingLocks != 0 || result.LivePens != 0 ||
+                result.LocalHeap?.Allocations.Count > 0 || result.LocalHeap?.OutstandingLocks > 0)
                 throw new InvalidOperationException("Original guest shutdown did not complete with WEP success and balanced locks.");
         }
     }

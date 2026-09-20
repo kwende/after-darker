@@ -19,6 +19,7 @@ ITutorial[] tutorials =
         args.Contains("--trace")),
     new Tutorial09MondrianFrames(args.Length >= 2 && args[0] == "09" ? args[1] : null,
         args.Length == 3 && args[0] == "09" ? args[2] : null),
+    new Tutorial10LocalHeap(),
 ];
 
 if (args is ["--list"])
@@ -41,7 +42,7 @@ bool validArguments = selectedId switch
 };
 if (selected is null || !validArguments)
 {
-    Console.Error.WriteLine("Usage: AfterDarker.Tutorials [01 | 02 | 03 | 04 | 05 [file.ad] | 06 [hello42.dll] [--trace] | 07 [file.ad | --file] [--step] | 08 [Mondrian.ad] [--trace] | 09 [Mondrian.ad] [frame-count] | --list]");
+    Console.Error.WriteLine("Usage: AfterDarker.Tutorials [01 | 02 | 03 | 04 | 05 [file.ad] | 06 [hello42.dll] [--trace] | 07 [file.ad | --file] [--step] | 08 [Mondrian.ad] [--trace] | 09 [Mondrian.ad] [frame-count] | 10 | --list]");
     return 1;
 }
 

@@ -13,7 +13,11 @@ public static class Win16Imports
     public enum Handler
     {
         Unsupported,
-        LocalInitReservation,
+        LocalInit,
+        LocalAlloc,
+        LocalFree,
+        LocalLock,
+        LocalUnlock,
         GlobalLock,
         GlobalUnlock,
         Environment,
@@ -40,19 +44,23 @@ public static class Win16Imports
         Handler Implementation, int? ArgumentBytes, Win16ReturnLayout? ReturnLayout);
     /// <summary>A service result before it is written to guest registers.</summary>
     /// <param name="Value">Word, DWORD or packed far pointer; ignored for void signatures.</param>
-    /// <param name="Cx">Optional extra selector result used by GlobalLock.</param>
+    /// <param name="Cx">Optional extra result: GlobalLock's selector or LocalAlloc's handle.</param>
     public sealed record Reply(uint Value, ushort? Cx = null);
 
     /// <summary>Resolve known imports to distinct gateway entries; no guest code or services execute here.</summary>
     /// <remarks>See docs/win16-implementations.md for adding a signature and its implementation.</remarks>
     public static IReadOnlyList<ImportEntry> BindImports(NeImage image, ushort gateway, bool enableDrawing = false)
+        => BindImports(image.Imports, gateway, enableDrawing);
+
+    /// <summary>Bind explicit import identities, also used by source-authored guest conformance programs.</summary>
+    public static IReadOnlyList<ImportEntry> BindImports(IEnumerable<NeImport> imports, ushort gateway, bool enableDrawing = false)
     {
         // Ordinals/signatures: Wine 10.0 krnl386.exe16.spec and user.exe16.spec.
         // Each synthetic address is OUR choice; its selector is a code gateway.
         // Unsupported entries deliberately have no guessed marshaling contract.
         var definitions = new (string Module, ushort Ordinal, string Name, Handler Handler, int? Bytes, Win16ReturnLayout? Return)[]
         {
-            ("KERNEL", 4, "LocalInit", Handler.LocalInitReservation, 6, Win16ReturnLayout.WordInAx),
+            ("KERNEL", 4, "LocalInit", Handler.LocalInit, 6, Win16ReturnLayout.WordInAx),
             ("KERNEL", 18, "GlobalLock", Handler.GlobalLock, 2, Win16ReturnLayout.DwordInDxAx),
             ("KERNEL", 19, "GlobalUnlock", Handler.GlobalUnlock, 2, Win16ReturnLayout.WordInAx),
             ("KERNEL", 131, "GetDOSEnvironment", Handler.Environment, 0, Win16ReturnLayout.DwordInDxAx),
@@ -81,9 +89,13 @@ public static class Win16Imports
             ("GDI", 24, "Ellipse", Handler.Unsupported, null, null),
             ("GDI", 27, "Rectangle", Handler.Unsupported, null, null),
             ("GDI", 29, "PatBlt", Handler.Unsupported, null, null),
+            ("KERNEL", 5, "LocalAlloc", Handler.LocalAlloc, 4, Win16ReturnLayout.WordInAx),
+            ("KERNEL", 7, "LocalFree", Handler.LocalFree, 2, Win16ReturnLayout.WordInAx),
+            ("KERNEL", 8, "LocalLock", Handler.LocalLock, 2, Win16ReturnLayout.DwordInDxAx),
+            ("KERNEL", 9, "LocalUnlock", Handler.LocalUnlock, 2, Win16ReturnLayout.WordInAx),
         };
         const int firstGatewayOffset = 0x100, gatewaySpacing = 0x10;
-        return Array.AsReadOnly(image.Imports.Select(import =>
+        return Array.AsReadOnly(imports.Distinct().Select(import =>
         {
             int index = Array.FindIndex(definitions, definition => import.Name is null && definition.Ordinal == import.Ordinal &&
                 string.Equals(definition.Module, import.Module, StringComparison.OrdinalIgnoreCase));

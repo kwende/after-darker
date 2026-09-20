@@ -8,6 +8,12 @@ namespace AfterDarker.Runtime;
 /// <remarks>Offsets refer only to the hashed artifact in docs/research/spiral-gyra-execution.md.</remarks>
 internal sealed class SpiralGyraProfile : ModuleProfile<SpiralGyraState>
 {
+    /// <summary>The existing true-color path draws guest COLORREFs directly rather than realizing an indexed HSV palette.</summary>
+    public override void ValidateBlankResult(ushort result)
+    {
+        if (result != AfterDarkHostContract.HueSaturationPaletteRequest)
+            throw new NotSupportedException($"Spiral Gyra returned unexpected BLANK result {result}.");
+    }
     public override string Name => "Spiral Gyra";
     public override string Sha256 => SupportedModules.SpiralGyraSha256;
     public override int ServiceExitLimit => 768;
