@@ -4,6 +4,9 @@ Start in [Win16LocalHeap](../src/AfterDarker.Core/Win16/Win16LocalHeap.cs).
 Its `Allocate`, `Lock`, `Unlock`, and `Free` methods contain the mechanism.
 The [runnable lesson](../src/AfterDarker.Tutorials/Lessons/Tutorial10LocalHeap.cs)
 lets x86 exercise those same implementations through the real import gateway.
+Original [Lasers](research/lasers-execution.md) and [Magic](research/magic-execution.md)
+use this same allocator for ray and line histories; their animation code writes
+the payloads directly, without module-specific logic in the heap.
 
 ```powershell
 dotnet run --project src/AfterDarker.Tutorials --no-launch-profile -- 10

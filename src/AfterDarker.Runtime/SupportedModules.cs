@@ -6,6 +6,8 @@ namespace AfterDarker.Runtime;
 /// <summary>Verified artifact identities, not file names or a claim of general AD compatibility.</summary>
 public static class SupportedModules
 {
+    /// <summary>Exact Magic artifact verified with a 100-line trail and horizontal mirroring.</summary>
+    public const string MagicSha256 = "777DFD7BEA0084E3947EFCD2E4E3E3ACD9BA22445F51D6AB8C19EFC7ABCC2763";
     /// <summary>Exact Lasers artifact verified with three rays and its movable local-heap history.</summary>
     public const string LasersSha256 = "8B800EABA0E1F121EF52947BB116FC6254724CEEB5E460315DF0F21E347AC430";
     /// <summary>Exact known Spiral Gyra artifact; names and extensions are insufficient evidence.</summary>
@@ -22,7 +24,8 @@ public static class SupportedModules
         RainstormSha256 => "Rainstorm",
         FadeAwaySha256 => "Fade Away",
         LasersSha256 => "Lasers",
-        _ => throw new NotSupportedException("This AD file is not supported yet. Supported modules: the analyzed Mondrian, Spiral Gyra, Rainstorm, Fade Away and Lasers versions. File names alone do not identify a supported version.")
+        MagicSha256 => "Magic",
+        _ => throw new NotSupportedException("This AD file is not supported yet. Supported modules: the analyzed Mondrian, Spiral Gyra, Rainstorm, Fade Away, Lasers and Magic versions. File names alone do not identify a supported version.")
     };
     /// <summary>Construct the selected profile and shared session without yet executing guest code.</summary>
     public static IAnimationSession Open(byte[] file, PlaybackOptions options, SessionTiming? timing = null,
@@ -39,6 +42,8 @@ public static class SupportedModules
                 timing: timing, diagnostics: diagnostics, output: output),
             "Lasers" => new AfterDarkSession<LasersState>(file, new LasersProfile(), options,
                 instructionLimit: 200_000, timing: timing, diagnostics: diagnostics, output: output),
+            "Magic" => new AfterDarkSession<MagicState>(file, new MagicProfile(), options,
+                timing: timing, diagnostics: diagnostics, output: output),
             _ => throw new InvalidOperationException()
         };
 }
