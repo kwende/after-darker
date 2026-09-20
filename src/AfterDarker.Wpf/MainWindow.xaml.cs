@@ -59,7 +59,7 @@ public partial class MainWindow : Window
 
     private async void Browse_Click(object sender, RoutedEventArgs e)
     {
-        var dialog = new OpenFileDialog { Filter = "After Dark module (*.ad)|*.ad|All files (*.*)|*.*", Title = "Load AD file — Mondrian, Spiral Gyra, Rainstorm, Fade Away or Lasers" };
+        var dialog = new OpenFileDialog { Filter = "After Dark module (*.ad)|*.ad|All files (*.*)|*.*", Title = "Load AD file — Mondrian, Spiral Gyra, Rainstorm, Fade Away, Lasers or Magic" };
         if (dialog.ShowDialog(this) != true) return;
         try { await LoadModuleAsync(dialog.FileName); }
         catch (Exception error) { MessageBox.Show(this, error.Message, "Unable to load AD file", MessageBoxButton.OK, MessageBoxImage.Information); }
@@ -114,6 +114,7 @@ public partial class MainWindow : Window
             "Rainstorm" => "Rainstorm uses fixed strength, lightning, drop count and wind settings; it has no speed control.",
             "Fade Away" => "Fade Away uses its Radar effect on a white starting image; it has no speed control.",
             "Lasers" => "Lasers uses three rays, a fixed trail width and fixed color-change speed in this version.",
+            "Magic" => "Magic uses a 100-line trail, horizontal mirroring, and fixed line/color speeds in this version.",
             _ => "Original module speed; applies on Run"
         };
         Title = $"After Darker — {name}";
@@ -185,7 +186,7 @@ public partial class MainWindow : Window
     private void SetBusy(bool busy)
     {
         ModulePath.IsEnabled = BrowseButton.IsEnabled = RunButton.IsEnabled = !busy && !loading && !closing;
-        Speed.IsEnabled = !busy && !loading && !closing && selectedModuleName is not ("Rainstorm" or "Fade Away" or "Lasers");
+        Speed.IsEnabled = !busy && !loading && !closing && selectedModuleName is not ("Rainstorm" or "Fade Away" or "Lasers" or "Magic");
         StopButton.IsEnabled = busy;
     }
     private async void OnClosing(object? sender, CancelEventArgs e)

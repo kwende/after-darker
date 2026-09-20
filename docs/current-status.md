@@ -22,6 +22,8 @@ white pixels and remaining black after the fade completes.
 Lasers is the fifth: its original three-ray drawing owns a movable allocation
 in the new shared local heap. Tutorial 10 exposes allocation, locking, guest
 writes, freeing and reuse in a small source-authored program.
+Magic is the sixth: its original 100-line history and horizontal mirroring reuse
+that heap and the existing pen/line APIs without new Win16 implementations.
 This remains narrow compatibility support, not general Win16 emulation.
 `AfterDarker.Core` contains two extracted binary-layout helpers, a Windows NE
 metadata reader, a CPU-independent load plan, and a separate After Dark
@@ -30,6 +32,16 @@ ten educational console lessons (06 needs the optional Watcom fixture;
 08/09 need the analyzed local Mondrian file).
 
 ## Established evidence
+
+- **Magic playback through shared services:** one 1,520-byte movable allocation
+  holds the original line history. Six private tests pass, including 1,700 draws
+  through ring, motion and color wraps, independent guests and clean shutdown.
+  All **312 combined tests** and **235 public tests** pass. Actual WPF acceptance
+  passed Magic alone and switching both ways with Lasers, with exact RGB
+  readback, restart and close while playing; no allocations, locks or pens
+  remained. Fixed controls select 100 lines, horizontal mirroring, line speed
+  100 and color speed 85. No new Win16 APIs were required. See
+  [Magic's evidence and proof limits](research/magic-execution.md).
 
 - **Shared local heap and Lasers:** `Win16LocalHeap` manages fixed/movable
   allocations, zero-init, lock counts, reuse/coalescing and bounded growth in
@@ -41,7 +53,7 @@ ten educational console lessons (06 needs the optional Watcom fixture;
   Actual standalone WPF and switching checks pass with clean shutdown. See
   [the heap guide](win16-local-heap.md) and [Lasers proof and limits](research/lasers-execution.md).
   No Windows arena reconstruction, compaction, global allocator or indexed
-  palette implementation is claimed. Magic, String Theory and Zot! remain future work.
+  palette implementation is claimed. String Theory and Zot! remain future work.
 
 - **Fade Away Radar playback:** a fresh session starts white, then the original
   code erases it in coarse and fine sweeps and finishes with a black fill.
@@ -281,8 +293,10 @@ ten educational console lessons (06 needs the optional Watcom fixture;
   ABI layouts remain unproven. Two successful host exits/resumes do not establish
   compatibility with arbitrary Win16 guest code.
 - Supported application playback is limited to the analyzed Mondrian, Spiral
-  Gyra, Rainstorm, Fade Away and Lasers artifacts, with Radar as the only Fade Away style
-  and Lasers fixed to three rays. Lasers requires dimensions of at least 141x141.
+  Gyra, Rainstorm, Fade Away, Lasers and Magic artifacts, with Radar as the only
+  Fade Away style, Lasers fixed to three rays and Magic fixed to 100 lines with
+  horizontal mirroring. Lasers requires dimensions of at least 141x141; Magic
+  requires at least 3x3 to avoid zero divisors in its coordinate calculation.
   The whole-folder research probes supply narrower
   observations for other modules without making them supported application
   playback. Other revisions and historical visual/pacing fidelity remain unproven.
@@ -309,12 +323,13 @@ explicitly.
 
 ## Next planning point
 
-The local-heap/Lasers increment is on `codex/local-heap-lasers`, created from
-clean main after Fade Away merged (`4b0fc18`). The owner selected shared heap
-plus Lasers first from row 3 of the [sweep](research/module-readiness-sweep.md).
-Stop here for review before Magic, String Theory or Zot!. Changes remain local
-and uncommitted; publication was not requested. The heap guide and Tutorial 10
-make allocation ownership and handle indirection prominent.
+The Magic increment is on `codex/magic-player`, created from clean reviewed
+main after Lasers merged (`7427aaf`, PR #16). Magic reuses the heap introduced
+for Lasers, following row 3 of the [sweep](research/module-readiness-sweep.md).
+Stop here for review before String Theory or Zot!. Changes remain local and
+uncommitted; publication was not requested. The heap guide and Tutorial 10
+still provide the focused allocation lesson; Magic's profile and execution
+notes show that mechanism reused by another original module.
 Other Fade Away styles, Rainstorm's intermediate lightning presentation, and
 historical pixel/timing comparisons remain explicit limitations.
 
@@ -327,6 +342,31 @@ Tutorial 04 implements the narrow host trap; the broader issue is not complete.
 See [the tutorial guide](tutorials.md).
 
 ## Session log
+
+### 2026-09-19 - Magic reuses the heap and line renderer
+
+- Created `codex/magic-player` from reviewed main `7427aaf`. Implemented Magic
+  only, preserving the owner's one-module-at-a-time approach.
+- Traced the original settings, history allocation and drawing loop. Supplied
+  explicit controls `60/100/85/1`, producing 100 history slots, one update per
+  call, a 76-update color interval and horizontal mirroring. The generic WPF
+  speed selector is disabled for these fixed controls.
+- INITIALIZE allocates 1,520 zeroed movable bytes; observed handle `0002` resolves
+  to `0028:0424`. Existing bounded heap growth admits this request beyond the
+  initial 1,024 bytes. No shared API, ABI, stack or rendering changes were needed.
+- Each update erases two old lines, draws two new lines and overwrites one
+  ten-byte history record. Original code controls ring wrap, endpoint motion
+  and the color cycle. CLOSE clears black and frees the allocation.
+- Six private tests verify 1,700 draws (1,507,579 instructions and 6,800 LineTo
+  calls), every history/motion/color counter, independent deterministic guests,
+  dimensions and cleanup. All 312 combined tests and 235 public cases pass.
+- Actual WPF Magic-only, Magic-to-Lasers and Lasers-to-Magic acceptance passed,
+  with bitmap readback, restart and close while playing. Inspected the MAGIC
+  window capture; no allocations, locks or pens remained after cleanup.
+- Added the typed profile/state and [execution notes](research/magic-execution.md).
+  Fixed settings, direct RGB, host pacing and absence of historical fidelity
+  comparisons remain explicit boundaries. String Theory/Zot! were not executed
+  or enabled. Private modules, disassembly, test reports and captures stay ignored.
 
 ### 2026-09-19 - shared local heap and original Lasers
 

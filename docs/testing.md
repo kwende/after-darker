@@ -52,7 +52,9 @@ is verified; an interactive Test Explorer session remains a manual check.
 | LocalFadeAway (opt-in) | 7 | Original Radar completion at five sizes, white restart, deterministic guests, idle/BLANK after completion, cleanup and artifact rejection |
 | **With compiler + first four modules** | **300** | Requires the compiler and the four earlier private modules |
 | LocalLasers (opt-in) | 6 | Local-heap growth, 1,100 draws including regeneration, independent guests, dimensions, cleanup and artifact rejection |
-| **With all six opt-ins** | **306** | Requires the compiler and all five supported private modules |
+| **With compiler + first five modules** | **306** | Requires the compiler and the five earlier private modules |
+| LocalMagic (opt-in) | 6 | 1,700 draws through history/motion/color wraps, independent deterministic guests, dimension bounds, heap/pen cleanup and artifact rejection |
+| **With all seven opt-ins** | **312** | Requires the compiler and all six supported private modules |
 
 Conformance tests use the native engine and a test-only Windows GDI raster oracle; they are not isolated unit tests or a
 mock of Unicorn. Categories make the distinction explicit. All fixtures are
@@ -310,8 +312,25 @@ dotnet test -p:TestLocalLasers=true --filter TestCategory=LocalLasers
 ```
 
 `TestLocalLasers=true` compiles six private integration cases. The module is
-read in place, never copied into test output. The full 306-case run uses
+read in place, never copied into test output. The 306-case run through Lasers uses
 `BuildWin16Fixture`, `TestLocalMondrian`, `TestLocalSpiralGyra`,
 `TestLocalRainstorm`, `TestLocalFadeAway`, and `TestLocalLasers`, all set to true,
 with the corresponding `AFTER_DARKER_*` environment variables set as shown
 above and in the earlier sections. The public suite alone has 235 cases.
+
+## Optional Magic tests
+
+```powershell
+$env:AFTER_DARKER_MAGIC = (Resolve-Path ad/Magic.ad).Path
+dotnet test -p:TestLocalMagic=true --filter TestCategory=LocalMagic --report-trx
+```
+
+`TestLocalMagic=true` compiles six private cases; the module is read in place.
+They verify the guest's history index, velocity-change counter and color index
+on every one of 1,700 draws, plus independent guests, three dimension cases
+and clean shutdown even without drawing. See [the evidence](research/magic-execution.md).
+No new public API behavior is introduced; the existing public heap and
+pen/gateway conformance tests cover the reused services.
+
+For the full **312-case** regression, add `TestLocalMagic=true` to the six
+opt-ins above and set `AFTER_DARKER_MAGIC` alongside their environment variables.

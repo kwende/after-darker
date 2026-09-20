@@ -49,12 +49,15 @@ entire desktop.
 
 Set **AfterDarker.Wpf** as the startup project and press F5. It finds your local
 `ad/Mondrian.ad` automatically. Use **File > Load AD file…** to play
-**Mondrian**, **Spiral Gyra**, **Rainstorm**, **Fade Away**, or **Lasers**, or switch between them while running. See the [WPF player guide](docs/wpf-player.md)
+**Mondrian**, **Spiral Gyra**, **Rainstorm**, **Fade Away**, **Lasers**, or **Magic**, or switch between them while running. See the [WPF player guide](docs/wpf-player.md)
 for controls, command-line launch and the original-code execution boundary.
 
 ## Status
 
-The repository now runs original Mondrian, Spiral Gyra, Rainstorm, Fade Away and Lasers in a live WPF window.
+The repository now runs original Mondrian, Spiral Gyra, Rainstorm, Fade Away, Lasers and Magic in a live WPF window.
+Magic reuses the shared heap and pen/line services for a 100-line trail with
+horizontal mirroring; it adds no new Windows APIs. See its
+[execution evidence and fixed settings](docs/research/magic-execution.md).
 Lasers adds a shared Win16 local heap for its original ray history. Start with
 the [heap ownership and handle walkthrough](docs/win16-local-heap.md), or run
 **Tutorial 10 - local heap and guest writes** for a self-contained F5 example.

@@ -12,8 +12,10 @@ using the requested white starting image and tests through original completion.
 Other styles in this sweep are still research observations, not selectable modes.
 
 [Lasers is now integrated](lasers-execution.md) with the shared bounded local
-heap. The owner chose to complete Lasers first from row 3. Magic, String Theory
-and Zot! still require their own execution and integration work; their old
+heap. The owner chose to complete Lasers first from row 3.
+[Magic now runs through the same heap and GDI services](magic-execution.md),
+with a tested 100-line history and horizontal mirroring. String Theory and
+Zot! still require their own execution and integration work; the old
 first-blocker observations below are retained as the historical baseline.
 
 **Rainstorm and selected Fade Away modes are the closest additions.** Four

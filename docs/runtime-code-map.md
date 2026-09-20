@@ -24,6 +24,7 @@ larger boundaries and proof requirements, see [architecture](architecture.md).
 | Which heap does a local handle belong to? | [Win16CallContext](../src/AfterDarker.Core/Win16/Win16CallContext.cs) carries caller DS from the gateway; `Win16LocalHeap.RequireOwner` verifies it |
 | Where can I inspect live allocations? | [LocalHeapSnapshot](../src/AfterDarker.Core/Win16/LocalHeapSnapshot.cs), exposed by session and playback results |
 | What makes Lasers different? | [LasersProfile](../src/AfterDarker.Runtime/Modules/LasersProfile.cs), [LasersState](../src/AfterDarker.Runtime/Modules/LasersState.cs) and [execution evidence](research/lasers-execution.md) |
+| Where does Magic supply its settings and expose its circular line history? | [MagicProfile](../src/AfterDarker.Runtime/Modules/MagicProfile.cs), [MagicState](../src/AfterDarker.Runtime/Modules/MagicState.cs) and [execution evidence](research/magic-execution.md); the guest updates that history itself |
 | Who runs and resumes machine code? | [SegmentedGuest.RunUntil](../src/AfterDarker.Runtime/SegmentedGuest.cs) |
 | What do the register snapshots mean? | [SegmentedGuest diagnostics](../src/AfterDarker.Runtime/SegmentedGuest.Diagnostics.cs) |
 | How do we make the initial call into the DLL? | [GuestCallerBuilder](../src/AfterDarker.Runtime/Calls/GuestCallerBuilder.cs) |

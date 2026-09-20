@@ -280,13 +280,15 @@ an explicit `Win16CallContext` input, separate from the Pascal arguments.
 Fixed handles are near offsets; movable handles resolve through per-guest host
 metadata. Ordinary x86 writes touch the backing memory directly through Unicorn.
 
-Lasers opts into reserving a full 64-KiB automatic data segment before execution,
+Lasers and Magic opt into reserving a full 64-KiB automatic data segment before execution,
 allowing allocator growth beyond its initial 1-KiB heap without changing selectors.
 The other current profiles retain their prior reservation-sized mappings.
 Free coalesces ranges; guest disposal releases native backing. This is a bounded
 host allocator with Win16 API behavior, not reconstruction of Windows arena
 headers, compaction, callbacks, or segment resizing. See the
 [ownership and heap guide](win16-local-heap.md) and [Lasers evidence](research/lasers-execution.md).
+Magic's 1,520-byte line history reuses that allocator without a service change;
+see [Magic's execution evidence](research/magic-execution.md).
 
 ### 3.6 Win16 modules
 

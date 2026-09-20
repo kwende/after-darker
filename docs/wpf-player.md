@@ -2,7 +2,7 @@
 
 Open `AfterDarker.sln`, set **AfterDarker.Wpf** as the startup project, and press
 F5. With the analyzed `ad/Mondrian.ad` present, the window starts automatically.
-Choose **File > Load AD file…** to select **Mondrian**, **Spiral Gyra**, **Rainstorm**, **Fade Away**, or **Lasers**. Loading
+Choose **File > Load AD file…** to select **Mondrian**, **Spiral Gyra**, **Rainstorm**, **Fade Away**, **Lasers**, or **Magic**. Loading
 starts playback automatically; the menu can also switch modules while playing.
 The previous guest shuts down before the new one starts. Unsupported files or
 versions are rejected by their content hash before stopping an active guest.
@@ -25,6 +25,12 @@ and Clear Screen First enabled. Its speed selector is disabled in this version.
 The original code allocates and writes its ray history through the shared
 [Win16 local heap](win16-local-heap.md); see [execution evidence](research/lasers-execution.md).
 
+Magic uses a 100-line history, horizontal mirroring, line-speed control 100 and
+color-speed control 85. Its generic speed selector is disabled. The original
+code manages a circular line history through the same heap and draws/erases
+the mirrored lines through the existing pen services. See
+[Magic's execution evidence](research/magic-execution.md).
+
 From the repository root:
 
 ```powershell
@@ -33,10 +39,10 @@ dotnet run --project src/AfterDarker.Wpf --no-launch-profile
 dotnet run --project src/AfterDarker.Wpf --no-launch-profile -- C:\path\Mondrian.ad
 ```
 
-All five supported modules execute their original, hash-checked Win16 code through
+All six supported modules execute their original, hash-checked Win16 code through
 `AfterDarkSession<TState>`. Mondrian's tutorial facade uses that same runtime.
 Spiral adds five pen/line imports; see the [execution notes](research/spiral-gyra-execution.md).
-The file picker accepts AD files generally, but only the five analyzed versions
+The file picker accepts AD files generally, but only the six analyzed versions
 are executable today. A renamed supported file works; an unknown file named
 Mondrian.ad does not bypass validation.
 
@@ -104,7 +110,7 @@ halfway through would leave its stack unsuitable for another CALL FAR to CLOSE.
 If execution or cleanup fails, no further guest calls are attempted, and the
 native engine is still disposed. The UI shows the symbolic failure. Cleanup
 ignores the cancelled pacing token but retains bounded native execution: 50,000
-instructions per Mondrian/Fade Away invocation or 200,000 for Spiral Gyra/Rainstorm/Lasers, one-second
+instructions per Mondrian/Fade Away/Magic invocation or 200,000 for Spiral Gyra/Rainstorm/Lasers, one-second
 native slices and a five-second
 cumulative native execution budget. These are cooperative runtime safeguards,
 not an out-of-process watchdog for a defective native library.
@@ -122,7 +128,9 @@ in the 300-draw verification; its stock black pen is host-owned.
 Lasers also allows 1,024 exits for trail cleanup during periodic regeneration
 and CLOSE. Shutdown verifies that its local allocation and locks were released;
 native memory is still disposed if the guest faults before it can clean up.
-With the current system record, CLOSE optionally clears then inverts the saved
+Magic fits the default 128-service budget, releases its line history at CLOSE
+and retains no owned pens between drawing calls.
+For Mondrian, with the current system record, CLOSE optionally clears then inverts the saved
 rectangles; it does not necessarily leave black pixels. The UI retains the last
 presented frame after Stop. Console lessons still end at their original boundary
 and dispose without running CLOSE/WEP.
