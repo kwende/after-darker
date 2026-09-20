@@ -1,0 +1,2200 @@
+{
+  "schema_version": 1,
+  "scope": "Post-heap reassessment: static census of all 29 artifacts, fresh bounded first-failure probes for 21 unsupported artifacts; no new playback support.",
+  "registry_sha256": "14d5d3353add2dad3ae90abb80ef88b3b8579540eaadc727e672c76347123dac",
+  "census_sha256": "df12118f54212f914ce84d87391e5ba75af20cc7d2ebcbebcf7b86a8dacdc2bb",
+  "files": [
+    {
+      "file": "Aquatic Realm.ad.dll",
+      "sha256": "91c06f1a7f8283d5811f63e964cbf6bbc6b2beffc3bbcd897023cdda94a34440",
+      "segment_count": 4,
+      "total_imports": 81,
+      "supported_imports": [
+        "GDI!SelectObject",
+        "GDI!DeleteObject",
+        "GDI!GetStockObject",
+        "KERNEL!GetDOSEnvironment",
+        "KERNEL!GlobalLock",
+        "KERNEL!GlobalUnlock",
+        "KERNEL!LocalInit",
+        "USER!GetTickCount",
+        "USER!SetRect",
+        "USER!FillRect"
+      ],
+      "known_but_disabled_imports": [
+        "GDI!SetBkColor",
+        "GDI!SetBkMode",
+        "GDI!TextOut",
+        "GDI!SetTextAlign",
+        "GDI!SetTextColor"
+      ],
+      "unbound_imports": [
+        "AD_RSRC!#10",
+        "AD_RSRC!#114",
+        "AD_RSRC!#115",
+        "AD_RSRC!#116",
+        "AD_RSRC!#117",
+        "AD_RSRC!#118",
+        "AD_RSRC!#119",
+        "AD_RSRC!#120",
+        "AD_RSRC!#121",
+        "AD_RSRC!#13",
+        "AD_RSRC!#132",
+        "AD_RSRC!#138",
+        "AD_RSRC!#139",
+        "AD_RSRC!#140",
+        "AD_RSRC!#141",
+        "AD_RSRC!#144",
+        "AD_RSRC!#15",
+        "AD_RSRC!#24",
+        "AD_RSRC!#30",
+        "AD_RSRC!#31",
+        "AD_RSRC!#34",
+        "AD_RSRC!#35",
+        "AD_RSRC!#4",
+        "AD_RSRC!#40",
+        "AD_RSRC!#5",
+        "AD_RSRC!#56",
+        "AD_RSRC!#7",
+        "AD_RSRC!#73",
+        "AD_RSRC!#74",
+        "AD_RSRC!#78",
+        "AD_RSRC!#79",
+        "AD_RSRC!#80",
+        "AD_RSRC!#87",
+        "AD_RSRC!#9",
+        "AD_SND!ADWCLOSESOUND",
+        "AD_SND!ADWFREESOUND",
+        "AD_SND!ADWLOADSOUNDRESOURCE",
+        "AD_SND!ADWOPENSOUND",
+        "AD_SND!ADWPLAYSOUND",
+        "AD_SND!ADWSETSOUNDMODE",
+        "AD_SND!ADWSOUNDASYNCCAP",
+        "GDI!BitBlt",
+        "GDI!CreateBitmap",
+        "GDI!CreateCompatibleBitmap",
+        "GDI!CreateSolidBrush",
+        "GDI!DeleteDC",
+        "GDI!GetDeviceCaps",
+        "GDI!GetObject",
+        "GDI!GetTextExtent",
+        "KERNEL!GetWinFlags",
+        "KERNEL!GlobalAlloc",
+        "KERNEL!GlobalReAlloc",
+        "KERNEL!GlobalFree",
+        "KERNEL!GlobalHandle",
+        "KERNEL!LockSegment",
+        "KERNEL!UnlockSegment",
+        "KERNEL!GlobalCompact",
+        "KERNEL!GetModuleFileName",
+        "KERNEL!FreeResource",
+        "KERNEL!lstrcpy",
+        "KERNEL!LoadLibrary",
+        "USER!MessageBox",
+        "USER!SelectPalette",
+        "USER!RealizePalette",
+        "USER!IntersectRect",
+        "WIN87EM!_fpMath"
+      ],
+      "helper_libraries": [
+        "AD_RSRC",
+        "WIN87EM",
+        "AD_SND"
+      ],
+      "os_fixup_records": 0,
+      "bounded_probe": {
+        "loader_passed": false,
+        "completed_phases": [],
+        "stopped_during": "loader",
+        "diagnostic": "S1:0166: only non-additive internal/imported selector, offset16, and far16:16 relocations are implemented.",
+        "last_completed_observation": null,
+        "control_kinds": [
+          2,
+          2,
+          5,
+          0
+        ],
+        "resource_type_counts": {
+          "15": 1,
+          "1000": 4,
+          "2000": 3,
+          "3000": 1,
+          "28676": 1,
+          "28677": 1,
+          "28678": 193
+        }
+      }
+    },
+    {
+      "file": "Can of Worms.ad",
+      "sha256": "1fd824fcda5ed65d3903e5158b8f20a2f2c2614e5e64ea48e0eb14b81d27d72e",
+      "segment_count": 5,
+      "total_imports": 36,
+      "supported_imports": [
+        "GDI!SelectObject",
+        "GDI!DeleteObject",
+        "GDI!GetStockObject",
+        "KERNEL!GetDOSEnvironment",
+        "KERNEL!GlobalLock",
+        "KERNEL!GlobalUnlock",
+        "KERNEL!LocalInit",
+        "USER!GetTickCount",
+        "USER!GetCurrentTime",
+        "USER!SetRect"
+      ],
+      "known_but_disabled_imports": [
+        "GDI!SetBkColor",
+        "GDI!SetBkMode",
+        "GDI!Ellipse",
+        "GDI!PatBlt",
+        "GDI!TextOut",
+        "GDI!SetTextAlign",
+        "GDI!SetTextColor",
+        "KERNEL!FatalExit",
+        "KERNEL!OutputDebugString",
+        "KERNEL!FatalAppExit"
+      ],
+      "unbound_imports": [
+        "AD_SND!ADWCLOSESOUND",
+        "AD_SND!ADWFREESOUND",
+        "AD_SND!ADWLOADSOUNDRESOURCE",
+        "AD_SND!ADWOPENSOUND",
+        "AD_SND!ADWPLAYSOUND",
+        "AD_SND!ADWSETSOUNDMODE",
+        "AD_SND!ADWSOUNDASYNCCAP",
+        "GDI!BitBlt",
+        "GDI!CreateCompatibleBitmap",
+        "GDI!CreateCompatibleDC",
+        "GDI!CreateSolidBrush",
+        "GDI!DeleteDC",
+        "USER!EqualRect",
+        "USER!IsRectEmpty",
+        "USER!OffsetRect",
+        "USER!IntersectRect"
+      ],
+      "helper_libraries": [
+        "AD_SND"
+      ],
+      "os_fixup_records": 0,
+      "bounded_probe": {
+        "loader_passed": true,
+        "completed_phases": [
+          "startup",
+          "PREINITIALIZE"
+        ],
+        "stopped_during": "INITIALIZE",
+        "diagnostic": "INITIALIZE: USER!OffsetRect reached at 0038:02B0; service is not enabled.",
+        "last_completed_observation": {
+          "Name": "PREINITIALIZE",
+          "Ax": 0,
+          "Locks": 0,
+          "Instructions": 132,
+          "Revision": 0,
+          "Pens": 0,
+          "LocalHeap": {
+            "Selector": 40,
+            "InitialBytes": 4096,
+            "CapacityBytes": 60986,
+            "EnabledBytes": 4096,
+            "FreeBytes": 4094,
+            "LargestFreeBlock": 4094,
+            "Allocations": [],
+            "OutstandingLocks": 0
+          }
+        },
+        "control_kinds": [
+          1,
+          2,
+          2,
+          0
+        ],
+        "resource_type_counts": {
+          "1000": 4,
+          "2000": 3,
+          "3000": 3,
+          "15": 1
+        }
+      }
+    },
+    {
+      "file": "Clocks.ad",
+      "sha256": "d3d85ef3ae2a510021086d7ed160aaf38f7b90209c0296bc83e1956f90f3a86f",
+      "segment_count": 5,
+      "total_imports": 88,
+      "supported_imports": [
+        "GDI!LineTo",
+        "GDI!MoveTo",
+        "GDI!SelectObject",
+        "GDI!CreatePen",
+        "GDI!DeleteObject",
+        "GDI!GetStockObject",
+        "KERNEL!GetDOSEnvironment",
+        "KERNEL!GlobalLock",
+        "KERNEL!GlobalUnlock",
+        "KERNEL!LocalInit",
+        "USER!GetCurrentTime",
+        "USER!SetRect",
+        "USER!FillRect"
+      ],
+      "known_but_disabled_imports": [
+        "GDI!SetBkColor",
+        "GDI!SetBkMode",
+        "GDI!Ellipse",
+        "GDI!TextOut",
+        "GDI!SetTextAlign",
+        "GDI!SetTextColor"
+      ],
+      "unbound_imports": [
+        "AD_RSRC!#10",
+        "AD_RSRC!#11",
+        "AD_RSRC!#114",
+        "AD_RSRC!#115",
+        "AD_RSRC!#116",
+        "AD_RSRC!#117",
+        "AD_RSRC!#118",
+        "AD_RSRC!#119",
+        "AD_RSRC!#120",
+        "AD_RSRC!#121",
+        "AD_RSRC!#13",
+        "AD_RSRC!#132",
+        "AD_RSRC!#138",
+        "AD_RSRC!#139",
+        "AD_RSRC!#14",
+        "AD_RSRC!#140",
+        "AD_RSRC!#144",
+        "AD_RSRC!#15",
+        "AD_RSRC!#17",
+        "AD_RSRC!#18",
+        "AD_RSRC!#22",
+        "AD_RSRC!#23",
+        "AD_RSRC!#30",
+        "AD_RSRC!#31",
+        "AD_RSRC!#34",
+        "AD_RSRC!#35",
+        "AD_RSRC!#4",
+        "AD_RSRC!#40",
+        "AD_RSRC!#5",
+        "AD_RSRC!#56",
+        "AD_RSRC!#7",
+        "AD_RSRC!#73",
+        "AD_RSRC!#74",
+        "AD_RSRC!#75",
+        "AD_RSRC!#78",
+        "AD_RSRC!#79",
+        "AD_RSRC!#80",
+        "AD_RSRC!#87",
+        "AD_RSRC!#9",
+        "AD_SND!ADWCLOSESOUND",
+        "AD_SND!ADWFREESOUND",
+        "AD_SND!ADWGETSOUNDINFO",
+        "AD_SND!ADWLOADSOUNDFILE",
+        "AD_SND!ADWLOADSOUNDRESOURCE",
+        "AD_SND!ADWOPENSOUND",
+        "AD_SND!ADWPLAYSOUND",
+        "AD_SND!ADWSETSOUNDMODE",
+        "AD_SND!ADWSOUNDASYNCCAP",
+        "GDI!BitBlt",
+        "GDI!CreateCompatibleBitmap",
+        "GDI!CreateSolidBrush",
+        "GDI!DeleteDC",
+        "GDI!GetDeviceCaps",
+        "GDI!GetObject",
+        "KERNEL!GetPrivateProfileString",
+        "KERNEL!GetWinFlags",
+        "KERNEL!GlobalAlloc",
+        "KERNEL!GlobalReAlloc",
+        "KERNEL!GlobalFree",
+        "KERNEL!GlobalHandle",
+        "KERNEL!UnlockSegment",
+        "KERNEL!GetModuleFileName",
+        "KERNEL!FreeResource",
+        "KERNEL!lstrcpy",
+        "KERNEL!LoadLibrary",
+        "USER!MessageBox",
+        "USER!SelectPalette",
+        "USER!RealizePalette",
+        "WIN87EM!_fpMath"
+      ],
+      "helper_libraries": [
+        "AD_RSRC",
+        "WIN87EM",
+        "AD_SND"
+      ],
+      "os_fixup_records": 0,
+      "bounded_probe": {
+        "loader_passed": false,
+        "completed_phases": [],
+        "stopped_during": "loader",
+        "diagnostic": "S1:0154: only non-additive internal/imported selector, offset16, and far16:16 relocations are implemented.",
+        "last_completed_observation": null,
+        "control_kinds": [
+          3,
+          3,
+          1,
+          5
+        ],
+        "resource_type_counts": {
+          "15": 1,
+          "1000": 4,
+          "2000": 3,
+          "28675": 2,
+          "28676": 1,
+          "28677": 14,
+          "3000": 1
+        }
+      }
+    },
+    {
+      "file": "Down the Drain.ad",
+      "sha256": "63891148da31989b27352a8c9abc2788e776fc378e858e63340bc6b7cd79237b",
+      "segment_count": 5,
+      "total_imports": 28,
+      "supported_imports": [
+        "GDI!SelectObject",
+        "GDI!DeleteObject",
+        "GDI!GetStockObject",
+        "KERNEL!GetDOSEnvironment",
+        "KERNEL!GlobalLock",
+        "KERNEL!GlobalUnlock",
+        "KERNEL!LocalInit",
+        "USER!SetRect",
+        "USER!FillRect"
+      ],
+      "known_but_disabled_imports": [
+        "GDI!SetBkColor",
+        "GDI!SetBkMode",
+        "GDI!Ellipse",
+        "GDI!TextOut",
+        "GDI!SetTextAlign",
+        "GDI!SetTextColor",
+        "KERNEL!FatalExit",
+        "KERNEL!OutputDebugString",
+        "KERNEL!FatalAppExit"
+      ],
+      "unbound_imports": [
+        "GDI!BitBlt",
+        "GDI!FillRgn",
+        "GDI!CombineRgn",
+        "GDI!CreateCompatibleBitmap",
+        "GDI!CreateCompatibleDC",
+        "GDI!CreateRectRgn",
+        "GDI!CreateSolidBrush",
+        "GDI!DeleteDC",
+        "USER!IntersectRect",
+        "WIN87EM!_fpMath"
+      ],
+      "helper_libraries": [
+        "WIN87EM"
+      ],
+      "os_fixup_records": 283,
+      "bounded_probe": {
+        "loader_passed": false,
+        "completed_phases": [],
+        "stopped_during": "loader",
+        "diagnostic": "S2:039A: only non-additive internal/imported selector, offset16, and far16:16 relocations are implemented.",
+        "last_completed_observation": null,
+        "control_kinds": [
+          1,
+          1,
+          5,
+          5
+        ],
+        "resource_type_counts": {
+          "1000": 4,
+          "2000": 3
+        }
+      }
+    },
+    {
+      "file": "Fade Away.ad",
+      "sha256": "d224af9a0ea75f3b4c24a837f9743b13851d3acb03be3607e0c9094df6e28b21",
+      "segment_count": 5,
+      "total_imports": 23,
+      "supported_imports": [
+        "GDI!LineTo",
+        "GDI!MoveTo",
+        "GDI!SelectObject",
+        "GDI!CreatePen",
+        "GDI!DeleteObject",
+        "GDI!GetStockObject",
+        "KERNEL!GetDOSEnvironment",
+        "KERNEL!GlobalLock",
+        "KERNEL!GlobalUnlock",
+        "KERNEL!LocalInit",
+        "USER!SetRect",
+        "USER!FillRect"
+      ],
+      "known_but_disabled_imports": [
+        "GDI!SetBkColor",
+        "GDI!SetBkMode",
+        "GDI!Ellipse",
+        "GDI!Rectangle",
+        "GDI!PatBlt",
+        "GDI!TextOut",
+        "GDI!SetTextAlign",
+        "GDI!SetTextColor",
+        "KERNEL!FatalExit",
+        "KERNEL!OutputDebugString",
+        "KERNEL!FatalAppExit"
+      ],
+      "unbound_imports": [],
+      "helper_libraries": [],
+      "os_fixup_records": 0
+    },
+    {
+      "file": "GeoBounce.ad",
+      "sha256": "19b6058bb0ef1d63e5a081894837fc5e17224f11b907ef4c08697c948fed32a5",
+      "segment_count": 6,
+      "total_imports": 32,
+      "supported_imports": [
+        "GDI!SelectObject",
+        "GDI!DeleteObject",
+        "GDI!GetStockObject",
+        "KERNEL!GetDOSEnvironment",
+        "KERNEL!GlobalLock",
+        "KERNEL!GlobalUnlock",
+        "KERNEL!LocalInit",
+        "USER!GetTickCount",
+        "USER!SetRect",
+        "USER!FillRect"
+      ],
+      "known_but_disabled_imports": [
+        "GDI!SetBkColor",
+        "GDI!SetBkMode",
+        "GDI!TextOut",
+        "GDI!SetTextAlign",
+        "GDI!SetTextColor",
+        "KERNEL!FatalExit",
+        "KERNEL!OutputDebugString",
+        "KERNEL!FatalAppExit"
+      ],
+      "unbound_imports": [
+        "AD_SND!ADWCLOSESOUND",
+        "AD_SND!ADWFREESOUND",
+        "AD_SND!ADWLOADSOUNDRESOURCE",
+        "AD_SND!ADWOPENSOUND",
+        "AD_SND!ADWPLAYSOUND",
+        "AD_SND!ADWSETSOUNDMODE",
+        "AD_SND!ADWSOUNDASYNCCAP",
+        "GDI!BitBlt",
+        "GDI!Polygon",
+        "GDI!CreateCompatibleBitmap",
+        "GDI!CreateCompatibleDC",
+        "GDI!CreateSolidBrush",
+        "GDI!DeleteDC",
+        "KERNEL!lstrcpy"
+      ],
+      "helper_libraries": [
+        "AD_SND"
+      ],
+      "os_fixup_records": 0,
+      "bounded_probe": {
+        "loader_passed": true,
+        "completed_phases": [
+          "startup",
+          "PREINITIALIZE"
+        ],
+        "stopped_during": "INITIALIZE",
+        "diagnostic": "INITIALIZE: GDI!CreateCompatibleDC reached at 0040:0200; service is not enabled.",
+        "last_completed_observation": {
+          "Name": "PREINITIALIZE",
+          "Ax": 48,
+          "Locks": 0,
+          "Instructions": 131,
+          "Revision": 0,
+          "Pens": 0,
+          "LocalHeap": {
+            "Selector": 48,
+            "InitialBytes": 4096,
+            "CapacityBytes": 62402,
+            "EnabledBytes": 4096,
+            "FreeBytes": 4094,
+            "LargestFreeBlock": 4094,
+            "Allocations": [],
+            "OutstandingLocks": 0
+          }
+        },
+        "control_kinds": [
+          3,
+          2,
+          2,
+          3
+        ],
+        "resource_type_counts": {
+          "1000": 4,
+          "2000": 3,
+          "3000": 2,
+          "15": 1
+        }
+      }
+    },
+    {
+      "file": "Globe.ad",
+      "sha256": "89841c1100d97ceb306c88d35a5509402b99507941e6a5910f31ec0287f20b07",
+      "segment_count": 6,
+      "total_imports": 99,
+      "supported_imports": [
+        "GDI!SelectObject",
+        "GDI!DeleteObject",
+        "GDI!GetStockObject",
+        "KERNEL!GetDOSEnvironment",
+        "KERNEL!GlobalLock",
+        "KERNEL!GlobalUnlock",
+        "KERNEL!LocalInit",
+        "KERNEL!LocalAlloc",
+        "KERNEL!LocalFree",
+        "USER!SetRect",
+        "USER!FillRect"
+      ],
+      "known_but_disabled_imports": [
+        "GDI!SetBkColor",
+        "GDI!SetBkMode",
+        "GDI!PatBlt",
+        "GDI!TextOut",
+        "GDI!SetTextAlign",
+        "GDI!SetTextColor"
+      ],
+      "unbound_imports": [
+        "AD_RSRC!#10",
+        "AD_RSRC!#114",
+        "AD_RSRC!#115",
+        "AD_RSRC!#116",
+        "AD_RSRC!#117",
+        "AD_RSRC!#118",
+        "AD_RSRC!#119",
+        "AD_RSRC!#120",
+        "AD_RSRC!#121",
+        "AD_RSRC!#13",
+        "AD_RSRC!#132",
+        "AD_RSRC!#138",
+        "AD_RSRC!#139",
+        "AD_RSRC!#140",
+        "AD_RSRC!#144",
+        "AD_RSRC!#15",
+        "AD_RSRC!#34",
+        "AD_RSRC!#35",
+        "AD_RSRC!#4",
+        "AD_RSRC!#40",
+        "AD_RSRC!#5",
+        "AD_RSRC!#56",
+        "AD_RSRC!#7",
+        "AD_RSRC!#73",
+        "AD_RSRC!#74",
+        "AD_RSRC!#77",
+        "AD_RSRC!#78",
+        "AD_RSRC!#8",
+        "AD_RSRC!#80",
+        "AD_RSRC!#87",
+        "AD_RSRC!#9",
+        "GDI!BitBlt",
+        "GDI!CreatePalette",
+        "GDI!SetPaletteEntries",
+        "GDI!CreateDIBitmap",
+        "GDI!SetDIBitsToDevice",
+        "GDI!CreateCompatibleDC",
+        "GDI!CreateSolidBrush",
+        "GDI!DeleteDC",
+        "GDI!GetDeviceCaps",
+        "GDI!GetObject",
+        "KERNEL!__AHSHIFT",
+        "KERNEL!GetPrivateProfileString",
+        "KERNEL!WritePrivateProfileString",
+        "KERNEL!GetWinFlags",
+        "KERNEL!GlobalAlloc",
+        "KERNEL!GlobalReAlloc",
+        "KERNEL!GlobalFree",
+        "KERNEL!GlobalHandle",
+        "KERNEL!LockSegment",
+        "KERNEL!UnlockSegment",
+        "KERNEL!GetModuleFileName",
+        "KERNEL!MakeProcInstance",
+        "KERNEL!FreeProcInstance",
+        "KERNEL!FreeResource",
+        "KERNEL!OpenFile",
+        "KERNEL!_lclose",
+        "KERNEL!_lread",
+        "KERNEL!_llseek",
+        "KERNEL!_lopen",
+        "KERNEL!_lwrite",
+        "KERNEL!lstrcpy",
+        "KERNEL!lstrlen",
+        "KERNEL!LoadLibrary",
+        "USER!MessageBox",
+        "USER!DlgDirList",
+        "USER!SendDlgItemMessage",
+        "USER!SelectPalette",
+        "USER!RealizePalette",
+        "USER!GetWindowRect",
+        "USER!EnableWindow",
+        "USER!GetWindowTextLength",
+        "USER!wvsprintf",
+        "USER!IsWindow",
+        "USER!MoveWindow",
+        "USER!DialogBox",
+        "USER!EndDialog",
+        "USER!GetDlgItem",
+        "USER!SetDlgItemText",
+        "USER!GetDlgItemText",
+        "USER!DlgDirSelect",
+        "WIN87EM!_fpMath"
+      ],
+      "helper_libraries": [
+        "AD_RSRC",
+        "WIN87EM"
+      ],
+      "os_fixup_records": 297,
+      "bounded_probe": {
+        "loader_passed": false,
+        "completed_phases": [],
+        "stopped_during": "loader",
+        "diagnostic": "S1:0166: only non-additive internal/imported selector, offset16, and far16:16 relocations are implemented.",
+        "last_completed_observation": null,
+        "control_kinds": [
+          2,
+          1,
+          4,
+          0
+        ],
+        "resource_type_counts": {
+          "15": 1,
+          "5": 1,
+          "1000": 4,
+          "2000": 3
+        }
+      }
+    },
+    {
+      "file": "GraphStat.ad",
+      "sha256": "82b494dbe95e11cf486aef54af4974f56cb8468a20ef83c30fbd56e84fb2beab",
+      "segment_count": 5,
+      "total_imports": 33,
+      "supported_imports": [
+        "GDI!LineTo",
+        "GDI!MoveTo",
+        "GDI!SelectObject",
+        "GDI!CreatePen",
+        "GDI!DeleteObject",
+        "GDI!GetStockObject",
+        "KERNEL!GetDOSEnvironment",
+        "KERNEL!GlobalLock",
+        "KERNEL!GlobalUnlock",
+        "KERNEL!LocalInit",
+        "USER!GetTickCount",
+        "USER!SetRect",
+        "USER!FillRect"
+      ],
+      "known_but_disabled_imports": [
+        "GDI!SetBkColor",
+        "GDI!SetBkMode",
+        "GDI!Ellipse",
+        "GDI!TextOut",
+        "GDI!SetTextAlign",
+        "GDI!SetTextColor",
+        "KERNEL!FatalExit",
+        "KERNEL!OutputDebugString",
+        "KERNEL!FatalAppExit"
+      ],
+      "unbound_imports": [
+        "GDI!CreateFontIndirect",
+        "GDI!GetPixel",
+        "KERNEL!GetWindowsDirectory",
+        "KERNEL!GlobalAlloc",
+        "KERNEL!WinExec",
+        "KERNEL!GlobalFree",
+        "KERNEL!OpenFile",
+        "KERNEL!_lclose",
+        "KERNEL!_lread",
+        "KERNEL!_llseek",
+        "KERNEL!lstrcpy"
+      ],
+      "helper_libraries": [],
+      "os_fixup_records": 0,
+      "bounded_probe": {
+        "loader_passed": true,
+        "completed_phases": [
+          "startup",
+          "PREINITIALIZE"
+        ],
+        "stopped_during": "INITIALIZE",
+        "diagnostic": "INITIALIZE: KERNEL!GetWindowsDirectory reached at 0038:0170; service is not enabled.",
+        "last_completed_observation": {
+          "Name": "PREINITIALIZE",
+          "Ax": 40,
+          "Locks": 0,
+          "Instructions": 131,
+          "Revision": 0,
+          "Pens": 0,
+          "LocalHeap": {
+            "Selector": 40,
+            "InitialBytes": 4096,
+            "CapacityBytes": 63808,
+            "EnabledBytes": 4096,
+            "FreeBytes": 4096,
+            "LargestFreeBlock": 4096,
+            "Allocations": [],
+            "OutstandingLocks": 0
+          }
+        },
+        "control_kinds": [
+          2,
+          0,
+          4,
+          0
+        ],
+        "resource_type_counts": {
+          "1000": 4,
+          "2000": 3
+        }
+      }
+    },
+    {
+      "file": "Gravity.ad",
+      "sha256": "addf0b0a5a9f2341c2ee094398f02ac98bc7306bb2938a41905ae66f734e0482",
+      "segment_count": 5,
+      "total_imports": 33,
+      "supported_imports": [
+        "GDI!SelectObject",
+        "GDI!DeleteObject",
+        "GDI!GetStockObject",
+        "KERNEL!GetDOSEnvironment",
+        "KERNEL!GlobalLock",
+        "KERNEL!GlobalUnlock",
+        "KERNEL!LocalInit",
+        "USER!GetTickCount",
+        "USER!GetCurrentTime",
+        "USER!SetRect",
+        "USER!FillRect"
+      ],
+      "known_but_disabled_imports": [
+        "GDI!SetBkColor",
+        "GDI!SetBkMode",
+        "GDI!Ellipse",
+        "GDI!PatBlt",
+        "GDI!TextOut",
+        "GDI!SetTextAlign",
+        "GDI!SetTextColor",
+        "KERNEL!FatalExit",
+        "KERNEL!OutputDebugString",
+        "KERNEL!FatalAppExit"
+      ],
+      "unbound_imports": [
+        "AD_SND!ADWCLOSESOUND",
+        "AD_SND!ADWFREESOUND",
+        "AD_SND!ADWLOADSOUNDRESOURCE",
+        "AD_SND!ADWOPENSOUND",
+        "AD_SND!ADWPLAYSOUND",
+        "AD_SND!ADWSETSOUNDMODE",
+        "AD_SND!ADWSOUNDASYNCCAP",
+        "GDI!BitBlt",
+        "GDI!CreateCompatibleBitmap",
+        "GDI!CreateCompatibleDC",
+        "GDI!CreateSolidBrush",
+        "GDI!DeleteDC"
+      ],
+      "helper_libraries": [
+        "AD_SND"
+      ],
+      "os_fixup_records": 0,
+      "bounded_probe": {
+        "loader_passed": true,
+        "completed_phases": [
+          "startup",
+          "PREINITIALIZE"
+        ],
+        "stopped_during": "INITIALIZE",
+        "diagnostic": "INITIALIZE: AD_SND!ADWOPENSOUND reached at 0038:0170; service is not enabled.",
+        "last_completed_observation": {
+          "Name": "PREINITIALIZE",
+          "Ax": 40,
+          "Locks": 0,
+          "Instructions": 131,
+          "Revision": 0,
+          "Pens": 0,
+          "LocalHeap": {
+            "Selector": 40,
+            "InitialBytes": 1024,
+            "CapacityBytes": 64300,
+            "EnabledBytes": 1024,
+            "FreeBytes": 1024,
+            "LargestFreeBlock": 1024,
+            "Allocations": [],
+            "OutstandingLocks": 0
+          }
+        },
+        "control_kinds": [
+          2,
+          2,
+          5,
+          0
+        ],
+        "resource_type_counts": {
+          "1000": 4,
+          "2000": 3,
+          "3000": 1,
+          "15": 1
+        }
+      }
+    },
+    {
+      "file": "Hall of Mirrors.ad",
+      "sha256": "359b5c7c11ed42386b56ad491324b770cba0d9ccb86da5008f05166b6c0ea2ba",
+      "segment_count": 2,
+      "total_imports": 25,
+      "supported_imports": [
+        "GDI!LineTo",
+        "GDI!MoveTo",
+        "GDI!SelectObject",
+        "GDI!CreatePen",
+        "GDI!DeleteObject",
+        "KERNEL!GetDOSEnvironment",
+        "KERNEL!GlobalLock",
+        "KERNEL!GlobalUnlock",
+        "KERNEL!LocalInit",
+        "USER!GetTickCount"
+      ],
+      "known_but_disabled_imports": [
+        "GDI!SetBkColor",
+        "GDI!SetBkMode",
+        "GDI!PatBlt",
+        "GDI!TextOut",
+        "GDI!SetTextAlign",
+        "GDI!SetTextColor"
+      ],
+      "unbound_imports": [
+        "GDI!BitBlt",
+        "KERNEL!GetWinFlags",
+        "KERNEL!GlobalAlloc",
+        "KERNEL!GlobalReAlloc",
+        "KERNEL!GlobalFree",
+        "KERNEL!GlobalHandle",
+        "KERNEL!GetModuleFileName",
+        "KERNEL!lstrcpy",
+        "USER!MessageBox"
+      ],
+      "helper_libraries": [],
+      "os_fixup_records": 0,
+      "bounded_probe": {
+        "loader_passed": false,
+        "completed_phases": [],
+        "stopped_during": "loader",
+        "diagnostic": "Export #1 has an unrecognized Win16 prologue.",
+        "last_completed_observation": null,
+        "control_kinds": [
+          2,
+          3,
+          3,
+          1
+        ],
+        "resource_type_counts": {
+          "1000": 4,
+          "2000": 3
+        }
+      }
+    },
+    {
+      "file": "Hard Rain.ad",
+      "sha256": "0a93389efc588962eaf0fe683836efcb934bf1d036b2316ff202212a0800b331",
+      "segment_count": 5,
+      "total_imports": 19,
+      "supported_imports": [
+        "GDI!SelectObject",
+        "GDI!CreatePen",
+        "GDI!DeleteObject",
+        "GDI!GetStockObject",
+        "KERNEL!GetDOSEnvironment",
+        "KERNEL!GlobalLock",
+        "KERNEL!GlobalUnlock",
+        "KERNEL!LocalInit",
+        "USER!SetRect",
+        "USER!FillRect"
+      ],
+      "known_but_disabled_imports": [
+        "GDI!SetBkColor",
+        "GDI!SetBkMode",
+        "GDI!Ellipse",
+        "GDI!TextOut",
+        "GDI!SetTextAlign",
+        "GDI!SetTextColor",
+        "KERNEL!FatalExit",
+        "KERNEL!OutputDebugString",
+        "KERNEL!FatalAppExit"
+      ],
+      "unbound_imports": [],
+      "helper_libraries": [],
+      "os_fixup_records": 0,
+      "bounded_probe": {
+        "loader_passed": true,
+        "completed_phases": [
+          "startup",
+          "PREINITIALIZE",
+          "INITIALIZE",
+          "BLANK"
+        ],
+        "stopped_during": "DRAWFRAME 1",
+        "diagnostic": "DRAWFRAME 1: GDI!CreatePen (#61) at 0038:0190: Only solid one-pixel RGB/PALETTERGB pens are supported.",
+        "last_completed_observation": {
+          "Name": "BLANK",
+          "Ax": 0,
+          "Locks": 0,
+          "Instructions": 1755,
+          "Revision": 0,
+          "Pens": 0,
+          "LocalHeap": {
+            "Selector": 40,
+            "InitialBytes": 1024,
+            "CapacityBytes": 64246,
+            "EnabledBytes": 1024,
+            "FreeBytes": 1022,
+            "LargestFreeBlock": 1022,
+            "Allocations": [],
+            "OutstandingLocks": 0
+          }
+        },
+        "control_kinds": [
+          2,
+          2,
+          0,
+          5
+        ],
+        "resource_type_counts": {
+          "1000": 4,
+          "2000": 3
+        }
+      }
+    },
+    {
+      "file": "Lasers.ad",
+      "sha256": "8b800eaba0e1f121ef52947bb116fc6254724ceeb5e460315df0f21e347ac430",
+      "segment_count": 5,
+      "total_imports": 24,
+      "supported_imports": [
+        "GDI!LineTo",
+        "GDI!MoveTo",
+        "GDI!SelectObject",
+        "GDI!CreatePen",
+        "GDI!DeleteObject",
+        "GDI!GetStockObject",
+        "KERNEL!GetDOSEnvironment",
+        "KERNEL!GlobalLock",
+        "KERNEL!GlobalUnlock",
+        "KERNEL!LocalInit",
+        "KERNEL!LocalAlloc",
+        "KERNEL!LocalFree",
+        "KERNEL!LocalLock",
+        "KERNEL!LocalUnlock",
+        "USER!SetRect",
+        "USER!FillRect"
+      ],
+      "known_but_disabled_imports": [
+        "GDI!SetBkColor",
+        "GDI!SetBkMode",
+        "GDI!TextOut",
+        "GDI!SetTextAlign",
+        "GDI!SetTextColor",
+        "KERNEL!FatalExit",
+        "KERNEL!OutputDebugString",
+        "KERNEL!FatalAppExit"
+      ],
+      "unbound_imports": [],
+      "helper_libraries": [],
+      "os_fixup_records": 0
+    },
+    {
+      "file": "Magic.ad",
+      "sha256": "777dfd7bea0084e3947efcd2e4e3e3acd9ba22445f51d6ab8c19efc7abcc2763",
+      "segment_count": 5,
+      "total_imports": 24,
+      "supported_imports": [
+        "GDI!LineTo",
+        "GDI!MoveTo",
+        "GDI!SelectObject",
+        "GDI!CreatePen",
+        "GDI!DeleteObject",
+        "GDI!GetStockObject",
+        "KERNEL!GetDOSEnvironment",
+        "KERNEL!GlobalLock",
+        "KERNEL!GlobalUnlock",
+        "KERNEL!LocalInit",
+        "KERNEL!LocalAlloc",
+        "KERNEL!LocalFree",
+        "KERNEL!LocalLock",
+        "KERNEL!LocalUnlock",
+        "USER!SetRect",
+        "USER!FillRect"
+      ],
+      "known_but_disabled_imports": [
+        "GDI!SetBkColor",
+        "GDI!SetBkMode",
+        "GDI!TextOut",
+        "GDI!SetTextAlign",
+        "GDI!SetTextColor",
+        "KERNEL!FatalExit",
+        "KERNEL!OutputDebugString",
+        "KERNEL!FatalAppExit"
+      ],
+      "unbound_imports": [],
+      "helper_libraries": [],
+      "os_fixup_records": 0
+    },
+    {
+      "file": "Marbles.ad",
+      "sha256": "f49847feef36a2be22215c36f76bd82a2152b30794d841914a78a2cc6c22b389",
+      "segment_count": 5,
+      "total_imports": 92,
+      "supported_imports": [
+        "GDI!SelectObject",
+        "GDI!DeleteObject",
+        "GDI!GetStockObject",
+        "KERNEL!GetDOSEnvironment",
+        "KERNEL!GlobalLock",
+        "KERNEL!GlobalUnlock",
+        "KERNEL!LocalInit",
+        "USER!GetTickCount",
+        "USER!SetRect",
+        "USER!FillRect"
+      ],
+      "known_but_disabled_imports": [
+        "GDI!SetBkColor",
+        "GDI!SetBkMode",
+        "GDI!Ellipse",
+        "GDI!TextOut",
+        "GDI!SetTextAlign",
+        "GDI!SetTextColor"
+      ],
+      "unbound_imports": [
+        "AD_RSRC!#10",
+        "AD_RSRC!#100",
+        "AD_RSRC!#103",
+        "AD_RSRC!#104",
+        "AD_RSRC!#105",
+        "AD_RSRC!#106",
+        "AD_RSRC!#107",
+        "AD_RSRC!#108",
+        "AD_RSRC!#109",
+        "AD_RSRC!#110",
+        "AD_RSRC!#114",
+        "AD_RSRC!#115",
+        "AD_RSRC!#116",
+        "AD_RSRC!#117",
+        "AD_RSRC!#118",
+        "AD_RSRC!#119",
+        "AD_RSRC!#120",
+        "AD_RSRC!#121",
+        "AD_RSRC!#13",
+        "AD_RSRC!#132",
+        "AD_RSRC!#138",
+        "AD_RSRC!#139",
+        "AD_RSRC!#140",
+        "AD_RSRC!#144",
+        "AD_RSRC!#15",
+        "AD_RSRC!#23",
+        "AD_RSRC!#24",
+        "AD_RSRC!#28",
+        "AD_RSRC!#31",
+        "AD_RSRC!#34",
+        "AD_RSRC!#35",
+        "AD_RSRC!#4",
+        "AD_RSRC!#40",
+        "AD_RSRC!#5",
+        "AD_RSRC!#50",
+        "AD_RSRC!#54",
+        "AD_RSRC!#55",
+        "AD_RSRC!#56",
+        "AD_RSRC!#7",
+        "AD_RSRC!#73",
+        "AD_RSRC!#74",
+        "AD_RSRC!#78",
+        "AD_RSRC!#79",
+        "AD_RSRC!#80",
+        "AD_RSRC!#87",
+        "AD_RSRC!#9",
+        "AD_RSRC!#95",
+        "AD_RSRC!#96",
+        "AD_RSRC!#97",
+        "AD_SND!ADWCLOSESOUND",
+        "AD_SND!ADWFREESOUND",
+        "AD_SND!ADWLOADSOUNDRESOURCE",
+        "AD_SND!ADWOPENSOUND",
+        "AD_SND!ADWPLAYSOUND",
+        "AD_SND!ADWSETSOUNDMODE",
+        "AD_SND!ADWSOUNDASYNCCAP",
+        "GDI!BitBlt",
+        "GDI!CreateCompatibleBitmap",
+        "GDI!CreateSolidBrush",
+        "GDI!DeleteDC",
+        "GDI!GetDeviceCaps",
+        "GDI!GetObject",
+        "KERNEL!GetWinFlags",
+        "KERNEL!GlobalAlloc",
+        "KERNEL!GlobalReAlloc",
+        "KERNEL!GlobalFree",
+        "KERNEL!GlobalHandle",
+        "KERNEL!UnlockSegment",
+        "KERNEL!GetModuleFileName",
+        "KERNEL!FreeResource",
+        "KERNEL!lstrcpy",
+        "KERNEL!LoadLibrary",
+        "USER!MessageBox",
+        "USER!SelectPalette",
+        "USER!RealizePalette",
+        "WIN87EM!_fpMath"
+      ],
+      "helper_libraries": [
+        "AD_RSRC",
+        "WIN87EM",
+        "AD_SND"
+      ],
+      "os_fixup_records": 964,
+      "bounded_probe": {
+        "loader_passed": false,
+        "completed_phases": [],
+        "stopped_during": "loader",
+        "diagnostic": "S1:0154: only non-additive internal/imported selector, offset16, and far16:16 relocations are implemented.",
+        "last_completed_observation": null,
+        "control_kinds": [
+          1,
+          1,
+          1,
+          0
+        ],
+        "resource_type_counts": {
+          "15": 1,
+          "1000": 4,
+          "2000": 3,
+          "3000": 4,
+          "28676": 1,
+          "28677": 5
+        }
+      }
+    },
+    {
+      "file": "Mondrian.ad",
+      "sha256": "781979da1a6a6fdf99eebec4dab67e7a645bfc8787be1671e20f13a8ca6b1aed",
+      "segment_count": 5,
+      "total_imports": 17,
+      "supported_imports": [
+        "GDI!GetStockObject",
+        "KERNEL!GetDOSEnvironment",
+        "KERNEL!GlobalLock",
+        "KERNEL!GlobalUnlock",
+        "KERNEL!LocalInit",
+        "USER!GetTickCount",
+        "USER!SetRect",
+        "USER!FillRect",
+        "USER!InvertRect"
+      ],
+      "known_but_disabled_imports": [
+        "GDI!SetBkColor",
+        "GDI!SetBkMode",
+        "GDI!TextOut",
+        "GDI!SetTextAlign",
+        "GDI!SetTextColor",
+        "KERNEL!FatalExit",
+        "KERNEL!OutputDebugString",
+        "KERNEL!FatalAppExit"
+      ],
+      "unbound_imports": [],
+      "helper_libraries": [],
+      "os_fixup_records": 0
+    },
+    {
+      "file": "Mountains.ad",
+      "sha256": "601d1799169530d319a625b40a18dfa7633b00e27518bb0b3ddde02e1c44dc86",
+      "segment_count": 7,
+      "total_imports": 34,
+      "supported_imports": [
+        "GDI!LineTo",
+        "GDI!MoveTo",
+        "GDI!SelectObject",
+        "GDI!CreatePen",
+        "GDI!DeleteObject",
+        "GDI!GetStockObject",
+        "KERNEL!GetDOSEnvironment",
+        "KERNEL!GlobalLock",
+        "KERNEL!GlobalUnlock",
+        "KERNEL!LocalInit",
+        "KERNEL!LocalAlloc",
+        "KERNEL!LocalFree",
+        "KERNEL!LocalLock",
+        "KERNEL!LocalUnlock",
+        "USER!GetCurrentTime",
+        "USER!SetRect",
+        "USER!FillRect"
+      ],
+      "known_but_disabled_imports": [
+        "GDI!SetBkColor",
+        "GDI!SetBkMode",
+        "GDI!TextOut",
+        "GDI!SetTextAlign",
+        "GDI!SetTextColor",
+        "KERNEL!FatalExit",
+        "KERNEL!OutputDebugString",
+        "KERNEL!FatalAppExit"
+      ],
+      "unbound_imports": [
+        "GDI!Polygon",
+        "GDI!AnimatePalette",
+        "GDI!Polyline",
+        "GDI!SetPolyFillMode",
+        "GDI!CreateSolidBrush",
+        "USER!GetAsyncKeyState",
+        "USER!PostQuitMessage",
+        "USER!CopyRect",
+        "WIN87EM!_fpMath"
+      ],
+      "helper_libraries": [
+        "WIN87EM"
+      ],
+      "os_fixup_records": 640,
+      "bounded_probe": {
+        "loader_passed": false,
+        "completed_phases": [],
+        "stopped_during": "loader",
+        "diagnostic": "S2:02E5: only non-additive internal/imported selector, offset16, and far16:16 relocations are implemented.",
+        "last_completed_observation": null,
+        "control_kinds": [
+          3,
+          3,
+          2,
+          2
+        ],
+        "resource_type_counts": {
+          "1000": 4,
+          "2000": 3
+        }
+      }
+    },
+    {
+      "file": "Nocturnes.ad",
+      "sha256": "525ac95faab662835d497d3d491512bc2f24a7aa752c1ce014b413288e3036bf",
+      "segment_count": 5,
+      "total_imports": 30,
+      "supported_imports": [
+        "GDI!SelectObject",
+        "GDI!DeleteObject",
+        "GDI!GetStockObject",
+        "KERNEL!GetDOSEnvironment",
+        "KERNEL!GlobalLock",
+        "KERNEL!GlobalUnlock",
+        "KERNEL!LocalInit",
+        "USER!GetTickCount",
+        "USER!SetRect",
+        "USER!FillRect"
+      ],
+      "known_but_disabled_imports": [
+        "GDI!SetBkColor",
+        "GDI!SetBkMode",
+        "GDI!TextOut",
+        "GDI!SetTextAlign",
+        "GDI!SetTextColor",
+        "KERNEL!FatalExit",
+        "KERNEL!OutputDebugString",
+        "KERNEL!FatalAppExit"
+      ],
+      "unbound_imports": [
+        "AD_SND!ADWCLOSESOUND",
+        "AD_SND!ADWFREESOUND",
+        "AD_SND!ADWLOADSOUNDRESOURCE",
+        "AD_SND!ADWOPENSOUND",
+        "AD_SND!ADWPLAYSOUND",
+        "AD_SND!ADWSETSOUNDMODE",
+        "AD_SND!ADWSOUNDASYNCCAP",
+        "GDI!BitBlt",
+        "GDI!CreateCompatibleDC",
+        "GDI!CreateSolidBrush",
+        "GDI!DeleteDC",
+        "USER!LoadBitmap"
+      ],
+      "helper_libraries": [
+        "AD_SND"
+      ],
+      "os_fixup_records": 0,
+      "bounded_probe": {
+        "loader_passed": true,
+        "completed_phases": [
+          "startup",
+          "PREINITIALIZE"
+        ],
+        "stopped_during": "INITIALIZE",
+        "diagnostic": "INITIALIZE: GDI!CreateCompatibleDC reached at 0038:01F0; service is not enabled.",
+        "last_completed_observation": {
+          "Name": "PREINITIALIZE",
+          "Ax": 0,
+          "Locks": 0,
+          "Instructions": 132,
+          "Revision": 0,
+          "Pens": 0,
+          "LocalHeap": {
+            "Selector": 40,
+            "InitialBytes": 1024,
+            "CapacityBytes": 64148,
+            "EnabledBytes": 1024,
+            "FreeBytes": 1024,
+            "LargestFreeBlock": 1024,
+            "Allocations": [],
+            "OutstandingLocks": 0
+          }
+        },
+        "control_kinds": [
+          0,
+          0,
+          5,
+          1
+        ],
+        "resource_type_counts": {
+          "2": 1,
+          "1000": 4,
+          "2000": 3,
+          "3000": 2,
+          "15": 1
+        }
+      }
+    },
+    {
+      "file": "Penrose.ad",
+      "sha256": "42c32067da430b3d4c68b99f196267173ae9e7571a4d8400cf06a2673799093a",
+      "segment_count": 5,
+      "total_imports": 39,
+      "supported_imports": [
+        "GDI!SelectObject",
+        "GDI!CreatePen",
+        "GDI!DeleteObject",
+        "GDI!GetStockObject",
+        "KERNEL!GetDOSEnvironment",
+        "KERNEL!GlobalLock",
+        "KERNEL!GlobalUnlock",
+        "KERNEL!LocalInit",
+        "USER!SetRect",
+        "USER!PtInRect",
+        "USER!FillRect"
+      ],
+      "known_but_disabled_imports": [
+        "GDI!SetBkColor",
+        "GDI!SetBkMode",
+        "GDI!TextOut",
+        "GDI!SetTextAlign",
+        "GDI!SetTextColor",
+        "KERNEL!FatalExit",
+        "KERNEL!OutputDebugString",
+        "KERNEL!FatalAppExit"
+      ],
+      "unbound_imports": [
+        "GDI!OffsetRgn",
+        "GDI!GetRgnBox",
+        "GDI!RectInRegionOld",
+        "GDI!Polyline",
+        "GDI!FillRgn",
+        "GDI!FrameRgn",
+        "GDI!SelectClipRgn",
+        "GDI!CombineRgn",
+        "GDI!CreateEllipticRgnIndirect",
+        "GDI!CreatePolygonRgn",
+        "GDI!CreateSolidBrush",
+        "GDI!LPtoDP",
+        "KERNEL!GlobalWire",
+        "KERNEL!GlobalUnWire",
+        "KERNEL!GlobalAlloc",
+        "KERNEL!GlobalFree",
+        "KERNEL!GetVersion",
+        "KERNEL!lstrcpy",
+        "USER!OffsetRect",
+        "WIN87EM!_fpMath"
+      ],
+      "helper_libraries": [
+        "WIN87EM"
+      ],
+      "os_fixup_records": 66,
+      "bounded_probe": {
+        "loader_passed": false,
+        "completed_phases": [],
+        "stopped_during": "loader",
+        "diagnostic": "S2:0843: only non-additive internal/imported selector, offset16, and far16:16 relocations are implemented.",
+        "last_completed_observation": null,
+        "control_kinds": [
+          3,
+          1,
+          0,
+          0
+        ],
+        "resource_type_counts": {
+          "1000": 4,
+          "2000": 3
+        }
+      }
+    },
+    {
+      "file": "Punch Out.ad",
+      "sha256": "fabafcebf8638660c00b3e4314f0d72e5f4b796907a0b1a4e8e4af3b582b6fc2",
+      "segment_count": 5,
+      "total_imports": 32,
+      "supported_imports": [
+        "GDI!SelectObject",
+        "GDI!DeleteObject",
+        "GDI!GetStockObject",
+        "KERNEL!GetDOSEnvironment",
+        "KERNEL!GlobalLock",
+        "KERNEL!GlobalUnlock",
+        "KERNEL!LocalInit",
+        "USER!SetRect"
+      ],
+      "known_but_disabled_imports": [
+        "GDI!SetBkColor",
+        "GDI!SetBkMode",
+        "GDI!Ellipse",
+        "GDI!Rectangle",
+        "GDI!TextOut",
+        "GDI!SetTextAlign",
+        "GDI!SetTextColor",
+        "KERNEL!FatalExit",
+        "KERNEL!OutputDebugString",
+        "KERNEL!FatalAppExit"
+      ],
+      "unbound_imports": [
+        "AD_SND!ADWCLOSESOUND",
+        "AD_SND!ADWFREESOUND",
+        "AD_SND!ADWLOADSOUNDRESOURCE",
+        "AD_SND!ADWOPENSOUND",
+        "AD_SND!ADWPLAYSOUND",
+        "AD_SND!ADWSETSOUNDMODE",
+        "AD_SND!ADWSOUNDASYNCCAP",
+        "GDI!BitBlt",
+        "GDI!SelectClipRgn",
+        "GDI!CreateCompatibleBitmap",
+        "GDI!CreateCompatibleDC",
+        "GDI!CreateEllipticRgnIndirect",
+        "GDI!CreateRectRgnIndirect",
+        "GDI!DeleteDC"
+      ],
+      "helper_libraries": [
+        "AD_SND"
+      ],
+      "os_fixup_records": 0,
+      "bounded_probe": {
+        "loader_passed": true,
+        "completed_phases": [
+          "startup",
+          "PREINITIALIZE"
+        ],
+        "stopped_during": "INITIALIZE",
+        "diagnostic": "INITIALIZE: GDI!CreateCompatibleDC reached at 0038:0210; service is not enabled.",
+        "last_completed_observation": {
+          "Name": "PREINITIALIZE",
+          "Ax": 40,
+          "Locks": 0,
+          "Instructions": 131,
+          "Revision": 0,
+          "Pens": 0,
+          "LocalHeap": {
+            "Selector": 40,
+            "InitialBytes": 1024,
+            "CapacityBytes": 64566,
+            "EnabledBytes": 1024,
+            "FreeBytes": 1022,
+            "LargestFreeBlock": 1022,
+            "Allocations": [],
+            "OutstandingLocks": 0
+          }
+        },
+        "control_kinds": [
+          3,
+          2,
+          2,
+          0
+        ],
+        "resource_type_counts": {
+          "1000": 4,
+          "2000": 3,
+          "3000": 1,
+          "15": 1
+        }
+      }
+    },
+    {
+      "file": "Rainstorm.ad",
+      "sha256": "41611fed9e314b2f4f1c0653d1a5b948e41e70e464293d2f6489691e4c8df5c7",
+      "segment_count": 5,
+      "total_imports": 22,
+      "supported_imports": [
+        "GDI!LineTo",
+        "GDI!MoveTo",
+        "GDI!SelectObject",
+        "GDI!CreatePen",
+        "GDI!DeleteObject",
+        "GDI!GetStockObject",
+        "KERNEL!GetDOSEnvironment",
+        "KERNEL!GlobalLock",
+        "KERNEL!GlobalUnlock",
+        "KERNEL!LocalInit",
+        "USER!SetRect",
+        "USER!PtInRect",
+        "USER!FillRect",
+        "USER!InvertRect"
+      ],
+      "known_but_disabled_imports": [
+        "GDI!SetBkColor",
+        "GDI!SetBkMode",
+        "GDI!TextOut",
+        "GDI!SetTextAlign",
+        "GDI!SetTextColor",
+        "KERNEL!FatalExit",
+        "KERNEL!OutputDebugString",
+        "KERNEL!FatalAppExit"
+      ],
+      "unbound_imports": [],
+      "helper_libraries": [],
+      "os_fixup_records": 0
+    },
+    {
+      "file": "Shapes.ad",
+      "sha256": "16e51d41e4ba8e05ebf9ed5e4a59fdcfd32255634304e38dac2ba93ae1c4c67c",
+      "segment_count": 5,
+      "total_imports": 20,
+      "supported_imports": [
+        "GDI!SelectObject",
+        "GDI!DeleteObject",
+        "GDI!GetStockObject",
+        "KERNEL!GetDOSEnvironment",
+        "KERNEL!GlobalLock",
+        "KERNEL!GlobalUnlock",
+        "KERNEL!LocalInit",
+        "USER!SetRect",
+        "USER!FillRect"
+      ],
+      "known_but_disabled_imports": [
+        "GDI!SetBkColor",
+        "GDI!SetBkMode",
+        "GDI!Ellipse",
+        "GDI!Rectangle",
+        "GDI!TextOut",
+        "GDI!SetTextAlign",
+        "GDI!SetTextColor",
+        "KERNEL!FatalExit",
+        "KERNEL!OutputDebugString",
+        "KERNEL!FatalAppExit"
+      ],
+      "unbound_imports": [
+        "GDI!CreateSolidBrush"
+      ],
+      "helper_libraries": [],
+      "os_fixup_records": 0,
+      "bounded_probe": {
+        "loader_passed": true,
+        "completed_phases": [
+          "startup",
+          "PREINITIALIZE",
+          "INITIALIZE",
+          "BLANK"
+        ],
+        "stopped_during": "BLANK",
+        "diagnostic": "Module requested return code 11; probe does not implement that host response.",
+        "last_completed_observation": {
+          "Name": "BLANK",
+          "Ax": 11,
+          "Locks": 0,
+          "Instructions": 612,
+          "Revision": 0,
+          "Pens": 0,
+          "LocalHeap": {
+            "Selector": 40,
+            "InitialBytes": 1024,
+            "CapacityBytes": 64626,
+            "EnabledBytes": 1024,
+            "FreeBytes": 1022,
+            "LargestFreeBlock": 1022,
+            "Allocations": [],
+            "OutstandingLocks": 0
+          }
+        },
+        "control_kinds": [
+          5,
+          5,
+          0,
+          0
+        ],
+        "resource_type_counts": {
+          "1000": 4,
+          "2000": 3
+        }
+      }
+    },
+    {
+      "file": "Sounder.ad",
+      "sha256": "25f46ca14ee4427896662b613684bdc80b4b013512e23a0271d4426a7e5b7ce5",
+      "segment_count": 6,
+      "total_imports": 53,
+      "supported_imports": [
+        "GDI!GetStockObject",
+        "KERNEL!GetDOSEnvironment",
+        "KERNEL!GlobalLock",
+        "KERNEL!GlobalUnlock",
+        "KERNEL!LocalInit",
+        "KERNEL!LocalAlloc",
+        "KERNEL!LocalFree",
+        "USER!GetCurrentTime",
+        "USER!SetRect",
+        "USER!FillRect"
+      ],
+      "known_but_disabled_imports": [
+        "GDI!SetBkColor",
+        "GDI!SetBkMode",
+        "GDI!TextOut",
+        "GDI!SetTextAlign",
+        "GDI!SetTextColor",
+        "KERNEL!FatalExit",
+        "KERNEL!OutputDebugString",
+        "KERNEL!FatalAppExit"
+      ],
+      "unbound_imports": [
+        "AD_SND!ADWCLOSESOUND",
+        "AD_SND!ADWFREESOUND",
+        "AD_SND!ADWGETSOUNDINFO",
+        "AD_SND!ADWLOADSOUNDFILE",
+        "AD_SND!ADWOPENSOUND",
+        "AD_SND!ADWPLAYSOUND",
+        "AD_SND!ADWSETSOUNDMODE",
+        "AD_SND!ADWSOUNDASYNCCAP",
+        "AD_SND!ADWSTOPSOUND",
+        "KERNEL!GetPrivateProfileInt",
+        "KERNEL!GetPrivateProfileString",
+        "KERNEL!WritePrivateProfileString",
+        "KERNEL!GlobalAlloc",
+        "KERNEL!GlobalReAlloc",
+        "KERNEL!GlobalFree",
+        "KERNEL!LockSegment",
+        "KERNEL!UnlockSegment",
+        "KERNEL!MakeProcInstance",
+        "KERNEL!FreeProcInstance",
+        "KERNEL!LocalReAlloc",
+        "KERNEL!_lclose",
+        "KERNEL!_lopen",
+        "KERNEL!lstrcpy",
+        "KERNEL!lstrcat",
+        "USER!DlgDirList",
+        "USER!GetWindowRect",
+        "USER!EnableWindow",
+        "USER!lstrcmp",
+        "USER!IsWindow",
+        "USER!MoveWindow",
+        "USER!DialogBox",
+        "USER!EndDialog",
+        "USER!GetDlgItem",
+        "USER!GetDlgItemText",
+        "USER!DlgDirSelect"
+      ],
+      "helper_libraries": [
+        "AD_SND"
+      ],
+      "os_fixup_records": 0,
+      "bounded_probe": {
+        "loader_passed": true,
+        "completed_phases": [
+          "startup",
+          "PREINITIALIZE"
+        ],
+        "stopped_during": "INITIALIZE",
+        "diagnostic": "INITIALIZE: USER!IsWindow reached at 0040:0290; service is not enabled.",
+        "last_completed_observation": {
+          "Name": "PREINITIALIZE",
+          "Ax": 48,
+          "Locks": 0,
+          "Instructions": 131,
+          "Revision": 0,
+          "Pens": 0,
+          "LocalHeap": {
+            "Selector": 48,
+            "InitialBytes": 1024,
+            "CapacityBytes": 60757,
+            "EnabledBytes": 1024,
+            "FreeBytes": 1023,
+            "LargestFreeBlock": 1023,
+            "Allocations": [],
+            "OutstandingLocks": 0
+          }
+        },
+        "control_kinds": [
+          3,
+          1,
+          4,
+          5
+        ],
+        "resource_type_counts": {
+          "5": 1,
+          "1000": 4,
+          "2000": 3,
+          "15": 1
+        }
+      }
+    },
+    {
+      "file": "Spiral Gyra.ad",
+      "sha256": "8098ac464ba204e81719828ecddb9dc78058231ef105f8b512072c21e3167529",
+      "segment_count": 6,
+      "total_imports": 21,
+      "supported_imports": [
+        "GDI!LineTo",
+        "GDI!MoveTo",
+        "GDI!SelectObject",
+        "GDI!CreatePen",
+        "GDI!DeleteObject",
+        "GDI!GetStockObject",
+        "KERNEL!GetDOSEnvironment",
+        "KERNEL!GlobalLock",
+        "KERNEL!GlobalUnlock",
+        "KERNEL!LocalInit",
+        "USER!GetTickCount",
+        "USER!SetRect",
+        "USER!FillRect"
+      ],
+      "known_but_disabled_imports": [
+        "GDI!SetBkColor",
+        "GDI!SetBkMode",
+        "GDI!TextOut",
+        "GDI!SetTextAlign",
+        "GDI!SetTextColor",
+        "KERNEL!FatalExit",
+        "KERNEL!OutputDebugString",
+        "KERNEL!FatalAppExit"
+      ],
+      "unbound_imports": [],
+      "helper_libraries": [],
+      "os_fixup_records": 0
+    },
+    {
+      "file": "Stained Glass.ad",
+      "sha256": "694bddf2c92e84a2171d3c3885cbbd2a02067d934b9c6f8ce6e298b40ab4096c",
+      "segment_count": 9,
+      "total_imports": 34,
+      "supported_imports": [
+        "GDI!LineTo",
+        "GDI!MoveTo",
+        "GDI!SelectObject",
+        "GDI!CreatePen",
+        "GDI!DeleteObject",
+        "GDI!GetStockObject",
+        "KERNEL!GetDOSEnvironment",
+        "KERNEL!GlobalLock",
+        "KERNEL!GlobalUnlock",
+        "KERNEL!LocalInit",
+        "USER!SetRect",
+        "USER!FillRect",
+        "USER!InvertRect"
+      ],
+      "known_but_disabled_imports": [
+        "GDI!SetBkColor",
+        "GDI!SetBkMode",
+        "GDI!Ellipse",
+        "GDI!TextOut",
+        "GDI!SetTextAlign",
+        "GDI!SetTextColor",
+        "KERNEL!FatalExit",
+        "KERNEL!OutputDebugString",
+        "KERNEL!FatalAppExit"
+      ],
+      "unbound_imports": [
+        "GDI!SetWindowOrg",
+        "GDI!SetPixel",
+        "GDI!BitBlt",
+        "GDI!StretchBlt",
+        "GDI!SetROP2",
+        "GDI!CreateSolidBrush",
+        "GDI!GetWindowOrg",
+        "USER!EqualRect",
+        "USER!OffsetRect",
+        "USER!InflateRect",
+        "USER!IntersectRect",
+        "USER!FrameRect"
+      ],
+      "helper_libraries": [],
+      "os_fixup_records": 0,
+      "bounded_probe": {
+        "loader_passed": true,
+        "completed_phases": [
+          "startup",
+          "PREINITIALIZE"
+        ],
+        "stopped_during": "INITIALIZE",
+        "diagnostic": "INITIALIZE: GDI!CreateSolidBrush reached at 0058:0190; service is not enabled.",
+        "last_completed_observation": {
+          "Name": "PREINITIALIZE",
+          "Ax": 72,
+          "Locks": 0,
+          "Instructions": 131,
+          "Revision": 0,
+          "Pens": 0,
+          "LocalHeap": {
+            "Selector": 72,
+            "InitialBytes": 4096,
+            "CapacityBytes": 63010,
+            "EnabledBytes": 4096,
+            "FreeBytes": 4094,
+            "LargestFreeBlock": 4094,
+            "Allocations": [],
+            "OutstandingLocks": 0
+          }
+        },
+        "control_kinds": [
+          2,
+          2,
+          2,
+          0
+        ],
+        "resource_type_counts": {
+          "1000": 4,
+          "2000": 3
+        }
+      }
+    },
+    {
+      "file": "String Theory.ad",
+      "sha256": "76a6905fba156a2b510ee645511b74ea7dece650baa62781941d4fe95b9b66b8",
+      "segment_count": 5,
+      "total_imports": 24,
+      "supported_imports": [
+        "GDI!LineTo",
+        "GDI!MoveTo",
+        "GDI!SelectObject",
+        "GDI!CreatePen",
+        "GDI!DeleteObject",
+        "GDI!GetStockObject",
+        "KERNEL!GetDOSEnvironment",
+        "KERNEL!GlobalLock",
+        "KERNEL!GlobalUnlock",
+        "KERNEL!LocalInit",
+        "KERNEL!LocalAlloc",
+        "KERNEL!LocalFree",
+        "KERNEL!LocalLock",
+        "KERNEL!LocalUnlock",
+        "USER!SetRect",
+        "USER!FillRect"
+      ],
+      "known_but_disabled_imports": [
+        "GDI!SetBkColor",
+        "GDI!SetBkMode",
+        "GDI!TextOut",
+        "GDI!SetTextAlign",
+        "GDI!SetTextColor",
+        "KERNEL!FatalExit",
+        "KERNEL!OutputDebugString",
+        "KERNEL!FatalAppExit"
+      ],
+      "unbound_imports": [],
+      "helper_libraries": [],
+      "os_fixup_records": 0
+    },
+    {
+      "file": "Swan Lake.ad",
+      "sha256": "04262c0d2ec2088c10dbe163d52f6541f368e19b00d097353559ec23f1eeda99",
+      "segment_count": 5,
+      "total_imports": 73,
+      "supported_imports": [
+        "GDI!SelectObject",
+        "GDI!DeleteObject",
+        "GDI!GetStockObject",
+        "KERNEL!GetDOSEnvironment",
+        "KERNEL!GlobalLock",
+        "KERNEL!GlobalUnlock",
+        "KERNEL!LocalInit",
+        "USER!GetTickCount",
+        "USER!SetRect",
+        "USER!FillRect"
+      ],
+      "known_but_disabled_imports": [
+        "GDI!SetBkColor",
+        "GDI!SetBkMode",
+        "GDI!TextOut",
+        "GDI!SetTextAlign",
+        "GDI!SetTextColor"
+      ],
+      "unbound_imports": [
+        "AD_RSRC!#10",
+        "AD_RSRC!#114",
+        "AD_RSRC!#115",
+        "AD_RSRC!#116",
+        "AD_RSRC!#117",
+        "AD_RSRC!#118",
+        "AD_RSRC!#119",
+        "AD_RSRC!#120",
+        "AD_RSRC!#121",
+        "AD_RSRC!#13",
+        "AD_RSRC!#132",
+        "AD_RSRC!#138",
+        "AD_RSRC!#139",
+        "AD_RSRC!#140",
+        "AD_RSRC!#141",
+        "AD_RSRC!#144",
+        "AD_RSRC!#15",
+        "AD_RSRC!#24",
+        "AD_RSRC!#30",
+        "AD_RSRC!#31",
+        "AD_RSRC!#34",
+        "AD_RSRC!#35",
+        "AD_RSRC!#4",
+        "AD_RSRC!#40",
+        "AD_RSRC!#5",
+        "AD_RSRC!#50",
+        "AD_RSRC!#54",
+        "AD_RSRC!#55",
+        "AD_RSRC!#56",
+        "AD_RSRC!#7",
+        "AD_RSRC!#73",
+        "AD_RSRC!#74",
+        "AD_RSRC!#78",
+        "AD_RSRC!#79",
+        "AD_RSRC!#80",
+        "AD_RSRC!#87",
+        "AD_RSRC!#9",
+        "GDI!BitBlt",
+        "GDI!CreateCompatibleBitmap",
+        "GDI!CreateSolidBrush",
+        "GDI!DeleteDC",
+        "GDI!GetDeviceCaps",
+        "GDI!GetObject",
+        "KERNEL!GetWinFlags",
+        "KERNEL!GlobalAlloc",
+        "KERNEL!GlobalReAlloc",
+        "KERNEL!GlobalFree",
+        "KERNEL!GlobalHandle",
+        "KERNEL!UnlockSegment",
+        "KERNEL!GetModuleFileName",
+        "KERNEL!FreeResource",
+        "KERNEL!lstrcpy",
+        "KERNEL!LoadLibrary",
+        "USER!MessageBox",
+        "USER!SelectPalette",
+        "USER!RealizePalette",
+        "USER!OffsetRect",
+        "WIN87EM!_fpMath"
+      ],
+      "helper_libraries": [
+        "AD_RSRC",
+        "WIN87EM"
+      ],
+      "os_fixup_records": 121,
+      "bounded_probe": {
+        "loader_passed": false,
+        "completed_phases": [],
+        "stopped_during": "loader",
+        "diagnostic": "S1:0154: only non-additive internal/imported selector, offset16, and far16:16 relocations are implemented.",
+        "last_completed_observation": null,
+        "control_kinds": [
+          1,
+          2,
+          5,
+          0
+        ],
+        "resource_type_counts": {
+          "15": 1,
+          "1000": 4,
+          "2000": 3,
+          "28675": 1,
+          "28676": 1,
+          "28677": 40
+        }
+      }
+    },
+    {
+      "file": "Vertigo.ad",
+      "sha256": "e15a2a1f36b5411ee8d42668e478e45d53c7ee61b1668936eaeeb8a122928735",
+      "segment_count": 5,
+      "total_imports": 34,
+      "supported_imports": [
+        "GDI!SelectObject",
+        "GDI!CreatePen",
+        "GDI!DeleteObject",
+        "GDI!GetStockObject",
+        "KERNEL!GetDOSEnvironment",
+        "KERNEL!GlobalLock",
+        "KERNEL!GlobalUnlock",
+        "KERNEL!LocalInit",
+        "KERNEL!LocalAlloc",
+        "KERNEL!LocalFree",
+        "KERNEL!LocalLock",
+        "KERNEL!LocalUnlock",
+        "USER!GetCurrentTime",
+        "USER!SetRect",
+        "USER!FillRect"
+      ],
+      "known_but_disabled_imports": [
+        "GDI!SetBkColor",
+        "GDI!SetBkMode",
+        "GDI!Ellipse",
+        "GDI!Rectangle",
+        "GDI!TextOut",
+        "GDI!SetTextAlign",
+        "GDI!SetTextColor",
+        "KERNEL!FatalExit",
+        "KERNEL!OutputDebugString",
+        "KERNEL!FatalAppExit"
+      ],
+      "unbound_imports": [
+        "GDI!Pie",
+        "GDI!CreatePalette",
+        "GDI!AnimatePalette",
+        "GDI!CreateSolidBrush",
+        "USER!MessageBeep",
+        "USER!SelectPalette",
+        "USER!RealizePalette",
+        "USER!CopyRect",
+        "WIN87EM!_fpMath"
+      ],
+      "helper_libraries": [
+        "WIN87EM"
+      ],
+      "os_fixup_records": 234,
+      "bounded_probe": {
+        "loader_passed": false,
+        "completed_phases": [],
+        "stopped_during": "loader",
+        "diagnostic": "S2:0BB7: only non-additive internal/imported selector, offset16, and far16:16 relocations are implemented.",
+        "last_completed_observation": null,
+        "control_kinds": [
+          3,
+          2,
+          2,
+          1
+        ],
+        "resource_type_counts": {
+          "1000": 4,
+          "2000": 3
+        }
+      }
+    },
+    {
+      "file": "Wrap Around.ad",
+      "sha256": "5be395e7c04ca464076380951f2b6784aa1f1e18575e62e2c71bb586df9f1b7a",
+      "segment_count": 6,
+      "total_imports": 22,
+      "supported_imports": [
+        "GDI!LineTo",
+        "GDI!MoveTo",
+        "GDI!SelectObject",
+        "GDI!CreatePen",
+        "GDI!DeleteObject",
+        "GDI!GetStockObject",
+        "KERNEL!GetDOSEnvironment",
+        "KERNEL!GlobalLock",
+        "KERNEL!GlobalUnlock",
+        "KERNEL!LocalInit",
+        "USER!GetTickCount",
+        "USER!SetRect",
+        "USER!FillRect"
+      ],
+      "known_but_disabled_imports": [
+        "GDI!SetBkColor",
+        "GDI!SetBkMode",
+        "GDI!TextOut",
+        "GDI!SetTextAlign",
+        "GDI!SetTextColor",
+        "KERNEL!FatalExit",
+        "KERNEL!OutputDebugString",
+        "KERNEL!FatalAppExit"
+      ],
+      "unbound_imports": [
+        "WIN87EM!_fpMath"
+      ],
+      "helper_libraries": [
+        "WIN87EM"
+      ],
+      "os_fixup_records": 57,
+      "bounded_probe": {
+        "loader_passed": false,
+        "completed_phases": [],
+        "stopped_during": "loader",
+        "diagnostic": "S2:04BF: only non-additive internal/imported selector, offset16, and far16:16 relocations are implemented.",
+        "last_completed_observation": null,
+        "control_kinds": [
+          2,
+          2,
+          2,
+          0
+        ],
+        "resource_type_counts": {
+          "1000": 4,
+          "2000": 3
+        }
+      }
+    },
+    {
+      "file": "Zot!.ad",
+      "sha256": "b1c71ac07bd0cb55bf520b5e2bd69127726206136fe0ae7bb85a4b04abb04e76",
+      "segment_count": 5,
+      "total_imports": 25,
+      "supported_imports": [
+        "GDI!LineTo",
+        "GDI!MoveTo",
+        "GDI!SelectObject",
+        "GDI!CreatePen",
+        "GDI!DeleteObject",
+        "GDI!GetStockObject",
+        "KERNEL!GetDOSEnvironment",
+        "KERNEL!GlobalLock",
+        "KERNEL!GlobalUnlock",
+        "KERNEL!LocalInit",
+        "KERNEL!LocalAlloc",
+        "KERNEL!LocalFree",
+        "KERNEL!LocalLock",
+        "KERNEL!LocalUnlock",
+        "USER!GetCurrentTime",
+        "USER!SetRect",
+        "USER!FillRect"
+      ],
+      "known_but_disabled_imports": [
+        "GDI!SetBkColor",
+        "GDI!SetBkMode",
+        "GDI!TextOut",
+        "GDI!SetTextAlign",
+        "GDI!SetTextColor",
+        "KERNEL!FatalExit",
+        "KERNEL!OutputDebugString",
+        "KERNEL!FatalAppExit"
+      ],
+      "unbound_imports": [],
+      "helper_libraries": [],
+      "os_fixup_records": 0
+    }
+  ],
+  "runtime_commit": "2a276f0",
+  "probe_protocol": {
+    "surface": [
+      320,
+      240
+    ],
+    "bits_per_pixel": 24,
+    "control_values": "Resource-derived diagnostic values, not certified engine defaults.",
+    "tick_step_ms": 2500,
+    "instruction_limit_per_invocation": 2000000,
+    "service_exit_limit_per_invocation": 4096,
+    "native_slice_seconds": 3,
+    "process_timeout_seconds": 25,
+    "automatic_data_mapping_bytes": 65536,
+    "unknown_import_policy": "Distinct fail-on-use gateway entries with no guessed ABI.",
+    "diagnostic_adapters": false
+  },
+  "followups": [
+    {
+      "file": "Shapes.ad",
+      "change": "Color off",
+      "observed": "BLANK returns GREY_PAL (12), instead of RGB_PAL (11)."
+    },
+    {
+      "file": "Shapes.ad",
+      "change": "Explicit research-only continuation past palette request; no palette implementation",
+      "observed": "DRAWFRAME reaches GetStockObject(NULL_PEN=8), still unsupported."
+    },
+    {
+      "file": "Hard Rain.ad",
+      "change": "Minimum numeric controls",
+      "observed": "DRAWFRAME still requests solid width-2 pen."
+    },
+    {
+      "file": "Gravity.ad",
+      "change": "Research-only unavailable-sound reply to adwOpenSound, with Sound control already off",
+      "observed": "INITIALIZE proceeds to adwLoadSoundResource, which remains unsupported."
+    },
+    {
+      "file": "Stained Glass.ad",
+      "change": "Minimum numeric controls",
+      "observed": "INITIALIZE still reaches CreateSolidBrush."
+    }
+  ]
+}
