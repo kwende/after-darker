@@ -7,6 +7,36 @@ namespace AfterDarker.Tests.Unit;
 public sealed class PixelBufferTests
 {
     [TestMethod]
+    public void InitialImageCopiesRgbWithoutSharingHostStorageAndDrawingStillOwnsThePixels()
+    {
+        var surface = new PixelSurface(2, 1);
+        byte[] input = [10, 20, 30, 200, 210, 220];
+        surface.LoadRgb(input);
+        CollectionAssert.AreEqual(input, surface.CopyRgb());
+        Assert.AreEqual(1L, surface.Revision);
+        surface.LoadRgb(input);
+        Assert.AreEqual(1L, surface.Revision); // Identical image has no new pixel change.
+        Array.Fill(input, (byte)0);
+        CollectionAssert.AreEqual(new byte[] { 10, 20, 30, 200, 210, 220 }, surface.CopyRgb());
+        surface.Paint(new(0, 0, 1, 1), invert: false);
+        CollectionAssert.AreEqual(new byte[] { 0, 0, 0, 200, 210, 220 }, surface.CopyRgb());
+        Assert.AreEqual(2L, surface.Revision);
+    }
+
+    [TestMethod]
+    [DataRow(11)]
+    [DataRow(13)]
+    public void InvalidInitialImageLengthDoesNotChangePixelsOrRevision(int length)
+    {
+        var surface = new PixelSurface(2, 2);
+        surface.Paint(new(0, 0, 2, 2), invert: true);
+        byte[] before = surface.CopyRgb();
+        Assert.Throws<ArgumentException>(() => surface.LoadRgb(new byte[length]));
+        CollectionAssert.AreEqual(before, surface.CopyRgb());
+        Assert.AreEqual(1L, surface.Revision);
+    }
+
+    [TestMethod]
     public void ReusableDestinationMatchesSnapshotWithoutExposingSurfaceStorage()
     {
         var surface = new PixelSurface(7, 3);

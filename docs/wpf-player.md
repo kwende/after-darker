@@ -2,7 +2,7 @@
 
 Open `AfterDarker.sln`, set **AfterDarker.Wpf** as the startup project, and press
 F5. With the analyzed `ad/Mondrian.ad` present, the window starts automatically.
-Choose **File > Load AD file…** to select **Mondrian**, **Spiral Gyra**, or **Rainstorm**. Loading
+Choose **File > Load AD file…** to select **Mondrian**, **Spiral Gyra**, **Rainstorm**, or **Fade Away**. Loading
 starts playback automatically; the menu can also switch modules while playing.
 The previous guest shuts down before the new one starts. Unsupported files or
 versions are rejected by their content hash before stopping an active guest.
@@ -13,6 +13,12 @@ its speed selector is disabled because that module has no speed control. Rain
 is visible, but its two inversions within a DRAWFRAME are presented only after
 both complete, so the brief lightning image is not displayed. See the
 [Rainstorm evidence and presentation boundary](research/rainstorm-execution.md).
+
+Fade Away uses its **Radar** effect on an all-white starting image. The original
+code erases it in two sweeps, finishes with black, and then leaves the screen
+black. Stop/Run creates a fresh white image. Its speed selector is disabled;
+other Fade Away effects and desktop capture are not offered yet. See the
+[initial-image and completion notes](research/fade-away-execution.md).
 
 From the repository root:
 
@@ -93,7 +99,7 @@ halfway through would leave its stack unsuitable for another CALL FAR to CLOSE.
 If execution or cleanup fails, no further guest calls are attempted, and the
 native engine is still disposed. The UI shows the symbolic failure. Cleanup
 ignores the cancelled pacing token but retains bounded native execution: 50,000
-instructions per Mondrian invocation or 200,000 for Spiral Gyra/Rainstorm, one-second
+instructions per Mondrian/Fade Away invocation or 200,000 for Spiral Gyra/Rainstorm, one-second
 native slices and a five-second
 cumulative native execution budget. These are cooperative runtime safeguards,
 not an out-of-process watchdog for a defective native library.

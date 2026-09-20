@@ -7,6 +7,10 @@ with tested fixed controls and a documented lightning-presentation limitation.
 The census/probes below remain the historical pre-Rainstorm baseline, including
 their original registry hash. Their supported-module counts are not current UI state.
 
+[Fade Away's Radar effect has also been integrated](fade-away-execution.md),
+using the requested white starting image and tests through original completion.
+Other styles in this sweep are still research observations, not selectable modes.
+
 **Rainstorm and selected Fade Away modes are the closest additions.** Four
 more modules share a local-heap gap; two more share basic drawing gaps. Those
 eight are a useful expansion target. The evidence does not support calling all

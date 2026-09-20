@@ -505,3 +505,12 @@ path exposes a presentation boundary: two inversions occur within one DRAWFRAME,
 whereas the current host publishes only the final surface after the call.
 Intermediate effects and their historical timing require a separate presentation
 policy; executing the calls alone does not establish visible fidelity.
+
+[Fade Away](research/fade-away-execution.md) adds host-provided initial pixels.
+Profiles may supply an RGB image which the session copies before guest execution;
+the default remains black and Fade Away supplies white. This is separate from
+Windows drawing behavior and happens once per session. The original Radar path
+erases the image in two passes and then stays black. A future desktop-image
+source can use the same loading boundary without rewriting guest animation or
+teaching GDI about screenshots. Its unused style imports are bound to named,
+unsupported gateway entries, with no guessed ABI or automatic success.

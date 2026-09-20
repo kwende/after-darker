@@ -18,6 +18,24 @@ public sealed class Win16ImportGatewayTests
     private const ushort Data = MondrianSession.HostData, Stack = MondrianSession.Stack, DllData = 0x28;
 
     [TestMethod]
+    [DataRow("Ellipse")]
+    [DataRow("Rectangle")]
+    [DataRow("PatBlt")]
+    public void ImportsFromUnsupportedFadeStylesStopByNameBeforeReadingArguments(string name)
+    {
+        using var setup = new Probe(drawing: true);
+        var code = new List<byte>();
+        // No argument layout is guessed for an unimplemented service.
+        setup.EmitCall(code, name);
+        code.AddRange([0xA3, 0x20, 0]);
+        var error = Assert.Throws<NotSupportedException>(() => setup.Run(code));
+        StringAssert.Contains(error.Message, "GDI!" + name);
+        StringAssert.Contains(error.Message, "service is not enabled");
+        Assert.AreEqual((ushort)0xCCCC, setup.Word(0x20));
+        Assert.AreEqual(0L, setup.Surface.Revision);
+    }
+
+    [TestMethod]
     [DataRow(-8, 6, 1)]
     [DataRow(6, -8, 0)]
     [DataRow(2, 0, 0)]
@@ -283,7 +301,8 @@ public sealed class Win16ImportGatewayTests
         {
             var imports = new[] { new NeImport("KERNEL", 4, null), new("KERNEL", 18, null), new("KERNEL", 19, null),
                 new("KERNEL", 131, null), new("USER", 13, null), new("USER", 82, null), new("USER", 72, null), new("USER", 81, null), new("GDI", 87, null),
-                new("GDI", 61, null), new("GDI", 45, null), new("GDI", 69, null), new("GDI", 20, null), new("GDI", 19, null), new("USER", 76, null) };
+                new("GDI", 61, null), new("GDI", 45, null), new("GDI", 69, null), new("GDI", 20, null), new("GDI", 19, null), new("USER", 76, null),
+                new("GDI", 24, null), new("GDI", 27, null), new("GDI", 29, null) };
             var image = NeReader.Read(RelocationDemo.Create()) with
             {
                 Relocations = imports.Select(i => new NeRelocation(1, 0, 3, 1, 0, 0, 0, i)).ToArray()

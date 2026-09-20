@@ -76,6 +76,11 @@ public static class Win16Imports
             ("GDI", 19, "LineTo", enableDrawing ? Handler.LineTo : Handler.Unsupported, 6, Win16ReturnLayout.WordInAx),
             // Geometry needs checked memory, but does not require a drawing surface.
             ("USER", 76, "PtInRect", Handler.PtInRect, 8, Win16ReturnLayout.WordInAx),
+            // Fade Away imports these for other styles. Radar does not call them.
+            // Bind their identities for relocation, but fail symbolically if a guest reaches them.
+            ("GDI", 24, "Ellipse", Handler.Unsupported, null, null),
+            ("GDI", 27, "Rectangle", Handler.Unsupported, null, null),
+            ("GDI", 29, "PatBlt", Handler.Unsupported, null, null),
         };
         const int firstGatewayOffset = 0x100, gatewaySpacing = 0x10;
         return Array.AsReadOnly(image.Imports.Select(import =>

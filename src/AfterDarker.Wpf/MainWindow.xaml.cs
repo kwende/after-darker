@@ -59,7 +59,7 @@ public partial class MainWindow : Window
 
     private async void Browse_Click(object sender, RoutedEventArgs e)
     {
-        var dialog = new OpenFileDialog { Filter = "After Dark module (*.ad)|*.ad|All files (*.*)|*.*", Title = "Load AD file — Mondrian, Spiral Gyra or Rainstorm" };
+        var dialog = new OpenFileDialog { Filter = "After Dark module (*.ad)|*.ad|All files (*.*)|*.*", Title = "Load AD file — Mondrian, Spiral Gyra, Rainstorm or Fade Away" };
         if (dialog.ShowDialog(this) != true) return;
         try { await LoadModuleAsync(dialog.FileName); }
         catch (Exception error) { MessageBox.Show(this, error.Message, "Unable to load AD file", MessageBoxButton.OK, MessageBoxImage.Information); }
@@ -109,11 +109,14 @@ public partial class MainWindow : Window
         byte[] file = prepared ?? await ReadSupportedFileAsync(path, cancellationToken);
         string name = SupportedModules.Identify(file);
         selectedModuleName = name;
-        Speed.ToolTip = name == "Rainstorm"
-            ? "Rainstorm uses fixed strength, lightning, drop count and wind settings; it has no speed control."
-            : "Original module speed; applies on Run";
+        Speed.ToolTip = name switch
+        {
+            "Rainstorm" => "Rainstorm uses fixed strength, lightning, drop count and wind settings; it has no speed control.",
+            "Fade Away" => "Fade Away uses its Radar effect on a white starting image; it has no speed control.",
+            _ => "Original module speed; applies on Run"
+        };
         Title = $"After Darker — {name}";
-        ModuleTitle.Text = name.ToUpperInvariant();
+        ModuleTitle.Text = name == "Fade Away" ? "FADE AWAY · RADAR" : name.ToUpperInvariant();
         return await AfterDarkPlayback.RunAsync(file, options, frames, cancellationToken);
     }
 
@@ -181,7 +184,7 @@ public partial class MainWindow : Window
     private void SetBusy(bool busy)
     {
         ModulePath.IsEnabled = BrowseButton.IsEnabled = RunButton.IsEnabled = !busy && !loading && !closing;
-        Speed.IsEnabled = !busy && !loading && !closing && selectedModuleName != "Rainstorm";
+        Speed.IsEnabled = !busy && !loading && !closing && selectedModuleName is not ("Rainstorm" or "Fade Away");
         StopButton.IsEnabled = busy;
     }
     private async void OnClosing(object? sender, CancelEventArgs e)

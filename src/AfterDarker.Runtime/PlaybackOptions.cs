@@ -5,7 +5,7 @@ namespace AfterDarker.Runtime;
 /// <summary>Host settings offered by the current player; each module profile maps them to guest controls.</summary>
 /// <param name="Width">Drawing width in guest pixels, before WPF presentation scaling.</param>
 /// <param name="Height">Drawing height in guest pixels, before WPF presentation scaling.</param>
-/// <param name="Speed">One of the five exposed percentages for Mondrian/Spiral Gyra; Rainstorm uses fixed controls.</param>
+/// <param name="Speed">One of the five percentages for Mondrian/Spiral Gyra; Rainstorm and Fade Away use fixed controls.</param>
 /// <param name="Clear">Mondrian's clear-screen option; other supported modules do not use this setting.</param>
 public sealed record PlaybackOptions(short Width = 640, short Height = 480, ushort Speed = 100, bool Clear = true)
 {

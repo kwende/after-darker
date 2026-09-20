@@ -14,8 +14,14 @@ public abstract class ModuleProfile<TState>
     public virtual int CloseServiceExitLimit => ServiceExitLimit;
     /// <summary>Check host settings before allocating or executing the guest.</summary>
     public virtual void ValidateOptions(PlaybackOptions options) => options.Validate();
+    /// <summary>Supply host-owned starting RGB pixels once, before guest execution; null keeps the black surface.</summary>
+    /// <remarks>
+    /// The session copies the returned image. This is host input, not module drawing or a per-frame reset.
+    /// Fade Away supplies white; a future host image source can supply captured pixels through the same surface-loading path.
+    /// </remarks>
+    public virtual byte[]? CreateInitialPixels(PlaybackOptions options) => null;
     /// <summary>Serialize the supported paths' system and module records in Win16 byte layout.</summary>
-    /// <remarks>Early profiles retain narrow records; Rainstorm uses the full SDK module allocation. See docs/research/after-dark-sdk.md.</remarks>
+    /// <remarks>Early profiles retain narrow records; Rainstorm/Fade Away use the full SDK module allocation. See docs/research/after-dark-sdk.md.</remarks>
     public abstract (byte[] System, byte[] Module) CreateRecords(PlaybackOptions options);
     /// <summary>Decode artifact-specific globals from a detached automatic-data-segment snapshot.</summary>
     public abstract TState Observe(byte[] bytes);

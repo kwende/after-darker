@@ -89,7 +89,14 @@ boundaries and the Win16 void-return distinction.
 
 The direct [Win16ApiTests](../tests/AfterDarker.Tests/Unit/Win16ApiTests.cs) need
 no emulator. Existing CPU/gateway tests verify the marshaling around the same
-methods, and the opt-in tests exercise all three supported original modules.
+methods, and the opt-in tests exercise all four supported original modules.
+
+Fade Away's Radar path adds no Windows API behavior. Its other styles import
+Ellipse, Rectangle and PatBlt; their named registry entries remain unsupported
+and stop before argument decoding if called. Binding their addresses permits
+relocation without claiming an implementation. Initial white pixels are supplied
+by the host through `PixelSurface.LoadRgb`, not by a fake Windows call. See the
+[Fade Away notes](research/fade-away-execution.md).
 
 ## POINT by value
 
