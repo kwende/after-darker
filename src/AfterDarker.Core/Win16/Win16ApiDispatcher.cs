@@ -89,6 +89,15 @@ public static class Win16ApiDispatcher
                     short destinationY = arguments.ReadSignedWord();
                     return BooleanResult(api.LineTo(deviceContext, destinationX, destinationY));
                 }
+            case Win16Imports.Handler.Ellipse:
+                {
+                    ushort deviceContext = arguments.ReadWord();
+                    short left = arguments.ReadSignedWord();
+                    short top = arguments.ReadSignedWord();
+                    short right = arguments.ReadSignedWord();
+                    short bottom = arguments.ReadSignedWord();
+                    return BooleanResult(api.Ellipse(deviceContext, left, top, right, bottom));
+                }
             case Win16Imports.Handler.SetRect:
                 {
                     FarPointer16 destination = arguments.ReadFarPointer();

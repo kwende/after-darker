@@ -119,6 +119,7 @@ public partial class MainWindow : Window
             "Magic" => "Magic uses a 100-line trail, horizontal mirroring, and fixed line/color speeds in this version.",
             "String Theory" => "String Theory uses three groups of 100 strings, color speed 96, and Clear Screen First.",
             "Zot!" => "Zot! uses Few forks and Stormy frequency. Brief lightning images are presented during its drawing calls.",
+            "Hard Rain" => "Hard Rain uses five drops, size 20 and Clear Screen First in this version.",
             _ => "Original module speed; applies on Run"
         };
         Title = $"After Darker — {name}";
@@ -194,7 +195,7 @@ public partial class MainWindow : Window
     private void SetBusy(bool busy)
     {
         ModulePath.IsEnabled = BrowseButton.IsEnabled = RunButton.IsEnabled = !busy && !loading && !closing;
-        Speed.IsEnabled = !busy && !loading && !closing && selectedModuleName is not ("Rainstorm" or "Fade Away" or "Lasers" or "Magic" or "String Theory" or "Zot!");
+        Speed.IsEnabled = !busy && !loading && !closing && selectedModuleName is not ("Rainstorm" or "Fade Away" or "Lasers" or "Magic" or "String Theory" or "Zot!" or "Hard Rain");
         StopButton.IsEnabled = busy;
     }
     private async void OnClosing(object? sender, CancelEventArgs e)

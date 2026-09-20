@@ -20,6 +20,7 @@ bool PtInRect(FarPointer16 rectangleAddress, Point16 point);
 ushort GetStockObject(short index);
 short FillRect(ushort hdc, FarPointer16 rectangle, ushort brush);
 void InvertRect(ushort hdc, FarPointer16 rectangle);
+bool Ellipse(ushort hdc, short left, short top, short right, short bottom);
 ```
 
 Read these as ordinary C# functions. Arguments have been read from the
@@ -43,11 +44,12 @@ not yet been placed into CPU registers.
 | PtInRect | Reads a checked guest RECT and tests a signed by-value POINT; left/top inclusive, right/bottom exclusive. Empty/inverted rectangles return false. |
 | FillRect | Resolves the HDC and black brush; fills the clipped rectangle on its persistent surface. |
 | InvertRect | Resolves the HDC; inverts the clipped rectangle's RGB bits. |
-| CreatePen | Allocates a bounded, reusable guest identity for a supported solid pen. |
-| SelectObject | Selects a pen into an HDC and returns the previously selected pen. |
+| CreatePen | Allocates a bounded, reusable guest identity retaining solid RGB color and width 0/1/2. Width zero becomes one. |
+| SelectObject | Selects a pen or supported stock brush into its own HDC slot and returns the previous object of the same kind. |
 | DeleteObject | Releases an unselected owned pen; keeps stock objects host-owned. |
 | MoveTo | Updates the HDC current point and returns its previous coordinates. |
-| LineTo | Draws with the selected pen, excludes the endpoint, and advances the current point. |
+| LineTo | Draws with a one-pixel pen, excludes the endpoint, and advances the current point. A width-two pen fails before mutation. |
+| Ellipse | Outlines with the selected pen and fills with the selected black/white brush, preserving the current point; software raster policy is documented in the Hard Rain guide. |
 
 State is in [Win16ApiState.cs](../src/AfterDarker.Core/Win16/Win16ApiState.cs).
 One instance per guest keeps handles, initialized heaps, versions, and clocks
@@ -98,14 +100,15 @@ originally retained a reservation-only heap; the Lasers increment now adds the
 bounded allocator described above. Tutorial 09 adds only the four drawing
 methods listed above. `Win16ApiState.Drawing` holds each guest's HDC registry;
 [Win16DeviceContext](../src/AfterDarker.Core/Win16/Win16DeviceContext.cs) holds
-selected-pen/current-point state. `PixelSurface` owns pixel storage;
-`CosmeticLineRasterizer` explains line stepping independently of API marshaling. See
+the selected pen, selected brush and current point. `PixelSurface` owns pixel
+storage; `CosmeticLineRasterizer` and `EllipseRasterizer` explain their respective
+boundary stepping independently of API marshaling. See
 [the drawing lesson](tutorial-09-mondrian-frames.md) for the tested rectangle
 boundaries and the Win16 void-return distinction.
 
 The direct [Win16ApiTests](../tests/AfterDarker.Tests/Unit/Win16ApiTests.cs) need
 no emulator. Existing CPU/gateway tests verify the marshaling around the same
-methods, and the opt-in tests exercise all eight supported original modules.
+methods, and the opt-in tests exercise all nine supported original modules.
 
 Zot! adds the `USER!GetCurrentTime` identity with zero Pascal argument bytes
 and a DWORD return in DX:AX. Both it and `GetTickCount` bind to `Handler.Ticks`;
@@ -115,11 +118,17 @@ establish this alias. Public gateway tests check clock sharing, unsigned wrap,
 register results and stack cleanup. See [Zot!'s execution notes](research/zot-execution.md).
 
 Fade Away's Radar path adds no Windows API behavior. Its other styles import
-Ellipse, Rectangle and PatBlt; their named registry entries remain unsupported
-and stop before argument decoding if called. Binding their addresses permits
-relocation without claiming an implementation. Initial white pixels are supplied
+Ellipse, Rectangle and PatBlt. Hard Rain now implements the Ellipse identity;
+Rectangle and PatBlt remain guarded before argument decoding. This does not
+enable other Fade Away styles. Initial white pixels are supplied
 by the host through `PixelSurface.LoadRgb`, not by a fake Windows call. See the
 [Fade Away notes](research/fade-away-execution.md).
+
+Hard Rain's `Ellipse` is GDI ordinal 24, with ten argument bytes and a BOOL in
+AX. The default white brush and explicitly selected black brush have host-owned
+identities; neither consumes the pen pool. `SelectObject` restores the correct
+object kind by looking up the handle, not by guessing from the last drawing call.
+See [the pen/brush, aspect-ratio and raster walkthrough](research/hard-rain-execution.md).
 
 ## POINT by value
 

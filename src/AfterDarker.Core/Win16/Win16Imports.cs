@@ -31,7 +31,8 @@ public static class Win16Imports
         SelectObject,
         DeleteObject,
         MoveTo,
-        LineTo
+        LineTo,
+        Ellipse
     }
     /// <summary>One NE import bound to our synthetic code address and its known ABI.</summary>
     /// <param name="Import">Original module/ordinal or module/name identity.</param>
@@ -84,9 +85,10 @@ public static class Win16Imports
             ("GDI", 19, "LineTo", enableDrawing ? Handler.LineTo : Handler.Unsupported, 6, Win16ReturnLayout.WordInAx),
             // Geometry needs checked memory, but does not require a drawing surface.
             ("USER", 76, "PtInRect", Handler.PtInRect, 8, Win16ReturnLayout.WordInAx),
+            // Hard Rain reaches Ellipse. Fade Away's Radar path still does not.
+            ("GDI", 24, "Ellipse", enableDrawing ? Handler.Ellipse : Handler.Unsupported, 10, Win16ReturnLayout.WordInAx),
             // Fade Away imports these for other styles. Radar does not call them.
             // Bind their identities for relocation, but fail symbolically if a guest reaches them.
-            ("GDI", 24, "Ellipse", Handler.Unsupported, null, null),
             ("GDI", 27, "Rectangle", Handler.Unsupported, null, null),
             ("GDI", 29, "PatBlt", Handler.Unsupported, null, null),
             ("KERNEL", 5, "LocalAlloc", Handler.LocalAlloc, 4, Win16ReturnLayout.WordInAx),

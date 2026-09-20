@@ -6,6 +6,8 @@ namespace AfterDarker.Runtime;
 /// <summary>Verified artifact identities, not file names or a claim of general AD compatibility.</summary>
 public static class SupportedModules
 {
+    /// <summary>Exact Hard Rain artifact verified with five drops, size 20 and Clear Screen First.</summary>
+    public const string HardRainSha256 = "0A93389EFC588962EAF0FE683836EFCB934BF1D036B2316FF202212A0800B331";
     /// <summary>Exact String Theory artifact verified with three groups of 100 strings.</summary>
     public const string StringTheorySha256 = "76A6905FBA156A2B510EE645511B74EA7DECE650BAA62781941D4FE95B9B66B8";
     /// <summary>Exact Zot! artifact verified with Few forks and Stormy frequency.</summary>
@@ -31,7 +33,8 @@ public static class SupportedModules
         MagicSha256 => "Magic",
         StringTheorySha256 => "String Theory",
         ZotSha256 => "Zot!",
-        _ => throw new NotSupportedException("This AD file is not supported yet. Supported modules: the analyzed Mondrian, Spiral Gyra, Rainstorm, Fade Away, Lasers, Magic, String Theory and Zot! versions. File names alone do not identify a supported version.")
+        HardRainSha256 => "Hard Rain",
+        _ => throw new NotSupportedException("This AD file is not supported yet. Supported modules: the analyzed Mondrian, Spiral Gyra, Rainstorm, Fade Away, Lasers, Magic, String Theory, Zot! and Hard Rain versions. File names alone do not identify a supported version.")
     };
     /// <summary>Construct the selected profile and shared session without yet executing guest code.</summary>
     public static IAnimationSession Open(byte[] file, PlaybackOptions options, SessionTiming? timing = null,
@@ -54,6 +57,8 @@ public static class SupportedModules
                 instructionLimit: 200_000, timing: timing, diagnostics: diagnostics, output: output),
             "Zot!" => new AfterDarkSession<ZotState>(file, new ZotProfile(), options,
                 instructionLimit: 2_000_000, timing: timing, diagnostics: diagnostics, output: output),
+            "Hard Rain" => new AfterDarkSession<HardRainState>(file, new HardRainProfile(), options,
+                timing: timing, diagnostics: diagnostics, output: output),
             _ => throw new InvalidOperationException()
         };
 }

@@ -102,7 +102,6 @@ public sealed class Win16ImportGatewayTests
     }
 
     [TestMethod]
-    [DataRow("Ellipse")]
     [DataRow("Rectangle")]
     [DataRow("PatBlt")]
     public void ImportsFromUnsupportedFadeStylesStopByNameBeforeReadingArguments(string name)
@@ -370,6 +369,73 @@ public sealed class Win16ImportGatewayTests
         setup.EmitCall(code, name, words);
         var error = Assert.Throws<InvalidOperationException>(() => setup.Run(code));
         StringAssert.Contains(error.Message, "!" + name);
+        Assert.AreEqual(0L, setup.Surface.Revision);
+    }
+
+    [TestMethod]
+    public void GuestEllipseUsesPascalCoordinatesSelectedObjectsAndBalancedFarReturn()
+    {
+        using var setup = new Probe(drawing: true);
+        var code = new List<byte> { 0xBA, 0x78, 0x56 }; // Sentinel DX survives word results.
+        setup.EmitCall(code, "CreatePen", 0, 2, 0x0200, 0x3322);
+        code.AddRange([0x89, 0xC3, 0x68, 0x03, 0x01, 0x53]); // BX=returned pen; PUSH HDC; PUSH BX.
+        setup.EmitCall(code, "SelectObject");
+        setup.EmitCall(code, "SelectObject", 0x103, Win16Drawing.BlackBrushHandle);
+        code.AddRange([0xA3, 0x20, 0]); // Save the previous brush in guest memory.
+        setup.EmitCall(code, "MoveTo", 0x103, 0xFFFC, 0xFFFD);
+        code.AddRange([0xBA, 0x78, 0x56]); // MoveTo returned DX:AX; install a fresh nonzero word-result sentinel.
+        setup.EmitCall(code, "Ellipse", 0x103, 0xFFFE, 0xFFFF, 6, 5);
+        code.AddRange([0xA3, 0x22, 0]);
+        setup.EmitCall(code, "MoveTo", 0x103, 0, 0);
+        code.AddRange([0xA3, 0x24, 0, 0x89, 0x16, 0x26, 0]); // Previous point: DX:AX.
+        setup.EmitCall(code, "SelectObject", 0x103, Win16Drawing.WhiteBrushHandle);
+        setup.EmitCall(code, "SelectObject", 0x103, Win16Drawing.BlackPenHandle);
+        code.Add(0x53); setup.EmitCall(code, "DeleteObject");
+        var final = setup.Run(code);
+        Assert.AreEqual(Win16Drawing.WhiteBrushHandle, setup.Word(0x20));
+        Assert.AreEqual((ushort)1, setup.Word(0x22));
+        Assert.AreEqual((ushort)0xFFFC, setup.Word(0x24));
+        Assert.AreEqual((ushort)0xFFFD, setup.Word(0x26));
+        var ellipse = setup.Calls.Single(call => call.Binding.Implementation == Win16Imports.Handler.Ellipse);
+        CollectionAssert.AreEqual(new ushort[] { 0x103, 0xFFFE, 0xFFFF, 6, 5 }, ellipse.Arguments.ToArray());
+        Assert.AreEqual(ellipse.Before.Dx, ellipse.After.Dx);
+        Assert.AreEqual((ushort)0x5678, ellipse.After.Dx);
+        Assert.AreEqual((ushort)1, ellipse.After.Ax);
+        Assert.AreEqual(14, ellipse.After.Sp - ellipse.Before.Sp); // Ten argument bytes plus far return.
+        foreach (var call in setup.Calls)
+        {
+            Assert.AreEqual(Code, call.After.Cs); Assert.AreEqual(Data, call.After.Ds);
+            Assert.AreEqual(call.Before.Es, call.After.Es); Assert.AreEqual(call.Before.Bp, call.After.Bp);
+            Assert.AreEqual(call.Before.Sp + 4 + call.Binding.ArgumentBytes, (int?)call.After.Sp);
+        }
+        byte[] pixels = setup.Surface.CopyRgb();
+        Assert.IsTrue(pixels.Contains((byte)0x22) && pixels.Contains((byte)0x33));
+        Assert.IsTrue(pixels.AsSpan((2 * 8 + 2) * 3, 3).SequenceEqual(new byte[3])); // Black selected brush.
+        Assert.AreEqual(0, setup.Services.State.Drawing!.LivePenCount);
+        Assert.AreEqual((ushort)0x1000, final.Sp);
+    }
+
+    [TestMethod]
+    public void EllipseRejectsUnknownHdcBeforeReturningSuccessOrChangingPixels()
+    {
+        using var setup = new Probe(drawing: true);
+        var code = new List<byte>();
+        setup.EmitCall(code, "Ellipse", 0xFFFF, 0, 0, 8, 6);
+        code.AddRange([0xA3, 0x20, 0]);
+        var error = Assert.Throws<InvalidOperationException>(() => setup.Run(code));
+        StringAssert.Contains(error.Message, "GDI!Ellipse");
+        Assert.AreEqual((ushort)0xCCCC, setup.Word(0x20));
+        Assert.AreEqual(0L, setup.Surface.Revision);
+    }
+
+    [TestMethod]
+    public void EllipseRemainsGuardedWhenDrawingIsDisabled()
+    {
+        using var setup = new Probe(drawing: false);
+        var code = new List<byte>();
+        setup.EmitCall(code, "Ellipse"); // Disabled handler must fail before reading a guessed stack frame.
+        var error = Assert.Throws<NotSupportedException>(() => setup.Run(code));
+        StringAssert.Contains(error.Message, "GDI!Ellipse");
         Assert.AreEqual(0L, setup.Surface.Revision);
     }
 

@@ -338,6 +338,16 @@ Tutorial 09 runs original Mondrian BLANK/DRAWFRAME into this backend; broader
 DC state listed above is introduced only when required. See the
 [drawing proof and limits](tutorial-09-mondrian-frames.md).
 
+[Hard Rain](research/hard-rain-execution.md) adds independent stock-brush
+selection, pen width storage and Ellipse to that backend. A pen selection returns
+the old pen; a brush selection returns the old brush. Width-two pens are currently
+supported for Ellipse only. Its integer boundary/scanline renderer is deterministic
+and bounded, but not pixel-exact native GDI: both widths are compared across all
+ring radii used by the fixed profile, with color differences bounded to a one-pixel
+neighborhood. General ellipse proportions have no such measured fidelity bound.
+The profile also supplies the SDK pixel-aspect words, preventing division by zero
+in original code and describing the square-pixel destination honestly.
+
 A deterministic software surface remains the preferred backend. Pixel-exact tests
 are easier when antialiasing, GPU drivers, DPI, and presentation timing are not
 part of the result.

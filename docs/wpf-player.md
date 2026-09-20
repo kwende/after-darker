@@ -3,11 +3,17 @@
 Open `AfterDarker.sln`, set **AfterDarker.Wpf** as the startup project, and press
 F5. With the analyzed `ad/Mondrian.ad` present, the window starts automatically.
 Choose **File > Load AD file…** to select **Mondrian**, **Spiral Gyra**, **Rainstorm**,
-**Fade Away**, **Lasers**, **Magic**, **String Theory**, or **Zot!**. Loading
+**Fade Away**, **Lasers**, **Magic**, **String Theory**, **Zot!**, or **Hard Rain**. Loading
 starts playback automatically; the menu can also switch modules while playing.
 The previous guest shuts down before the new one starts. Unsupported files or
 versions are rejected by their content hash before stopping an active guest.
 Stop lets you change speed and Run a fresh guest. No original modules are distributed.
+
+Hard Rain uses five drops, size 20 and Clear Screen First. Its speed selector is
+disabled. Original code grows colored rings with two-pixel then one-pixel pens,
+erases them and creates replacements. The host supplies square-pixel aspect
+values and a deterministic software ellipse; its edges are close to, but not
+pixel-exact with, modern GDI. See [the measured boundary](research/hard-rain-execution.md).
 
 Rainstorm uses fixed strength/lightning/drops/wind controls (`60/50/52/40`);
 its speed selector is disabled because that module has no speed control.

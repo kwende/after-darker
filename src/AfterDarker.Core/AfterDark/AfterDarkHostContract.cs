@@ -26,6 +26,10 @@ public static class AfterDarkHostContract
     public const int SystemBytes = 0x36;
     /// <summary>Offset of the SDK iBitsPerPixel field.</summary>
     public const int ColorDepth = 0x0A;
+    /// <summary>Offset of AD_SYSTEM.ptAspect.x, the SDK's relative horizontal pixel aspect.</summary>
+    public const int PixelAspectX = 0x0C;
+    /// <summary>Offset of AD_SYSTEM.ptAspect.y, the SDK's relative vertical pixel aspect.</summary>
+    public const int PixelAspectY = 0x0E;
     /// <summary>Offset of the SDK iADVersion field.</summary>
     public const int SystemVersion = 0x14;
     /// <summary>Offset of the SDK hModuleInfo field, containing a handle rather than a pointer.</summary>

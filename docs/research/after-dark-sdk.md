@@ -54,6 +54,11 @@ AD_SYSTEM's documented layout is 0x2C bytes. Observed offsets now have names:
 0x0A is iBitsPerPixel, 0x14 is iADVersion, 0x20 is hModuleInfo, and 0x28 is
 iRunner. The last documented member is bPalAvail at 0x2A.
 
+Hard Rain now also exercises `ptAspect`: signed X/Y words at 0x0C and 0x0E.
+Its drawing code divides by the X word while correcting a ring's horizontal
+radius. The profile supplies 1:1 for the software surface's square pixels;
+zero-filled values cause a guest divide-by-zero. See [the execution evidence](hard-rain-execution.md).
+
 **Unresolved:** our current host also supplies compatibility words at system
 offsets 0x2C and 0x34. Those are beyond this public structure. Do not assign
 them SDK field names, shrink the existing allocation, or claim the header
