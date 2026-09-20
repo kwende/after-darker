@@ -2,6 +2,12 @@
 
 Sweep date: 2026-09-19. Runtime baseline: `8a16729`.
 
+**New reassessment:** after completing the heap group, all 21 remaining modules
+were probed against `2a276f0`. See the [current priorities and fresh blockers](module-readiness-after-heap.md).
+Hard Rain, Shapes and Stained Glass remain the recommended next implementation
+order; the new report also identifies the palette decision for Shapes and a
+potentially narrow loader issue in Hall of Mirrors.
+
 **Follow-up:** [Rainstorm playback is now implemented](rainstorm-execution.md)
 with tested fixed controls and a documented lightning-presentation limitation.
 The census/probes below remain the historical pre-Rainstorm baseline, including

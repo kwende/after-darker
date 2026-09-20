@@ -37,6 +37,18 @@ ten educational console lessons (06 needs the optional Watcom fixture;
 
 ## Established evidence
 
+- **Post-heap reassessment:** a fresh census confirms the same 29 artifact
+  hashes; all 21 unsupported modules were probed against reviewed `2a276f0`.
+  Ten pass loading and eleven stop in loader checks; none completed the probe.
+  Hard Rain still requests a width-2 pen. Shapes requests RGB/GREY palettes
+  before reaching its null-pen/brush/shape path. Gravity now passes the clock
+  call and reaches sound, even with Sound off. Recommended next implementation
+  order remains Hard Rain, Shapes, then constrained Stained Glass. A relocated
+  DS prologue makes Hall of Mirrors worth a short loader investigation, while
+  Wrap Around's 57 OS fixups keep it a separate floating-point proof. See the
+  [updated ranking, evidence and provisional later candidates](research/module-readiness-after-heap.md).
+  No production implementation or supported-module list changed.
+
 - **String Theory and Zot! complete the heap group:** six String Theory and
   nine Zot! private cases pass, alongside all earlier tests: **333 combined
   cases** and **241 public cases**. String Theory runs 1,500 draws through its
@@ -343,12 +355,14 @@ explicitly.
 
 ## Next planning point
 
-The String Theory/Zot! increment is on `codex/string-theory-zot`, created from
-reviewed main after Magic merged (`082ebcc`, PR #17). It completes row 3 of the
-[sweep](research/module-readiness-sweep.md), following the owner's request to
-finish both remaining entries. Stop here for review. Changes remain local and
-uncommitted; publication was not requested. Row 4 (Hard Rain and Shapes) is a
-future step. The heap guide and Tutorial 10 retain the focused allocation
+String Theory/Zot! merged in PR #18 (`2a276f0`), completing row 3 of the
+[sweep](research/module-readiness-sweep.md). The owner requested a pause and
+reassessment before another implementation. The documentation-only
+`codex/module-reassessment` branch records fresh probes and the recommended
+order: Hard Rain, Shapes, then constrained Stained Glass. Later bitmap/sound
+candidates are provisional. See the [new report](research/module-readiness-after-heap.md).
+Stop for the owner's choice; no next module is being implemented. These notes
+remain uncommitted. The heap guide and Tutorial 10 retain the focused allocation
 lesson; Zot!'s notes explain fixed blocks and presentation inside an active call.
 Other Fade Away styles, Rainstorm's intermediate lightning presentation, and
 historical pixel/timing comparisons remain explicit limitations.
@@ -362,6 +376,25 @@ Tutorial 04 implements the narrow host trap; the broader issue is not complete.
 See [the tutorial guide](tutorials.md).
 
 ## Session log
+
+### 2026-09-19 - reassess after eight supported modules
+
+- Created `codex/module-reassessment` from reviewed main `2a276f0`, after PR #18.
+  Refreshed all 29 artifact/import records and bounded execution for the 21
+  unsupported modules using current production services. All hashes match;
+  ten load, eleven stop in loader checks, and every probe ends at a named blocker.
+- Confirmed Hard Rain's width-2 pen even with minimum controls; identified
+  Shapes' RGB_PAL/GREY_PAL replies before its null-pen failure; confirmed Gravity
+  calls sound helpers with Sound off and proceeds to resource loading after a
+  research-only failed open. Stained Glass still first needs a solid brush.
+- Static inspection shows selected-brush/ellipse work in Hard Rain, dynamic
+  brushes/ellipse/rectangle work in Shapes, and broader GDI state/blits in
+  Stained Glass. Hall of Mirrors already has a selector-relocated MOV AX prologue;
+  the loader's separate export check rejects it. No loader change was made.
+- Added a new ranking and machine-readable evidence, keeping the original
+  sweep intact. Source/detailed traces remain ignored. Removed the temporary
+  local probe test source; the unchanged default suite passes all 241 cases.
+  No production code, private artifact, supported-module entry or API was added.
 
 ### 2026-09-19 - String Theory and Zot! complete the heap group
 
