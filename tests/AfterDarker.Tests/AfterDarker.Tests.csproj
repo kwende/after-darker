@@ -37,6 +37,12 @@
   <ItemGroup Condition="'$(TestLocalMagic)' != 'true'">
     <Compile Remove="LocalMagic/**/*.cs" />
   </ItemGroup>
+  <ItemGroup Condition="'$(TestLocalStringTheory)' != 'true'">
+    <Compile Remove="LocalStringTheory/**/*.cs" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TestLocalZot)' != 'true'">
+    <Compile Remove="LocalZot/**/*.cs" />
+  </ItemGroup>
   <ItemGroup Condition="'$(BuildWin16Fixture)' == 'true'">
     <None Include="../../artifacts/win16/hello42/hello42.dll" Link="Fixtures/hello42.dll" CopyToOutputDirectory="Always" />
   </ItemGroup>

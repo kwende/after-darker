@@ -10,6 +10,26 @@ namespace AfterDarker.Tests.Conformance;
 public sealed class DosInterruptTests
 {
     [TestMethod]
+    public void LargerServiceCeilingStillRejectsWorkBeyondTheChosenBudget()
+    {
+        // Zot! needs more service returns than earlier modules; this source-only
+        // proof ensures widening the configurable ceiling did not remove the limit.
+        byte[] code = Enumerable.Range(0, 1100).SelectMany(_ => new byte[] { 0xCD, 0x21 }).Append((byte)0x90).ToArray();
+        using var guest = new SegmentedGuest(instructionLimit: 2_000_000, nativeSliceTimeout: TimeSpan.FromSeconds(3));
+        guest.Map(8, 0x10000, code, true); guest.Install(16);
+        int dispatched = 0;
+        guest.DispatchInterrupt = _ => dispatched++;
+        Assert.Throws<InvalidOperationException>(() => guest.RunUntil("bounded", new(8, 0), new(8, 2200), 1024));
+        Assert.AreEqual(1024, dispatched);
+        dispatched = 0;
+        guest.RunUntil("explicit", new(8, 0), new(8, 2200), 4096);
+        Assert.AreEqual(1100, dispatched);
+        Assert.Throws<ArgumentOutOfRangeException>(() => guest.RunUntil("too large", new(8, 0), new(8, 2200), 4097));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new SegmentedGuest(instructionLimit: 2_000_001));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new SegmentedGuest(nativeSliceTimeout: TimeSpan.FromSeconds(4)));
+    }
+
+    [TestMethod]
     public void LargerCleanupServiceBudgetIsExplicitAndStillBoundsDispatch()
     {
         // 200 independent INTs stand in for a cleanup loop's 200 host services.

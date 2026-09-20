@@ -23,6 +23,7 @@ public sealed partial class SegmentedGuest : IGuestMemory16, IDisposable
     private readonly TextWriter output;
     private readonly bool trace;
     private readonly int instructionLimit;
+    private readonly long nativeSliceTimeoutMicroseconds;
     private ushort gatewaySelector;
     private bool gatewayReached, installed;
     private int? interrupt;
@@ -48,9 +49,13 @@ public sealed partial class SegmentedGuest : IGuestMemory16, IDisposable
     private sealed record Region(uint Base, int Size, bool Code);
     /// <summary>Create an engine without mapping memory or executing guest instructions.</summary>
     public SegmentedGuest(TextWriter? output = null, bool trace = false, int instructionLimit = 50_000,
-        DiagnosticOptions? diagnostics = null)
+        DiagnosticOptions? diagnostics = null, TimeSpan? nativeSliceTimeout = null)
     {
-        if (instructionLimit is < 1 or > 1_000_000) throw new ArgumentOutOfRangeException(nameof(instructionLimit));
+        if (instructionLimit is < 1 or > 2_000_000) throw new ArgumentOutOfRangeException(nameof(instructionLimit));
+        TimeSpan sliceTimeout = nativeSliceTimeout ?? TimeSpan.FromSeconds(1);
+        if (sliceTimeout < TimeSpan.FromMilliseconds(1) || sliceTimeout > TimeSpan.FromSeconds(3))
+            throw new ArgumentOutOfRangeException(nameof(nativeSliceTimeout));
+        nativeSliceTimeoutMicroseconds = sliceTimeout.Ticks / 10;
         interrupts = new(diagnostics ?? DiagnosticOptions.Recent);
         engine = new(Common.UC_ARCH_X86, Common.UC_MODE_32);
         this.output = output ?? TextWriter.Null;
@@ -139,7 +144,7 @@ public sealed partial class SegmentedGuest : IGuestMemory16, IDisposable
     public CpuState RunUntil(string phase, FarPointer16 start, FarPointer16 end,
         int serviceExitLimit = DefaultServiceExitLimit)
     {
-        if (serviceExitLimit is < 1 or > 1024) throw new ArgumentOutOfRangeException(nameof(serviceExitLimit));
+        if (serviceExitLimit is < 1 or > 4096) throw new ArgumentOutOfRangeException(nameof(serviceExitLimit));
         // Budgets apply to each bounded host invocation. Keeping a lifetime
         // counter is useful diagnostics, but must not kill a healthy animation
         // merely because many completed DRAWFRAME calls preceded this one.
@@ -164,7 +169,7 @@ public sealed partial class SegmentedGuest : IGuestMemory16, IDisposable
             {
                 // Unicorn's begin is an EIP OFFSET; until is a LINEAR address.
                 // MemWrite supplied bytes earlier; this call fetches/decodes them.
-                engine.EmuStart(resume, Translate(end, 1), timeout: 1_000_000, count: instructionLimit);
+                engine.EmuStart(resume, Translate(end, 1), timeout: nativeSliceTimeoutMicroseconds, count: instructionLimit);
             }
             catch (Exception error)
             {

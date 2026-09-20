@@ -22,4 +22,6 @@ public sealed record PlaybackResult(string ModuleName, IReadOnlyList<PlaybackPha
 {
     /// <summary>Detached local-heap ownership, including remaining allocations and locks at shutdown.</summary>
     public LocalHeapSnapshot? LocalHeap { get; init; }
+    /// <summary>Reached image checkpoints inside DRAWFRAME; zero for profiles that present only after return.</summary>
+    public long IntermediateFrames { get; init; }
 }

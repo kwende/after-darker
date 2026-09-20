@@ -25,6 +25,9 @@ larger boundaries and proof requirements, see [architecture](architecture.md).
 | Where can I inspect live allocations? | [LocalHeapSnapshot](../src/AfterDarker.Core/Win16/LocalHeapSnapshot.cs), exposed by session and playback results |
 | What makes Lasers different? | [LasersProfile](../src/AfterDarker.Runtime/Modules/LasersProfile.cs), [LasersState](../src/AfterDarker.Runtime/Modules/LasersState.cs) and [execution evidence](research/lasers-execution.md) |
 | Where does Magic supply its settings and expose its circular line history? | [MagicProfile](../src/AfterDarker.Runtime/Modules/MagicProfile.cs), [MagicState](../src/AfterDarker.Runtime/Modules/MagicState.cs) and [execution evidence](research/magic-execution.md); the guest updates that history itself |
+| Where are String Theory's groups, history and colors observed? | [StringTheoryProfile](../src/AfterDarker.Runtime/Modules/StringTheoryProfile.cs), [StringTheoryState](../src/AfterDarker.Runtime/Modules/StringTheoryState.cs) and [evidence](research/string-theory-execution.md) |
+| Where are Zot!'s fixed blocks, clock gate and flash points defined? | [ZotProfile](../src/AfterDarker.Runtime/Modules/ZotProfile.cs), [ZotState](../src/AfterDarker.Runtime/Modules/ZotState.cs) and [evidence](research/zot-execution.md) |
+| Who writes the shared SDK record layout for the two newest modules? | [StandardModuleRecords](../src/AfterDarker.Runtime/Modules/StandardModuleRecords.cs); profiles supply the meanings of its four control words |
 | Who runs and resumes machine code? | [SegmentedGuest.RunUntil](../src/AfterDarker.Runtime/SegmentedGuest.cs) |
 | What do the register snapshots mean? | [SegmentedGuest diagnostics](../src/AfterDarker.Runtime/SegmentedGuest.Diagnostics.cs) |
 | How do we make the initial call into the DLL? | [GuestCallerBuilder](../src/AfterDarker.Runtime/Calls/GuestCallerBuilder.cs) |
@@ -37,6 +40,7 @@ larger boundaries and proof requirements, see [architecture](architecture.md).
 | How is a POINT passed by value? | [Point16](../src/AfterDarker.Core/Win16/Point16.cs), `Win16ArgumentReader.ReadPoint`, and the [Rainstorm notes](research/rainstorm-execution.md) |
 | What may a UI call? | [IAnimationSession](../src/AfterDarker.Runtime/IAnimationSession.cs), [PlaybackOptions](../src/AfterDarker.Runtime/PlaybackOptions.cs), [PlaybackResult](../src/AfterDarker.Runtime/PlaybackResult.cs) |
 | Who paces frames and owns the background guest? | [AfterDarkPlayback](../src/AfterDarker.Runtime/AfterDarkPlayback.cs) and [WPF guide](wpf-player.md) |
+| How can an image be presented before DRAWFRAME returns? | [ImportFrameCheckpoint](../src/AfterDarker.Runtime/Presentation/ImportFrameCheckpoint.cs) describes a profile's image boundary; [ImportFrameCapture](../src/AfterDarker.Runtime/Presentation/ImportFrameCapture.cs) matches it after gateway dispatch and emits `IntermediateFrameReady` |
 | Where are selected pens and the current point stored? | [Win16Drawing](../src/AfterDarker.Core/Win16/Win16Drawing.cs) and [Win16DeviceContext](../src/AfterDarker.Core/Win16/Win16DeviceContext.cs) |
 | Where do operations become pixels? | [PixelSurface](../src/AfterDarker.Core/Rendering/PixelSurface.cs) and [CosmeticLineRasterizer](../src/AfterDarker.Core/Rendering/CosmeticLineRasterizer.cs) |
 
@@ -64,6 +68,12 @@ flowchart TD
 `EmuStop` ends the current blocking engine run. It neither destroys the CPU nor
 returns from the guest procedure. The gateway completes that guest return
 after managed execution regains control.
+
+For profiles with intermediate-image checkpoints, the session observes the
+completed import return between `ReturnToCaller` and native resume. It matches
+the import and returned PC, copies pixels and calls the presenter on the same
+worker. This is a host callback with no guest reentry, not an additional Win16
+import or a modification of the guest's stack. See [Zot!'s flow](research/zot-execution.md).
 
 For a three-word Pascal call, the stack at the gateway is:
 

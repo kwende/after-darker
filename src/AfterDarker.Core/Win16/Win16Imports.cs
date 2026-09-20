@@ -93,6 +93,8 @@ public static class Win16Imports
             ("KERNEL", 7, "LocalFree", Handler.LocalFree, 2, Win16ReturnLayout.WordInAx),
             ("KERNEL", 8, "LocalLock", Handler.LocalLock, 2, Win16ReturnLayout.DwordInDxAx),
             ("KERNEL", 9, "LocalUnlock", Handler.LocalUnlock, 2, Win16ReturnLayout.WordInAx),
+            // Wine 10.0 user.exe16.spec maps both clock ordinals to GetTickCount.
+            ("USER", 15, "GetCurrentTime", Handler.Ticks, 0, Win16ReturnLayout.DwordInDxAx),
         };
         const int firstGatewayOffset = 0x100, gatewaySpacing = 0x10;
         return Array.AsReadOnly(imports.Distinct().Select(import =>

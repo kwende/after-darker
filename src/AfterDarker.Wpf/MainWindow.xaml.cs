@@ -59,7 +59,7 @@ public partial class MainWindow : Window
 
     private async void Browse_Click(object sender, RoutedEventArgs e)
     {
-        var dialog = new OpenFileDialog { Filter = "After Dark module (*.ad)|*.ad|All files (*.*)|*.*", Title = "Load AD file — Mondrian, Spiral Gyra, Rainstorm, Fade Away, Lasers or Magic" };
+        var dialog = new OpenFileDialog { Filter = "After Dark module (*.ad)|*.ad|All files (*.*)|*.*", Title = "Load After Dark module" };
         if (dialog.ShowDialog(this) != true) return;
         try { await LoadModuleAsync(dialog.FileName); }
         catch (Exception error) { MessageBox.Show(this, error.Message, "Unable to load AD file", MessageBoxButton.OK, MessageBoxImage.Information); }
@@ -115,6 +115,8 @@ public partial class MainWindow : Window
             "Fade Away" => "Fade Away uses its Radar effect on a white starting image; it has no speed control.",
             "Lasers" => "Lasers uses three rays, a fixed trail width and fixed color-change speed in this version.",
             "Magic" => "Magic uses a 100-line trail, horizontal mirroring, and fixed line/color speeds in this version.",
+            "String Theory" => "String Theory uses three groups of 100 strings, color speed 96, and Clear Screen First.",
+            "Zot!" => "Zot! uses Few forks and Stormy frequency. Brief lightning images are presented during its drawing calls.",
             _ => "Original module speed; applies on Run"
         };
         Title = $"After Darker — {name}";
@@ -180,13 +182,16 @@ public partial class MainWindow : Window
         latest = frame;
         if (presented < int.MaxValue) presented++;
         Status.Text = $"Running · 640 × 480 · {frame!.ChangedFrames:N0} image changes · {frame.DrawCalls:N0} guest calls";
-        if (smokeDirectory is not null && presented >= 30 && frame.ChangedFrames > 0) _ = FinishSmokeAsync(null);
+        // Transient effects legitimately alternate with black. Capture an actual
+        // visible effect after the presentation threshold, not its erased image.
+        if (smokeDirectory is not null && presented >= 30 && frame.ChangedFrames > 0 && display.Any(component => component != 0))
+            _ = FinishSmokeAsync(null);
     }
 
     private void SetBusy(bool busy)
     {
         ModulePath.IsEnabled = BrowseButton.IsEnabled = RunButton.IsEnabled = !busy && !loading && !closing;
-        Speed.IsEnabled = !busy && !loading && !closing && selectedModuleName is not ("Rainstorm" or "Fade Away" or "Lasers" or "Magic");
+        Speed.IsEnabled = !busy && !loading && !closing && selectedModuleName is not ("Rainstorm" or "Fade Away" or "Lasers" or "Magic" or "String Theory" or "Zot!");
         StopButton.IsEnabled = busy;
     }
     private async void OnClosing(object? sender, CancelEventArgs e)
@@ -302,6 +307,7 @@ public partial class MainWindow : Window
                 Module = lastResult?.ModuleName, SwitchedFrom = switchedFrom, Instructions = lastResult?.Instructions, OutstandingLocks = lastResult?.OutstandingLocks,
                 LivePens = lastResult?.LivePens, PeakPens = lastResult?.PeakPens,
                 LocalHeap = lastResult?.LocalHeap,
+                IntermediateFrames = lastResult?.IntermediateFrames,
                 UiThread = Environment.CurrentManagedThreadId
             }, new JsonSerializerOptions { WriteIndented = true }));
         }

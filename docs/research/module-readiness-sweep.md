@@ -14,9 +14,12 @@ Other styles in this sweep are still research observations, not selectable modes
 [Lasers is now integrated](lasers-execution.md) with the shared bounded local
 heap. The owner chose to complete Lasers first from row 3.
 [Magic now runs through the same heap and GDI services](magic-execution.md),
-with a tested 100-line history and horizontal mirroring. String Theory and
-Zot! still require their own execution and integration work; the old
-first-blocker observations below are retained as the historical baseline.
+with a tested 100-line history and horizontal mirroring.
+[String Theory](string-theory-execution.md) and [Zot!](zot-execution.md) now
+complete row 3: three groups of strings reuse the movable heap, while Zot!
+uses fixed blocks, a clock alias and bounded intermediate-image presentation.
+The WPF player now supports eight modules. Row 4 (Hard Rain and Shapes) remains
+future work. The first-blocker observations below retain the historical baseline.
 
 **Rainstorm and selected Fade Away modes are the closest additions.** Four
 more modules share a local-heap gap; two more share basic drawing gaps. Those

@@ -6,6 +6,10 @@ namespace AfterDarker.Runtime;
 /// <summary>Verified artifact identities, not file names or a claim of general AD compatibility.</summary>
 public static class SupportedModules
 {
+    /// <summary>Exact String Theory artifact verified with three groups of 100 strings.</summary>
+    public const string StringTheorySha256 = "76A6905FBA156A2B510EE645511B74EA7DECE650BAA62781941D4FE95B9B66B8";
+    /// <summary>Exact Zot! artifact verified with Few forks and Stormy frequency.</summary>
+    public const string ZotSha256 = "B1C71AC07BD0CB55BF520B5E2BD69127726206136FE0AE7BB85A4B04ABB04E76";
     /// <summary>Exact Magic artifact verified with a 100-line trail and horizontal mirroring.</summary>
     public const string MagicSha256 = "777DFD7BEA0084E3947EFCD2E4E3E3ACD9BA22445F51D6AB8C19EFC7ABCC2763";
     /// <summary>Exact Lasers artifact verified with three rays and its movable local-heap history.</summary>
@@ -25,7 +29,9 @@ public static class SupportedModules
         FadeAwaySha256 => "Fade Away",
         LasersSha256 => "Lasers",
         MagicSha256 => "Magic",
-        _ => throw new NotSupportedException("This AD file is not supported yet. Supported modules: the analyzed Mondrian, Spiral Gyra, Rainstorm, Fade Away, Lasers and Magic versions. File names alone do not identify a supported version.")
+        StringTheorySha256 => "String Theory",
+        ZotSha256 => "Zot!",
+        _ => throw new NotSupportedException("This AD file is not supported yet. Supported modules: the analyzed Mondrian, Spiral Gyra, Rainstorm, Fade Away, Lasers, Magic, String Theory and Zot! versions. File names alone do not identify a supported version.")
     };
     /// <summary>Construct the selected profile and shared session without yet executing guest code.</summary>
     public static IAnimationSession Open(byte[] file, PlaybackOptions options, SessionTiming? timing = null,
@@ -44,6 +50,10 @@ public static class SupportedModules
                 instructionLimit: 200_000, timing: timing, diagnostics: diagnostics, output: output),
             "Magic" => new AfterDarkSession<MagicState>(file, new MagicProfile(), options,
                 timing: timing, diagnostics: diagnostics, output: output),
+            "String Theory" => new AfterDarkSession<StringTheoryState>(file, new StringTheoryProfile(), options,
+                instructionLimit: 200_000, timing: timing, diagnostics: diagnostics, output: output),
+            "Zot!" => new AfterDarkSession<ZotState>(file, new ZotProfile(), options,
+                instructionLimit: 2_000_000, timing: timing, diagnostics: diagnostics, output: output),
             _ => throw new InvalidOperationException()
         };
 }

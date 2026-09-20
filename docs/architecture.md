@@ -280,7 +280,7 @@ an explicit `Win16CallContext` input, separate from the Pascal arguments.
 Fixed handles are near offsets; movable handles resolve through per-guest host
 metadata. Ordinary x86 writes touch the backing memory directly through Unicorn.
 
-Lasers and Magic opt into reserving a full 64-KiB automatic data segment before execution,
+Lasers, Magic, String Theory and Zot! opt into reserving a full 64-KiB automatic data segment before execution,
 allowing allocator growth beyond its initial 1-KiB heap without changing selectors.
 The other current profiles retain their prior reservation-sized mappings.
 Free coalesces ranges; guest disposal releases native backing. This is a bounded
@@ -289,6 +289,9 @@ headers, compaction, callbacks, or segment resizing. See the
 [ownership and heap guide](win16-local-heap.md) and [Lasers evidence](research/lasers-execution.md).
 Magic's 1,520-byte line history reuses that allocator without a service change;
 see [Magic's execution evidence](research/magic-execution.md).
+String Theory uses one movable 4,560-byte history; Zot! uses fixed 800-byte
+and 1,600-byte bolt arrays which are allocated/freed within each strike.
+The same allocator supports both lifetimes without module-specific behavior.
 
 ### 3.6 Win16 modules
 
@@ -521,9 +524,21 @@ The third target, [Rainstorm](research/rainstorm-execution.md), adds a stock
 black-pen lookup and a by-value POINT geometry import through the same gateway.
 Its profile supplies fixed controls and SDK-sized module storage. Its lightning
 path exposes a presentation boundary: two inversions occur within one DRAWFRAME,
-whereas the current host publishes only the final surface after the call.
+whereas its profile publishes only the final surface after the call.
 Intermediate effects and their historical timing require a separate presentation
 policy; executing the calls alone does not establish visible fidelity.
+
+[Zot!](research/zot-execution.md) now opts into such a policy. It draws and
+erases lightning within one DRAWFRAME. Its hash-specific profile names two
+original import-return addresses; `ImportFrameCapture` resolves them through
+the load plan and matches phase, returned PC and import identity after gateway
+dispatch. A synchronous managed callback copies the current pixels, without
+changing guest code or registers. Reentrancy is rejected. The live worker
+publishes through the existing mailbox and gives each changed image an 80-ms
+hold, an explicit modern adaptation. Checkpoint counts and holds are bounded;
+cancellation wakes the hold but still lets the guest return before CLOSE/WEP.
+No GDI method contains Zot!-specific presentation logic. Rainstorm has not yet
+been given its own checkpoint policy.
 
 [Fade Away](research/fade-away-execution.md) adds host-provided initial pixels.
 Profiles may supply an RGB image which the session copies before guest execution;

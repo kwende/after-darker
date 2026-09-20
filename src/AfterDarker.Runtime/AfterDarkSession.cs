@@ -79,6 +79,8 @@ public partial class AfterDarkSession<TState> : IAnimationSession
     private readonly SessionTiming timing;
     private readonly PixelSurface? surface;
     private readonly Win16Drawing? drawing;
+    private readonly ImportFrameCapture? intermediateFrames;
+    private bool executingPhase;
     private readonly DiagnosticOptions diagnostics;
     private readonly DiagnosticHistory<Win16CallTrace> calls;
     private readonly DiagnosticHistory<PhaseResult> phases;
@@ -91,6 +93,8 @@ public partial class AfterDarkSession<TState> : IAnimationSession
     public int LivePenCount => drawing?.LivePenCount ?? 0;
     /// <summary>Maximum concurrent owned pens in this session.</summary>
     public int PeakPenCount => drawing?.PeakPenCount ?? 0;
+    /// <inheritdoc/>
+    public event IntermediateFrameHandler? IntermediateFrameReady;
     void IAnimationSession.Initialize() => Initialize();
     void IAnimationSession.Blank() => Blank();
     void IAnimationSession.DrawFrame() => DrawFrame();
@@ -100,7 +104,7 @@ public partial class AfterDarkSession<TState> : IAnimationSession
         var result = GetResult();
         return new(ModuleName, result.Phases.Select(phase => new PlaybackPhase(phase.Name, phase.StoredAx, phase.Registers)).ToArray(),
             result.Instructions, result.OutstandingLocks, result.Calls.Count, LivePenCount, PeakPenCount, result.Diagnostics.ImportCalls)
-        { LocalHeap = result.LocalHeap };
+        { LocalHeap = result.LocalHeap, IntermediateFrames = intermediateFrames?.TotalVisits ?? 0 };
     }
 
     /// <summary>Valid lifecycle stages; faults forbid further guest execution.</summary>
@@ -156,6 +160,8 @@ public partial class AfterDarkSession<TState> : IAnimationSession
         var bindingsByImport = importBindings.ToDictionary(binding => binding.Import);
         plan = NeLoadPlan.CreateWithImportResolver(file, NeLoadPlan.PlaceSegments(image),
             import => bindingsByImport[import].Address);
+        if (surface is not null && profile.FrameCheckpoints.Count > 0)
+            intermediateFrames = new(profile.FrameCheckpoints, plan.ResolveCode, surface.RgbByteCount);
         automaticDataSegment = plan.Segments.Single(segment => segment.Source.Number == image.Header.AutomaticDataSegment);
         libraryDataSelector = automaticDataSegment.Placement.Selector;
         FarPointer16 startup = plan.ResolveCode(image.Header.Startup!.Value);
@@ -163,7 +169,7 @@ public partial class AfterDarkSession<TState> : IAnimationSession
         beforeExecution = profile.Observe(automaticDataSegment.Bytes);
         output.WriteLine($"1. PREPARE {hash}: {plan.Segments.Count} segments; {plan.Patches.Count} patches; startup {startup}; MODULE {module}");
 
-        guest = new SegmentedGuest(output, trace, instructionLimit, this.diagnostics);
+        guest = new SegmentedGuest(output, trace, instructionLimit, this.diagnostics, profile.NativeSliceTimeout);
         try
         {
             MapLibrarySegments();
@@ -327,6 +333,7 @@ public partial class AfterDarkSession<TState> : IAnimationSession
     {
         RequireDrawing();
         RequireState(SessionState.Ready);
+        intermediateFrames?.BeginDraw();
         return RunDrawingPhase("DRAWFRAME", DrawCaller, drawEnd);
     }
 
@@ -426,6 +433,7 @@ public partial class AfterDarkSession<TState> : IAnimationSession
     private void RequireState(SessionState allowed, SessionState? alternative = null, SessionState? third = null)
     {
         ObjectDisposedException.ThrowIf(State == SessionState.Disposed, this);
+        if (executingPhase) throw new InvalidOperationException("A guest call is active; presentation callbacks cannot reenter the session.");
         if (State != allowed && State != alternative && State != third)
             throw new InvalidOperationException($"After Dark session is {State}; expected {allowed}" +
                 (alternative is null ? "" : $" or {alternative}") + (third is null ? "" : $" or {third}") + ".");
@@ -444,6 +452,7 @@ public partial class AfterDarkSession<TState> : IAnimationSession
     /// </summary>
     public void Dispose()
     {
+        if (executingPhase) throw new InvalidOperationException("A guest call is active; dispose only after it returns.");
         if (State == SessionState.Disposed) return;
         State = SessionState.Disposed;
         guest.Dispose();
@@ -452,6 +461,19 @@ public partial class AfterDarkSession<TState> : IAnimationSession
     /// <summary>Run the guest caller, check restored stack and DS, and observe the original DLL globals.</summary>
     private PhaseResult RunPhase(string name, ushort begin, ushort end, ushort resultOffset, ushort expectedDs,
         int serviceExitLimit = SegmentedGuest.DefaultServiceExitLimit)
+    {
+        // A presenter runs while the CPU is stopped inside an unfinished far call.
+        // It may copy supplied pixels, but cannot start another call or dispose
+        // the engine. Keep that invariant explicit rather than relying on the UI.
+        if (executingPhase) throw new InvalidOperationException("A guest call is already active.");
+        executingPhase = true;
+        try { return ExecuteAndObservePhase(name, begin, end, resultOffset, expectedDs, serviceExitLimit); }
+        finally { executingPhase = false; }
+    }
+
+    /// <summary>Execute the bounded caller and verify its return frame before recording module state.</summary>
+    private PhaseResult ExecuteAndObservePhase(string name, ushort begin, ushort end, ushort resultOffset,
+        ushort expectedDs, int serviceExitLimit)
     {
         var returned = guest.RunUntil(name, new(Caller, begin), new(Caller, end), Math.Max(serviceExitLimit, profile.ServiceExitLimit));
         ushort stored = BinaryPrimitives.ReadUInt16LittleEndian(guest.Read(new(HostData, resultOffset), 2));
@@ -473,6 +495,7 @@ public partial class AfterDarkSession<TState> : IAnimationSession
         calls.Add(call);
         long total = importCalls.GetValueOrDefault(call.Binding.Name);
         importCalls[call.Binding.Name] = total == long.MaxValue ? total : total + 1;
+        intermediateFrames?.AfterImport(call.Phase, call.After.Pc, call.Binding.Import, surface!, IntermediateFrameReady);
         if (output != TextWriter.Null)
             output.WriteLine($"   {call.Phase}: {call.Binding.Name}({string.Join(",", call.Arguments.Select(argument => argument.ToString("X4")))}) -> {call.Returned:X8}; RETF {call.Binding.ArgumentBytes}, resume {call.After.Pc}");
     }

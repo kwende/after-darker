@@ -4,9 +4,10 @@ Start in [Win16LocalHeap](../src/AfterDarker.Core/Win16/Win16LocalHeap.cs).
 Its `Allocate`, `Lock`, `Unlock`, and `Free` methods contain the mechanism.
 The [runnable lesson](../src/AfterDarker.Tutorials/Lessons/Tutorial10LocalHeap.cs)
 lets x86 exercise those same implementations through the real import gateway.
-Original [Lasers](research/lasers-execution.md) and [Magic](research/magic-execution.md)
-use this same allocator for ray and line histories; their animation code writes
-the payloads directly, without module-specific logic in the heap.
+Original [Lasers](research/lasers-execution.md), [Magic](research/magic-execution.md),
+[String Theory](research/string-theory-execution.md) and [Zot!](research/zot-execution.md)
+use this same allocator. Their animation code writes the payloads directly,
+without module-specific logic in the heap.
 
 ```powershell
 dotnet run --project src/AfterDarker.Tutorials --no-launch-profile -- 10
@@ -82,6 +83,20 @@ offsets are four-byte aligned; movable identities have low bits `10`, keeping
 the two namespaces disjoint. Guest code using these APIs need not know our
 metadata layout. Code inspecting private Windows heap structures is unsupported.
 
+The original modules now exercise both allocation kinds:
+
+| Module | Allocation | Lifetime |
+| --- | --- | --- |
+| Lasers | Movable, zeroed, 1,836 bytes | INITIALIZE through CLOSE |
+| Magic | Movable, zeroed, 1,520 bytes | INITIALIZE through CLOSE |
+| String Theory | Movable, zeroed, 4,560 bytes | INITIALIZE through CLOSE |
+| Zot! | Fixed, 800 bytes plus 1,600 bytes | Allocated and freed within each strike's DRAWFRAME |
+
+Zot!'s typical fixed handles `03E8` and `0708` are already offsets in DS `0028`.
+LocalLock returns those same offsets, with no movable lock count. The earlier
+modules instead receive a synthetic identity such as `0002`, then resolve it
+to their payload offset. No new allocator code was needed for this distinction.
+
 Local handles are meaningful within a particular **DS**, unlike the explicit
 far pointers returned by the supplied global-record registry. The gateway
 samples DS into [Win16CallContext](../src/AfterDarker.Core/Win16/Win16CallContext.cs).
@@ -131,7 +146,8 @@ For the tested Lasers artifact, static allocation ends at `04B8`, leaving
 from 1,024 enabled bytes to that capacity. This eager backing / on-demand
 allocator growth policy is ours; it does not reproduce historical Windows
 arena headers, handle-table overhead, segment resizing or compaction choices.
-Other current profiles keep their original reservation-sized mappings.
+Magic, String Theory and Zot! opt into this same growth policy. The other
+profiles keep their original reservation-sized mappings.
 
 `LocalHeapSnapshot` exposes the initial size, capacity, enabled bytes, free
 bytes, largest free block and live allocations. **Enabled bytes are allocator
