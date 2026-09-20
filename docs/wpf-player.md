@@ -3,11 +3,17 @@
 Open `AfterDarker.sln`, set **AfterDarker.Wpf** as the startup project, and press
 F5. With the analyzed `ad/Mondrian.ad` present, the window starts automatically.
 Choose **File > Load AD file…** to select **Mondrian**, **Spiral Gyra**, **Rainstorm**,
-**Fade Away**, **Lasers**, **Magic**, **String Theory**, **Zot!**, **Hard Rain**, or **Shapes**. Loading
+**Fade Away**, **Lasers**, **Magic**, **String Theory**, **Zot!**, **Hard Rain**, **Shapes**, or **Stained Glass**. Loading
 starts playback automatically; the menu can also switch modules while playing.
 The previous guest shuts down before the new one starts. Unsupported files or
 versions are rejected by their content hash before stopping an active guest.
 Stop lets you change speed and Run a fresh guest. No original modules are distributed.
+
+Stained Glass uses Complexity 10, Duplication 100 and Color 100; its generic speed
+selector is disabled. The original code draws and copies repeated patterns using
+window origins and XOR raster mixing. Host presentation remains at the shared
+60-Hz cadence. Three-pixel strokes approximate native GDI; see
+[the tested configuration and raster boundary](research/stained-glass-execution.md).
 
 Shapes uses Color and Clear Screen First. Each original DRAWFRAME paints one
 random rectangle or ellipse. The speed selector is disabled; the host uses its
@@ -59,10 +65,10 @@ dotnet run --project src/AfterDarker.Wpf --no-launch-profile
 dotnet run --project src/AfterDarker.Wpf --no-launch-profile -- C:\path\Mondrian.ad
 ```
 
-All eight supported modules execute their original, hash-checked Win16 code through
+All eleven supported modules execute their original, hash-checked Win16 code through
 `AfterDarkSession<TState>`. Mondrian's tutorial facade uses that same runtime.
 Spiral adds five pen/line imports; see the [execution notes](research/spiral-gyra-execution.md).
-The file picker accepts AD files generally, but only the eight analyzed versions
+The file picker accepts AD files generally, but only the eleven analyzed versions
 are executable today. A renamed supported file works; an unknown file named
 Mondrian.ad does not bypass validation.
 
@@ -163,7 +169,7 @@ If execution or cleanup fails, no further guest calls are attempted, and the
 native engine is still disposed. The UI shows the symbolic failure. Cleanup
 ignores the cancelled pacing token but retains bounded native execution: 50,000
 instructions per Mondrian/Fade Away/Magic invocation, 200,000 for
-Spiral Gyra/Rainstorm/Lasers/String Theory, or 2,000,000 for Zot!. Native slices
+Spiral Gyra/Rainstorm/Lasers/String Theory, or 2,000,000 for Zot!/Stained Glass. Native slices
 are one second normally and three seconds for Zot!'s original CPU delay loops;
 all retain a five-second cumulative native execution budget. Managed image holds
 have the separate bound described above. These are cooperative runtime safeguards,
@@ -186,7 +192,8 @@ Magic fits the default 128-service budget, releases its line history at CLOSE
 and retains no owned pens between drawing calls.
 String Theory also uses 128 services and frees its history at CLOSE. Zot! allows
 4,096 exits for its bolt/fork work and releases both fixed allocations before
-each DRAWFRAME returns. All profiles check allocation, lock and pen cleanup.
+each DRAWFRAME returns. Stained Glass also allows 4,096 service exits for its
+pattern construction and duplication. All profiles check allocation, lock and pen cleanup.
 For Mondrian, with the current system record, CLOSE optionally clears then inverts the saved
 rectangles; it does not necessarily leave black pixels. The UI retains the last
 presented frame after Stop. Console lessons still end at their original boundary

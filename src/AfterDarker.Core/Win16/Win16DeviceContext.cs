@@ -12,6 +12,10 @@ internal sealed class Win16DeviceContext(PixelSurface surface)
 {
     /// <summary>Deterministic pixel destination shared across this guest's drawing calls.</summary>
     public PixelSurface Surface { get; } = surface;
+    /// <summary>Logical coordinate mapped to device pixel (0,0) in the supported MM_TEXT mode.</summary>
+    public Point16 WindowOrigin { get; set; } = new(0, 0);
+    /// <summary>Boolean combination used by pen strokes and filled shapes, initially ordinary copy.</summary>
+    public RasterMix Mix { get; set; } = RasterMix.CopyPen;
     /// <summary>Guest handle of the selected pen; a selected owned pen cannot be deleted.</summary>
     public ushort SelectedPen { get; set; } = Win16Drawing.BlackPenHandle;
     /// <summary>Brush selection is independent of the pen; a new DC begins with the stock white brush.</summary>

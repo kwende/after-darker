@@ -6,6 +6,8 @@ namespace AfterDarker.Runtime;
 /// <summary>Verified artifact identities, not file names or a claim of general AD compatibility.</summary>
 public static class SupportedModules
 {
+    /// <summary>Exact Stained Glass artifact analyzed with fixed color controls.</summary>
+    public const string StainedGlassSha256 = "694BDDF2C92E84A2171D3C3885CBBD2A02067D934B9C6F8CE6E298B40AB4096C";
     /// <summary>Exact Shapes artifact verified with Color and Clear Screen First enabled.</summary>
     public const string ShapesSha256 = "16E51D41E4BA8E05EBF9ED5E4A59FDCFD32255634304E38DAC2BA93AE1C4C67C";
     /// <summary>Exact Hard Rain artifact verified with five drops, size 20 and Clear Screen First.</summary>
@@ -37,7 +39,8 @@ public static class SupportedModules
         ZotSha256 => "Zot!",
         HardRainSha256 => "Hard Rain",
         ShapesSha256 => "Shapes",
-        _ => throw new NotSupportedException("This AD file is not supported yet. Supported modules: the analyzed Mondrian, Spiral Gyra, Rainstorm, Fade Away, Lasers, Magic, String Theory, Zot!, Hard Rain and Shapes versions. File names alone do not identify a supported version.")
+        StainedGlassSha256 => "Stained Glass",
+        _ => throw new NotSupportedException("This AD file is not supported yet. Supported modules: the analyzed Mondrian, Spiral Gyra, Rainstorm, Fade Away, Lasers, Magic, String Theory, Zot!, Hard Rain, Shapes and Stained Glass versions. File names alone do not identify a supported version.")
     };
     /// <summary>Construct the selected profile and shared session without yet executing guest code.</summary>
     public static IAnimationSession Open(byte[] file, PlaybackOptions options, SessionTiming? timing = null,
@@ -64,6 +67,8 @@ public static class SupportedModules
                 timing: timing, diagnostics: diagnostics, output: output),
             "Shapes" => new AfterDarkSession<ShapesState>(file, new ShapesProfile(), options,
                 timing: timing, diagnostics: diagnostics, output: output),
+            "Stained Glass" => new AfterDarkSession<StainedGlassState>(file, new StainedGlassProfile(), options,
+                instructionLimit: 2_000_000, timing: timing, diagnostics: diagnostics, output: output),
             _ => throw new InvalidOperationException()
         };
 }

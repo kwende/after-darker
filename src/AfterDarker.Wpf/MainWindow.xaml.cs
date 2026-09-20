@@ -121,6 +121,7 @@ public partial class MainWindow : Window
             "Zot!" => "Zot! uses Few forks and Stormy frequency. Brief lightning images are presented during its drawing calls.",
             "Hard Rain" => "Hard Rain uses five drops, size 20 and Clear Screen First in this version.",
             "Shapes" => "Shapes uses Color and Clear Screen First; each update draws one original shape.",
+            "Stained Glass" => "Stained Glass uses Complexity 10, Duplication 100 and Color 100 in this version.",
             _ => "Original module speed; applies on Run"
         };
         Title = $"After Darker — {name}";
@@ -196,7 +197,7 @@ public partial class MainWindow : Window
     private void SetBusy(bool busy)
     {
         ModulePath.IsEnabled = BrowseButton.IsEnabled = RunButton.IsEnabled = !busy && !loading && !closing;
-        Speed.IsEnabled = !busy && !loading && !closing && selectedModuleName is not ("Rainstorm" or "Fade Away" or "Lasers" or "Magic" or "String Theory" or "Zot!" or "Hard Rain" or "Shapes");
+        Speed.IsEnabled = !busy && !loading && !closing && selectedModuleName is not ("Rainstorm" or "Fade Away" or "Lasers" or "Magic" or "String Theory" or "Zot!" or "Hard Rain" or "Shapes" or "Stained Glass");
         StopButton.IsEnabled = busy;
     }
     private async void OnClosing(object? sender, CancelEventArgs e)

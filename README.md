@@ -50,12 +50,17 @@ entire desktop.
 Set **AfterDarker.Wpf** as the startup project and press F5. It finds your local
 `ad/Mondrian.ad` automatically. Use **File > Load AD file…** to play
 **Mondrian**, **Spiral Gyra**, **Rainstorm**, **Fade Away**, **Lasers**, **Magic**,
-**String Theory**, **Zot!**, **Hard Rain**, or **Shapes**, or switch between them while running. See the [WPF player guide](docs/wpf-player.md)
+**String Theory**, **Zot!**, **Hard Rain**, **Shapes**, or **Stained Glass**, or switch between them while running. See the [WPF player guide](docs/wpf-player.md)
 for controls, command-line launch and the original-code execution boundary.
 
 ## Status
 
-The repository now runs ten original modules in a live WPF window.
+The repository now runs eleven original modules in a live WPF window.
+[Stained Glass](docs/research/stained-glass-execution.md) adds per-DC coordinate
+origins and raster mixing, rectangle helpers, pixels, explicit brush frames and
+overlap-safe image copying. Its original code constructs repeated colored patterns
+with fixed Complexity/Duplication/Color controls of 10/100/100. Three-pixel pen
+strokes use a tested software approximation; historical pixel fidelity is not claimed.
 [Shapes](docs/research/shapes-execution.md) adds owned solid brushes, null pens
 and rectangles. Original code draws randomly colored ellipses and rectangles;
 the host renders PALETTERGB components directly on its RGB surface, an explicit
@@ -103,8 +108,8 @@ a local playback viewer and reproducibility report. The host supplies four
 rectangle/brush APIs and a deterministic software surface.
 
 Prior research has established the After Dark lifecycle, inspected several
-real modules, and recovered enough behavior from Spiral Gyra and Stained Glass
-to make them useful future conformance targets. A narrow protected-mode
+real modules, and established executable profiles for Spiral Gyra and Stained Glass.
+A narrow protected-mode
 far-call probe and a two-call host-gateway probe now pass; segment protection
 and broader Win16 behavior still require conformance experiments.
 

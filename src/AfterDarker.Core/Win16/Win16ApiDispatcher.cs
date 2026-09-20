@@ -69,6 +69,38 @@ public static class Win16ApiDispatcher
                 }
             case Win16Imports.Handler.CreateSolidBrush:
                 return new Win16Imports.Reply(api.CreateSolidBrush(arguments.ReadDoubleWord()));
+            case Win16Imports.Handler.GetWindowOrg:
+                return new Win16Imports.Reply(api.GetWindowOrg(arguments.ReadWord()));
+            case Win16Imports.Handler.SetWindowOrg:
+                return new(api.SetWindowOrg(arguments.ReadWord(), arguments.ReadSignedWord(), arguments.ReadSignedWord()));
+            case Win16Imports.Handler.SetROP2:
+                return new(api.SetROP2(arguments.ReadWord(), arguments.ReadWord()));
+            case Win16Imports.Handler.SetPixel:
+                return new(api.SetPixel(arguments.ReadWord(), arguments.ReadSignedWord(), arguments.ReadSignedWord(), arguments.ReadDoubleWord()));
+            case Win16Imports.Handler.BitBlt:
+                {
+                    ushort destinationHdc = arguments.ReadWord();
+                    short destinationX = arguments.ReadSignedWord(), destinationY = arguments.ReadSignedWord();
+                    short width = arguments.ReadSignedWord(), height = arguments.ReadSignedWord();
+                    ushort sourceHdc = arguments.ReadWord();
+                    short sourceX = arguments.ReadSignedWord(), sourceY = arguments.ReadSignedWord();
+                    uint operation = arguments.ReadDoubleWord();
+                    return BooleanResult(api.BitBlt(destinationHdc, destinationX, destinationY, width, height,
+                        sourceHdc, sourceX, sourceY, operation));
+                }
+            case Win16Imports.Handler.OffsetRect:
+            case Win16Imports.Handler.InflateRect:
+                {
+                    FarPointer16 rectangle = arguments.ReadFarPointer();
+                    short horizontal = arguments.ReadSignedWord(), vertical = arguments.ReadSignedWord();
+                    if (entry.Implementation == Win16Imports.Handler.OffsetRect) api.OffsetRect(rectangle, horizontal, vertical);
+                    else api.InflateRect(rectangle, horizontal, vertical);
+                    return new(0);
+                }
+            case Win16Imports.Handler.IntersectRect:
+                return BooleanResult(api.IntersectRect(arguments.ReadFarPointer(), arguments.ReadFarPointer(), arguments.ReadFarPointer()));
+            case Win16Imports.Handler.EqualRect:
+                return BooleanResult(api.EqualRect(arguments.ReadFarPointer(), arguments.ReadFarPointer()));
             case Win16Imports.Handler.SelectObject:
                 {
                     ushort deviceContext = arguments.ReadWord();
@@ -122,11 +154,13 @@ public static class Win16ApiDispatcher
                     return BooleanResult(api.PtInRect(rectangleAddress, point));
                 }
             case Win16Imports.Handler.FillRect:
+            case Win16Imports.Handler.FrameRect:
                 {
                     ushort deviceContext = arguments.ReadWord();
                     FarPointer16 rectangle = arguments.ReadFarPointer();
                     ushort brushHandle = arguments.ReadWord();
-                    short result = api.FillRect(deviceContext, rectangle, brushHandle);
+                    short result = entry.Implementation == Win16Imports.Handler.FillRect
+                        ? api.FillRect(deviceContext, rectangle, brushHandle) : api.FrameRect(deviceContext, rectangle, brushHandle);
                     return new Win16Imports.Reply(unchecked((ushort)result));
                 }
             case Win16Imports.Handler.InvertRect:

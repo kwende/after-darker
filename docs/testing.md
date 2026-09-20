@@ -37,32 +37,24 @@ is verified; an interactive Test Explorer session remains a manual check.
 
 | Category | Cases | What is established |
 | --- | ---: | --- |
-| Unit | 165 | Descriptor/frame layout, NE metadata/SDK plans/relocations, host record fields, lock lifetime, DOS date/time packing, invalid-input rejection, lossless PNG encoding, ring retention, reusable pixel buffers, initial-image ownership/validation, monotonic timing, pacing, concurrent latest-frame transfer, pen ownership/capacity, supported-file rejection, local-heap identity, locking, fragmentation, growth, reuse and bounds; intermediate image matching, ownership and bounds |
-| Conformance | 82 | Actual Unicorn execution: arithmetic, near/far calls, imported-call marshaling/results/cleanup, guest dereferences of locked blocks, protected-mode DOS interrupt stop/resume, bounded failures, rectangle and pen/line ABIs, and software rectangles compared with native Windows PatBlt, bounded interrupt history with per-call budgets, and 1,500 line cases compared with native GDI, plus explicit startup-register and checked stack-frame contracts, by-value POINT arguments, stock black-pen lookup, unused Fade Away import guards, local-heap implicit DS, guest writes, unsigned allocation failure and Pascal cleanup; shared GetCurrentTime/GetTickCount DWORD clock and bounded larger service budgets |
+| Unit | 170 | Descriptor/frame layout, NE metadata/SDK plans/relocations, host record fields, lock lifetime, DOS date/time packing, invalid-input rejection, lossless PNG encoding, ring retention, reusable pixel buffers, initial-image ownership/validation, monotonic timing, pacing, concurrent latest-frame transfer, pen ownership/capacity, supported-file rejection, local-heap identity, locking, fragmentation, growth, reuse and bounds; intermediate image matching, ownership and bounds |
+| Conformance | 91 | Actual Unicorn execution: arithmetic, near/far calls, imported-call marshaling/results/cleanup, guest dereferences of locked blocks, protected-mode DOS interrupt stop/resume, bounded failures, rectangle and pen/line ABIs, and software rectangles compared with native Windows PatBlt, bounded interrupt history with per-call budgets, and 1,500 line cases compared with native GDI, plus explicit startup-register and checked stack-frame contracts, by-value POINT arguments, stock black-pen lookup, unused Fade Away import guards, local-heap implicit DS, guest writes, unsigned allocation failure and Pascal cleanup; shared GetCurrentTime/GetTickCount DWORD clock and bounded larger service budgets |
 | Tutorial | 12 | Five CPU/heap lessons, NE inspection, and six relocation report/step/cancel/file-path checks using generated input |
-| **Default total** | **259** | All passing on the current Windows x64 development host; no Watcom or private file required |
+| **Default total** | **273** | All passing on the current Windows x64 development host; no Watcom or private file required |
 | Toolchain (opt-in) | 12 | Three real-DLL metadata cases plus nine startup/export/exit execution, ABI, failure, mutation, trace, and console checks |
-| **With Watcom** | **271** | Includes rebuilding the project-owned Win16 fixture |
+| **With Watcom** | **285** | Includes rebuilding the project-owned Win16 fixture |
 | LocalModule (opt-in) | 34 | Original initialization plus deterministic 30-frame capture, 180-frame removal path, slower timing gate, capture-budget failure, eight session lifetime/state/failure cases, and six retention/buffer cases including 5,000 draws; live timing, CLOSE/WEP, failure, cancellation and restart |
-| **With Watcom + Mondrian** | **305** | Requires the pinned compiler and local analyzed Mondrian file |
 | LocalSpiralGyra (opt-in) | 7 | Original colored line rendering, five speeds, independent deterministic guests, pen reuse and CLOSE/WEP |
-| **With compiler + Mondrian + Spiral** | **312** | Requires the compiler and those two private modules |
 | LocalRainstorm (opt-in) | 9 | 300 draws with unchanged instruction count, exact intermediate flash pixels at three sizes, 452 deterministic draws through two flashes, cancellation during a live flash, dimension extremes, cleanup and exact-artifact rejection |
-| **With compiler + Mondrian + Spiral + Rainstorm** | **321** | Requires the compiler and those three private modules |
 | LocalFadeAway (opt-in) | 7 | Original Radar completion at five sizes, white restart, deterministic guests, idle/BLANK after completion, cleanup and artifact rejection |
-| **With compiler + first four modules** | **328** | Requires the compiler and the four earlier private modules |
 | LocalLasers (opt-in) | 6 | Local-heap growth, 1,100 draws including regeneration, independent guests, dimensions, cleanup and artifact rejection |
-| **With compiler + first five modules** | **334** | Requires the compiler and the five earlier private modules |
 | LocalMagic (opt-in) | 6 | 1,700 draws through history/motion/color wraps, independent deterministic guests, dimension bounds, heap/pen cleanup and artifact rejection |
-| **With compiler + first six modules** | **340** | Requires the compiler and those six private modules |
 | LocalStringTheory (opt-in) | 6 | 1,500 draws through group history, motion and color cycles, independent guests, dimensions and heap/pen cleanup |
-| **With compiler + first seven modules** | **346** | Requires the compiler and those seven private modules |
 | LocalZot (opt-in) | 9 | 30 timed strikes, fixed-block ABI, strict clock boundary, independent intermediate images, dimensions/seeds, cleanup, cancellation and callback reentry rejection |
-| **With compiler + first eight modules** | **355** | Requires the compiler and the eight earlier private modules |
 | LocalHardRain (opt-in) | 6 | 1,000 draws with per-record growth/regeneration checks, both pen widths, independent guests, dimension extremes, cleanup and artifact rejection |
-| **With compiler + first nine modules** | **361** | Requires the compiler and the nine earlier private modules |
 | LocalShapes (opt-in) | 6 | 1,000 original random shape/color/bounds decisions, independent guests, dimension guards, brush cleanup and artifact rejection |
-| **With all eleven opt-ins** | **367** | Requires the compiler and all ten supported private modules |
+| LocalStainedGlass (opt-in) | 7 | 2,000 draws through all ten new imports, varied seeds/sizes, independent guests, object/heap cleanup and artifact rejection |
+| **With all twelve opt-ins** | **388** | Requires the compiler and all eleven supported private modules |
 
 Hard Rain adds five public unit cases for pen/brush selection, width handling,
 ellipse clipping/empty/reversed bounds and signed-coordinate extremes. Three
@@ -76,6 +68,13 @@ Shapes adds three unit cases for brushes and null pens, five gateway cases for
 brush creation and selected geometry, and two native rectangle comparisons
 (110 bounds each). Its formerly unsupported Rectangle case is removed, a net
 increase of nine public cases. The existing PatBlt tests remain unchanged.
+
+Stained Glass adds five unit cases and nine conformance cases: per-DC origins,
+ROP2, explicit brushes, hollow interiors, pixels, overlap-safe SRCCOPY and guest
+RECT mutation. Actual x86 calls exercise all ten new services and their far-call
+ABI. Native comparisons verify exact pixels for the tested one-pixel/brush/copy
+operations; wider line/ellipse edges have a measured approximation boundary.
+No private AD bytes are needed for these 14 public cases.
 
 Conformance tests use the native engine and a test-only Windows GDI raster oracle; they are not isolated unit tests or a
 mock of Unicorn. Categories make the distinction explicit. All fixtures are
@@ -125,7 +124,7 @@ dotnet test -p:BuildWin16Fixture=true
 dotnet test -p:BuildWin16Fixture=true --filter "TestCategory=Toolchain"
 ```
 
-This builds the DLL and adds 12 `Toolchain` cases, for 271 passing cases in
+This builds the DLL and adds 12 `Toolchain` cases, for 285 passing cases in
 the combined suite. Three check metadata; nine exercise tutorial 06, including
 real startup/HELLOWORLD/WEP execution, AX and guest stores, different caller/DLL
 DS, import argument order and cleanup, DX:AX returns, initialization failure,
@@ -133,7 +132,7 @@ bad selector rejection, the error gateway, instruction bounds, and tracing.
 Changing the compiled return constant to 77 produces 77 in both register and
 memory; the host does not manufacture the expected result. The source and build
 instructions are tracked; outputs live in ignored `artifacts/`. Default runs
-remain compiler-free with 259 cases. Do not pass `--no-build` when changing this
+remain compiler-free with 273 cases. Do not pass `--no-build` when changing this
 opt-in property, since it changes which tests are compiled.
 
 `NeLoadPlanTests` adds 17 pure unit cases using generated metadata bytes, so
@@ -343,7 +342,7 @@ read in place, never copied into test output. The 334-case run through Lasers us
 `BuildWin16Fixture`, `TestLocalMondrian`, `TestLocalSpiralGyra`,
 `TestLocalRainstorm`, `TestLocalFadeAway`, and `TestLocalLasers`, all set to true,
 with the corresponding `AFTER_DARKER_*` environment variables set as shown
-above and in the earlier sections. The public suite alone has 259 cases.
+above and in the earlier sections. The public suite alone has 273 cases.
 
 ## Optional Magic tests
 
@@ -384,9 +383,9 @@ locks or owned pens. Missing/wrong private artifacts fail explicitly.
 Six additional public cases need no private input: two check the clock alias's
 real far-call ABI including DWORD wrap, one checks bounded larger service budgets,
 and three check intermediate image matching, copied ownership and visit/hold bounds.
-The normal `dotnet test` command remains **259 cases**, with no compiler or AD file.
+The normal `dotnet test` command remains **273 cases**, with no compiler or AD file.
 
-For the complete **367-case** regression:
+For the complete **388-case** regression:
 
 ```powershell
 $env:AFTER_DARKER_MONDRIAN = (Resolve-Path ad/Mondrian.ad).Path
@@ -399,13 +398,14 @@ $env:AFTER_DARKER_STRING_THEORY = (Resolve-Path 'ad/String Theory.ad').Path
 $env:AFTER_DARKER_ZOT = (Resolve-Path 'ad/Zot!.ad').Path
 $env:AFTER_DARKER_HARD_RAIN = (Resolve-Path 'ad/Hard Rain.ad').Path
 $env:AFTER_DARKER_SHAPES = (Resolve-Path ad/Shapes.ad).Path
-dotnet test -p:BuildWin16Fixture=true -p:TestLocalMondrian=true -p:TestLocalSpiralGyra=true -p:TestLocalRainstorm=true -p:TestLocalFadeAway=true -p:TestLocalLasers=true -p:TestLocalMagic=true -p:TestLocalStringTheory=true -p:TestLocalZot=true -p:TestLocalHardRain=true -p:TestLocalShapes=true --report-trx
+$env:AFTER_DARKER_STAINED_GLASS = (Resolve-Path 'ad/Stained Glass.ad').Path
+dotnet test -p:BuildWin16Fixture=true -p:TestLocalMondrian=true -p:TestLocalSpiralGyra=true -p:TestLocalRainstorm=true -p:TestLocalFadeAway=true -p:TestLocalLasers=true -p:TestLocalMagic=true -p:TestLocalStringTheory=true -p:TestLocalZot=true -p:TestLocalHardRain=true -p:TestLocalShapes=true -p:TestLocalStainedGlass=true --report-trx
 ```
 
 See the [String Theory evidence](research/string-theory-execution.md) and
 [Zot! presentation/heap evidence](research/zot-execution.md). WPF acceptance
 passed each module alone and switching both ways. Those actual-window runs
-are separate from the 367 automated test cases.
+are separate from the 388 automated test cases.
 
 ## Optional Hard Rain tests
 
@@ -435,3 +435,18 @@ balanced brush ownership through CLOSE/WEP. The default suite needs no module.
 To also save the first 120 draw results, set `AFTER_DARKER_SHAPES_CAPTURE` to an
 ignored output directory such as `artifacts/shapes/frames` before this command.
 See [the direct-RGB policy, observations and preview pacing](research/shapes-execution.md).
+
+## Optional Stained Glass tests and captures
+
+```powershell
+$env:AFTER_DARKER_STAINED_GLASS = (Resolve-Path 'ad/Stained Glass.ad').Path
+dotnet test -p:TestLocalStainedGlass=true --filter TestCategory=LocalStainedGlass --report-trx
+```
+
+Seven cases cover 2,000 draws through the new imports, four additional seed/size
+combinations, independent sessions, rejected dimensions/artifacts and CLOSE/WEP
+with no owned objects, allocations or locks. To save every hundredth image from
+the 2,000-draw test, set `AFTER_DARKER_STAINED_GLASS_CAPTURE` to an absolute path
+under ignored `artifacts/`. The [execution guide](research/stained-glass-execution.md)
+records the fixed color controls, API signatures and exact-versus-approximate
+native raster comparisons. StretchBlt remains guarded and unexercised.

@@ -4,18 +4,22 @@ namespace AfterDarker.Core.Win16;
 
 /// <summary>
 /// The supported device-context state: one persistent surface per guest HDC,
-/// identity coordinates (MM_TEXT), full-surface clip, stock brushes and black/null pens,
-/// selected solid pens/brushes and a current drawing position. Lines use copy-pen RGB.
+/// MM_TEXT coordinates with a translated window origin, full-surface clip, stock objects,
+/// selected solid pens/brushes, current drawing position and per-DC binary raster mixing.
 /// Extend explicitly when a module needs other objects, widths or raster modes.
 /// </summary>
-public sealed class Win16Drawing
+public sealed partial class Win16Drawing
 {
+    /// <summary>Win16 WHITE_BRUSH stock index.</summary>
+    public const short WhiteBrushIndex = 0;
     /// <summary>Win16 stock-object index understood by the supported GetStockObject handler.</summary>
     public const short BlackBrushIndex = 4;
     /// <summary>Win16 BLACK_PEN stock-object index, distinct from our guest pen handle.</summary>
     public const short BlackPenIndex = 7;
     /// <summary>Win16 NULL_PEN stock index: draw fills without an outline.</summary>
     public const short NullPenIndex = 8;
+    /// <summary>NULL_BRUSH/HOLLOW_BRUSH stock index: outline a shape without filling its interior.</summary>
+    public const short NullBrushIndex = 5;
     /// <summary>Host-owned guest identity for the stock black brush; never a native pointer.</summary>
     public const ushort BlackBrushHandle = 0x201; // Guest identity, never a native pointer.
     /// <summary>Host-owned guest identity for the default selected black pen.</summary>
@@ -24,6 +28,8 @@ public sealed class Win16Drawing
     public const ushort WhiteBrushHandle = 0x203;
     /// <summary>Stock pen which suppresses strokes; this is not a null/invalid handle.</summary>
     public const ushort NullPenHandle = 0x204;
+    /// <summary>Host-owned identity for a brush which leaves the interior untouched.</summary>
+    public const ushort NullBrushHandle = 0x205;
     private const ushort FirstPen = 0x300, PenCapacity = 256;
     private const ushort FirstBrush = 0x400, BrushCapacity = 256;
     private readonly Dictionary<ushort, Win16DeviceContext> contexts = [];
@@ -53,11 +59,33 @@ public sealed class Win16Drawing
         if (hdc == 0) throw new ArgumentException("A null HDC is not a surface.");
         contexts.Add(hdc, new(surface));
     }
+    /// <summary>Return the signed logical origin packed as Y:X, as required by Win16 GetWindowOrg.</summary>
+    public uint GetWindowOrg(ushort hdc)
+    {
+        Point16 origin = RequireDeviceContext(hdc).WindowOrigin;
+        return (ushort)origin.X | ((uint)(ushort)origin.Y << 16);
+    }
+    /// <summary>Map the given logical point to pixel zero and return the previous packed origin.</summary>
+    public uint SetWindowOrg(ushort hdc, short horizontal, short vertical)
+    {
+        uint previous = GetWindowOrg(hdc);
+        RequireDeviceContext(hdc).WindowOrigin = new(horizontal, vertical);
+        return previous;
+    }
+    /// <summary>Set the pen/brush mix mode and return its previous value; invalid modes fail before changing state.</summary>
+    public ushort SetROP2(ushort hdc, ushort mode)
+    {
+        Win16DeviceContext context = RequireDeviceContext(hdc);
+        if (mode is < 1 or > 16) return 0;
+        ushort previous = (ushort)context.Mix;
+        context.Mix = (RasterMix)mode;
+        return previous;
+    }
     /// <summary>Fill black or invert a rectangle on the selected device context surface.</summary>
     public void Paint(ushort hdc, Rectangle16 rectangle, bool invert)
     {
         Win16DeviceContext deviceContext = RequireDeviceContext(hdc);
-        int changedPixels = deviceContext.Surface.Paint(rectangle, invert);
+        int changedPixels = deviceContext.Surface.Paint(rectangle, invert, deviceContext.WindowOrigin);
         LastOperation = new(invert ? "InvertRect" : "FillRect", hdc, rectangle, changedPixels);
         if (OperationCount < long.MaxValue) OperationCount++;
     }
@@ -65,8 +93,8 @@ public sealed class Win16Drawing
     /// <summary>Allocate a bounded guest pen; width two is currently supported by Ellipse only.</summary>
     public ushort CreatePen(short style, short width, uint color)
     {
-        if (style != 0 || width is < 0 or > 2)
-            throw new NotSupportedException("Only solid RGB/PALETTERGB pens of width zero, one or two are supported.");
+        if (style != 0 || width is < 0 or > 3)
+            throw new NotSupportedException($"Only solid RGB/PALETTERGB pens of width zero through three are supported (style={style}, width={width}, color={color:X8}).");
         uint rgb = Win16Color.ResolveSolidRgb(color);
         for (ushort handle = FirstPen; handle < FirstPen + PenCapacity; handle++)
         {
@@ -92,7 +120,7 @@ public sealed class Win16Drawing
     public ushort SelectObject(ushort hdc, ushort handle)
     {
         Win16DeviceContext deviceContext = RequireDeviceContext(hdc);
-        if (handle is BlackBrushHandle or WhiteBrushHandle || brushColors.ContainsKey(handle))
+        if (handle is BlackBrushHandle or WhiteBrushHandle or NullBrushHandle || brushColors.ContainsKey(handle))
         {
             ushort previousBrush = deviceContext.SelectedBrush;
             deviceContext.SelectedBrush = handle;
@@ -106,7 +134,7 @@ public sealed class Win16Drawing
     /// <summary>Release an owned pen/brush only when no HDC selects it; stock lifetimes remain host-owned.</summary>
     public bool DeleteObject(ushort handle)
     {
-        if (handle is BlackPenHandle or NullPenHandle or BlackBrushHandle or WhiteBrushHandle) return true;
+        if (handle is BlackPenHandle or NullPenHandle or BlackBrushHandle or WhiteBrushHandle or NullBrushHandle) return true;
         if (contexts.Values.Any(context => context.SelectedPen == handle || context.SelectedBrush == handle)) return false;
         return pens.Remove(handle) || brushColors.Remove(handle);
     }
@@ -124,8 +152,12 @@ public sealed class Win16Drawing
     {
         Win16DeviceContext deviceContext = RequireDeviceContext(hdc);
         Win16Pen? pen = SelectedPen(deviceContext);
-        if (pen is { Width: not 1 }) throw new NotSupportedException("LineTo with a wide pen is not implemented; width two is supported by Ellipse.");
-        int changedPixels = pen is null ? 0 : deviceContext.Surface.Line(deviceContext.CurrentX, deviceContext.CurrentY, destinationX, destinationY, pen.Color);
+        if (pen is { Width: 2 }) throw new NotSupportedException("Width-two LineTo is not implemented; Ellipse supports that width.");
+        int changedPixels = pen is null ? 0 : pen.Width == 3
+            ? deviceContext.Surface.WideLine(deviceContext.CurrentX, deviceContext.CurrentY, destinationX, destinationY,
+                pen.Color, deviceContext.Mix, deviceContext.WindowOrigin)
+            : deviceContext.Surface.Line(deviceContext.CurrentX, deviceContext.CurrentY, destinationX, destinationY,
+                pen.Color, deviceContext.Mix, deviceContext.WindowOrigin);
         LastOperation = new("LineTo", hdc, new(deviceContext.CurrentX, deviceContext.CurrentY, destinationX, destinationY), changedPixels);
         deviceContext.CurrentX = destinationX;
         deviceContext.CurrentY = destinationY;
@@ -138,8 +170,9 @@ public sealed class Win16Drawing
     {
         Win16DeviceContext deviceContext = RequireDeviceContext(hdc);
         Win16Pen? pen = SelectedPen(deviceContext);
-        uint brushColor = ResolveBrushColor(deviceContext.SelectedBrush);
-        int changedPixels = deviceContext.Surface.Ellipse(rectangle, pen?.Color ?? 0, pen?.Width ?? 0, brushColor);
+        uint? brushColor = SelectedBrushColor(deviceContext);
+        int changedPixels = deviceContext.Surface.Ellipse(rectangle, pen?.Color ?? 0, pen?.Width ?? 0, brushColor,
+            deviceContext.Mix, deviceContext.WindowOrigin);
         LastOperation = new("Ellipse", hdc, rectangle, changedPixels);
         if (OperationCount < long.MaxValue) OperationCount++;
         return true;
@@ -152,7 +185,7 @@ public sealed class Win16Drawing
         Win16Pen? pen = SelectedPen(deviceContext);
         if (pen is { Width: not 1 }) throw new NotSupportedException("Rectangle supports a null or one-pixel pen only.");
         int changedPixels = deviceContext.Surface.Rectangle(rectangle, pen?.Color ?? 0, pen is not null,
-            ResolveBrushColor(deviceContext.SelectedBrush));
+            SelectedBrushColor(deviceContext), deviceContext.Mix, deviceContext.WindowOrigin);
         LastOperation = new("Rectangle", hdc, rectangle, changedPixels);
         if (OperationCount < long.MaxValue) OperationCount++;
         return true;
@@ -165,6 +198,9 @@ public sealed class Win16Drawing
         _ => brushColors.TryGetValue(handle, out uint color) ? color
             : throw new NotSupportedException($"Unknown brush {handle:X4}.")
     };
+
+    private uint? SelectedBrushColor(Win16DeviceContext context) =>
+        context.SelectedBrush == NullBrushHandle ? null : ResolveBrushColor(context.SelectedBrush);
 
     // Managed null means the selected NULL_PEN suppresses strokes. An unknown
     // guest object is rejected by SelectObject; it cannot silently land here.

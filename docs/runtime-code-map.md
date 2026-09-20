@@ -29,6 +29,12 @@ larger boundaries and proof requirements, see [architecture](architecture.md).
 | Where are Zot!'s fixed blocks, clock gate and flash points defined? | [ZotProfile](../src/AfterDarker.Runtime/Modules/ZotProfile.cs), [ZotState](../src/AfterDarker.Runtime/Modules/ZotState.cs) and [evidence](research/zot-execution.md) |
 | Where are Hard Rain's drop records and square-pixel inputs? | [HardRainProfile](../src/AfterDarker.Runtime/Modules/HardRainProfile.cs), [HardRainState](../src/AfterDarker.Runtime/Modules/HardRainState.cs) and [evidence](research/hard-rain-execution.md) |
 | Where does Shapes accept its palette request and expose its original random state? | [ShapesProfile](../src/AfterDarker.Runtime/Modules/ShapesProfile.cs), [ShapesState](../src/AfterDarker.Runtime/Modules/ShapesState.cs) and [evidence](research/shapes-execution.md) |
+| Where are Stained Glass's settings and original globals? | [StainedGlassProfile](../src/AfterDarker.Runtime/Modules/StainedGlassProfile.cs), [StainedGlassState](../src/AfterDarker.Runtime/Modules/StainedGlassState.cs) and [evidence](research/stained-glass-execution.md) |
+| Where are coordinate origins and raster mixing stored? | [Win16DeviceContext](../src/AfterDarker.Core/Win16/Win16DeviceContext.cs) owns per-DC state; [RasterMix](../src/AfterDarker.Core/Rendering/RasterMix.cs) names the 16 bitwise operations |
+| Where are guest RECTs moved, inflated and intersected? | [Win16Api.Rectangles](../src/AfterDarker.Core/Win16/Win16Api.Rectangles.cs) uses checked guest memory, signed words and alias-safe reads |
+| Where do explicit brushes and SetPixel paint? | [Win16Drawing.Brushes](../src/AfterDarker.Core/Win16/Win16Drawing.Brushes.cs) separates API behavior from [PixelSurface.Brushes](../src/AfterDarker.Core/Rendering/PixelSurface.Brushes.cs) |
+| Where does BitBlt preserve overlapping source pixels? | [Win16Drawing.Blits](../src/AfterDarker.Core/Win16/Win16Drawing.Blits.cs) validates DCs/ROP; [PixelSurface.Blit](../src/AfterDarker.Core/Rendering/PixelSurface.Blit.cs) snapshots and clips the copy |
+| Where are three-pixel lines approximated? | [PixelSurface.WideLine](../src/AfterDarker.Core/Rendering/PixelSurface.WideLine.cs) covers a round-ended stroke, mixing each pixel once even at overlapping end caps |
 | Where are RGB and PALETTERGB interpreted? | [Win16Color](../src/AfterDarker.Core/Win16/Win16Color.cs); pens and brushes use the same explicit true-color policy |
 | Where are brushes allocated, selected and deleted? | [Win16Drawing](../src/AfterDarker.Core/Win16/Win16Drawing.cs) owns the bounded brush pool; [PlaybackResult](../src/AfterDarker.Runtime/PlaybackResult.cs) exposes live/peak brush counts |
 | Who writes the shared SDK record layout for newer modules? | [StandardModuleRecords](../src/AfterDarker.Runtime/Modules/StandardModuleRecords.cs); profiles supply the meanings of its four control words |
@@ -139,8 +145,8 @@ tests preserve this distinction.
 
 ## Drawing state and pixels
 
-An HDC identifies `Win16DeviceContext`, retaining separate pen/brush slots and current
-position. `Win16Drawing` owns the HDC/pen registries and object lifetimes.
+An HDC identifies `Win16DeviceContext`, retaining separate pen/brush slots, current
+position, window origin and ROP2. `Win16Drawing` owns the HDC/object registries and lifetimes.
 `PixelSurface` owns bytes, clipping and change counts. `CosmeticLineRasterizer`
 names the longer-axis step and shorter-axis rounding separately. Clipping
 follows pixel generation so an off-screen start cannot change rounding phase.
@@ -150,6 +156,10 @@ measured compatibility result, not complete historical Win3.1 fidelity.
 Ellipse uses a separately documented software policy: its tested Hard Rain ring
 sizes stay within one pixel of native GDI colors, but are not pixel-exact.
 The pen carries its width; a brush selection never replaces the selected pen.
+Stained Glass's [execution guide](research/stained-glass-execution.md) explains
+which calls use ROP2, why XOR requires single coverage, and why overlapping
+BitBlt reads a source snapshot. These drawing services remain independent of
+module profiles and WPF.
 
 ## Tutorials and contribution style
 
