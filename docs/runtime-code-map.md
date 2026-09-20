@@ -26,7 +26,8 @@ larger boundaries and proof requirements, see [architecture](architecture.md).
 | Who chooses host-record and stack addresses? | [SessionMemoryLayout](../src/AfterDarker.Runtime/SessionMemoryLayout.cs) |
 | Who sequences startup, frames, and shutdown? | [AfterDarkSession](../src/AfterDarker.Runtime/AfterDarkSession.cs) and [its diagnostic types](../src/AfterDarker.Runtime/AfterDarkSession.Diagnostics.cs) |
 | Which module versions can run? | [SupportedModules](../src/AfterDarker.Runtime/SupportedModules.cs) |
-| What differs between the two modules? | [ModuleProfile](../src/AfterDarker.Runtime/Modules/ModuleProfile.cs), [MondrianProfile](../src/AfterDarker.Runtime/Modules/MondrianProfile.cs), [SpiralGyraProfile](../src/AfterDarker.Runtime/Modules/SpiralGyraProfile.cs) |
+| What differs between supported modules? | [ModuleProfile](../src/AfterDarker.Runtime/Modules/ModuleProfile.cs), [MondrianProfile](../src/AfterDarker.Runtime/Modules/MondrianProfile.cs), [SpiralGyraProfile](../src/AfterDarker.Runtime/Modules/SpiralGyraProfile.cs), [RainstormProfile](../src/AfterDarker.Runtime/Modules/RainstormProfile.cs) |
+| How is a POINT passed by value? | [Point16](../src/AfterDarker.Core/Win16/Point16.cs), `Win16ArgumentReader.ReadPoint`, and the [Rainstorm notes](research/rainstorm-execution.md) |
 | What may a UI call? | [IAnimationSession](../src/AfterDarker.Runtime/IAnimationSession.cs), [PlaybackOptions](../src/AfterDarker.Runtime/PlaybackOptions.cs), [PlaybackResult](../src/AfterDarker.Runtime/PlaybackResult.cs) |
 | Who paces frames and owns the background guest? | [AfterDarkPlayback](../src/AfterDarker.Runtime/AfterDarkPlayback.cs) and [WPF guide](wpf-player.md) |
 | Where are selected pens and the current point stored? | [Win16Drawing](../src/AfterDarker.Core/Win16/Win16Drawing.cs) and [Win16DeviceContext](../src/AfterDarker.Core/Win16/Win16DeviceContext.cs) |

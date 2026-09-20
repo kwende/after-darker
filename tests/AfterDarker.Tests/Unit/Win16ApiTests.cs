@@ -8,6 +8,45 @@ namespace AfterDarker.Tests.Unit;
 public sealed class Win16ApiTests
 {
     [TestMethod]
+    [DataRow(-10, -5, 2, 9, -10, -5, true)]
+    [DataRow(-10, -5, 2, 9, 1, 8, true)]
+    [DataRow(-10, -5, 2, 9, 2, 0, false)]
+    [DataRow(-10, -5, 2, 9, 0, 9, false)]
+    [DataRow(-10, -5, 2, 9, -11, 0, false)]
+    [DataRow(-10, -5, 2, 9, 0, -6, false)]
+    [DataRow(2, -5, 2, 9, 2, 0, false)]
+    [DataRow(-10, 9, 2, 9, 0, 9, false)]
+    [DataRow(2, -5, -10, 9, 0, 0, false)]
+    [DataRow(-10, 9, 2, -5, 0, 0, false)]
+    [DataRow(-32768, -32768, 32767, 32767, -32768, 32766, true)]
+    public void PointInRectanglePreservesSignedHalfOpenGeometry(int left, int top, int right, int bottom,
+        int x, int y, bool expected)
+    {
+        var api = Create();
+        var rectangleAddress = new FarPointer16(0x48, 0x350);
+        byte[] rectangle = new Rectangle16((short)left, (short)top, (short)right, (short)bottom).Encode();
+        api.State.Memory.Write(rectangleAddress, rectangle);
+        Assert.AreEqual(expected, api.PtInRect(rectangleAddress, new((short)x, (short)y)));
+        CollectionAssert.AreEqual(rectangle, api.State.Memory.Read(rectangleAddress, Rectangle16.ByteCount));
+    }
+
+    [TestMethod]
+    public void StockBlackPenReusesTheDeviceContextsDefaultAndHasNoOwnedLifetime()
+    {
+        var drawing = new Win16Drawing();
+        var api = new Win16Api(new Win16ApiState(new Memory(), new(new(0x48, 0x400), 512)) { Drawing = drawing });
+        drawing.Register(0x103, new AfterDarker.Core.Rendering.PixelSurface(8, 8));
+        ushort pen = api.GetStockObject(Win16Drawing.BlackPenIndex);
+        Assert.AreEqual(Win16Drawing.BlackPenHandle, pen);
+        Assert.AreEqual(pen, api.GetStockObject(Win16Drawing.BlackPenIndex));
+        Assert.AreEqual(pen, api.SelectObject(0x103, pen));
+        Assert.IsTrue(api.DeleteObject(pen));
+        Assert.AreEqual(pen, api.SelectObject(0x103, pen));
+        Assert.AreEqual(0, drawing.LivePenCount);
+        Assert.AreEqual(0, drawing.PeakPenCount);
+    }
+
+    [TestMethod]
     public void SeparateGuestsHaveIndependentHandlesHeapsVersionsAndClocks()
     {
         var first = Create(version: 0x12340A03, tick: uint.MaxValue - 7);

@@ -15,7 +15,7 @@ public abstract class ModuleProfile<TState>
     /// <summary>Check host settings before allocating or executing the guest.</summary>
     public virtual void ValidateOptions(PlaybackOptions options) => options.Validate();
     /// <summary>Serialize the supported paths' system and module records in Win16 byte layout.</summary>
-    /// <remarks>These remain narrow records; see docs/research/after-dark-sdk.md for the full SDK layout.</remarks>
+    /// <remarks>Early profiles retain narrow records; Rainstorm uses the full SDK module allocation. See docs/research/after-dark-sdk.md.</remarks>
     public abstract (byte[] System, byte[] Module) CreateRecords(PlaybackOptions options);
     /// <summary>Decode artifact-specific globals from a detached automatic-data-segment snapshot.</summary>
     public abstract TState Observe(byte[] bytes);

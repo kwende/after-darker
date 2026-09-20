@@ -497,3 +497,11 @@ GDI now models a selected solid pen and current point per HDC, with bounded,
 reusable guest pen handles. `MoveTo` returns the previous packed position;
 `LineTo` renders through the same deterministic software surface. This adds
 five Win16 imports without introducing a module-specific drawing backend.
+
+The third target, [Rainstorm](research/rainstorm-execution.md), adds a stock
+black-pen lookup and a by-value POINT geometry import through the same gateway.
+Its profile supplies fixed controls and SDK-sized module storage. Its lightning
+path exposes a presentation boundary: two inversions occur within one DRAWFRAME,
+whereas the current host publishes only the final surface after the call.
+Intermediate effects and their historical timing require a separate presentation
+policy; executing the calls alone does not establish visible fidelity.

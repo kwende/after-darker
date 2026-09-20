@@ -2,11 +2,17 @@
 
 Open `AfterDarker.sln`, set **AfterDarker.Wpf** as the startup project, and press
 F5. With the analyzed `ad/Mondrian.ad` present, the window starts automatically.
-Choose **File > Load AD file…** to select **Mondrian** or **Spiral Gyra**. Loading
+Choose **File > Load AD file…** to select **Mondrian**, **Spiral Gyra**, or **Rainstorm**. Loading
 starts playback automatically; the menu can also switch modules while playing.
 The previous guest shuts down before the new one starts. Unsupported files or
 versions are rejected by their content hash before stopping an active guest.
 Stop lets you change speed and Run a fresh guest. No original modules are distributed.
+
+Rainstorm uses fixed strength/lightning/drops/wind controls (`60/50/52/40`);
+its speed selector is disabled because that module has no speed control. Rain
+is visible, but its two inversions within a DRAWFRAME are presented only after
+both complete, so the brief lightning image is not displayed. See the
+[Rainstorm evidence and presentation boundary](research/rainstorm-execution.md).
 
 From the repository root:
 
@@ -87,7 +93,7 @@ halfway through would leave its stack unsuitable for another CALL FAR to CLOSE.
 If execution or cleanup fails, no further guest calls are attempted, and the
 native engine is still disposed. The UI shows the symbolic failure. Cleanup
 ignores the cancelled pacing token but retains bounded native execution: 50,000
-instructions per Mondrian invocation or 200,000 for Spiral Gyra, one-second
+instructions per Mondrian invocation or 200,000 for Spiral Gyra/Rainstorm, one-second
 native slices and a five-second
 cumulative native execution budget. These are cooperative runtime safeguards,
 not an out-of-process watchdog for a defective native library.
@@ -98,6 +104,10 @@ may service 200 saved rectangles plus blanking and locks, so its service budget
 is explicitly 208; its other calls retain 128. Spiral uses 768 services because
 one invocation can perform 30 drawing iterations. Its CLOSE restores the original
 pen and deletes its allocated pens; shutdown checks that none remain.
+
+Rainstorm allows 1,024 service exits per invocation because its 52 drops each
+perform point tests and pen/line operations. Its peak owned-pen count was one
+in the 300-draw verification; its stock black pen is host-owned.
 With the current system record, CLOSE optionally clears then inverts the saved
 rectangles; it does not necessarily leave black pixels. The UI retains the last
 presented frame after Stop. Console lessons still end at their original boundary

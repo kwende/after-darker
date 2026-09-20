@@ -33,4 +33,13 @@ internal sealed class Win16ArgumentReader(IReadOnlyList<ushort> words)
         ushort lowWord = ReadWord();
         return ((uint)highWord << 16) | lowWord;
     }
+
+    /// <summary>Read a by-value POINT. Pascal pushes its high word (Y) before its low word (X).</summary>
+    /// <remarks>Memory stores X then Y; our source-ordered stack words are Y then X. See docs/win16-implementations.md.</remarks>
+    public Point16 ReadPoint()
+    {
+        short y = ReadSignedWord();
+        short x = ReadSignedWord();
+        return new Point16(x, y);
+    }
 }

@@ -15,6 +15,8 @@ with a narrowly scoped host environment. Tutorial 09 continues in that guest
 through BLANK and DRAWFRAME, producing changed PNG frames on a deterministic
 software surface. The WPF host now also executes Spiral Gyra through a shared
 module session, adding five pen/line imports to the original nine-service slice.
+Rainstorm is the third playable module, with fixed controls, shared black-pen
+lookup and PtInRect support; its intermediate lightning image is not presented.
 This remains narrow compatibility support, not general Win16 emulation.
 `AfterDarker.Core` contains two extracted binary-layout helpers, a Windows NE
 metadata reader, a CPU-independent load plan, and a separate After Dark
@@ -24,6 +26,24 @@ nine educational console lessons (06 needs the optional Watcom fixture;
 
 ## Established evidence
 
+- **Rainstorm playback:** the shared session executes startup, initialization,
+  rain drawing and CLOSE/WEP for the verified artifact. Nineteen public cases
+  add signed rectangle/POINT and stock-pen coverage; five private cases include
+  300 draws, deterministic independent guests and dimension extremes. All 261
+  tests pass with every opt-in enabled. Actual WPF acceptance verifies RGB
+  readback, restart, switching to/from Spiral Gyra and close during playback.
+  Final locks/pens are zero. See [execution notes](research/rainstorm-execution.md).
+  The original lightning path inverts twice inside one DRAWFRAME; our final-frame
+  presentation omits the intermediate flash. This is a documented fidelity gap.
+- **Whole-folder readiness sweep:** all 29 local module hashes match the prior
+  census. Eighteen pass the current load plan with guarded unknown import slots;
+  eleven stop in the loader. Research-only adapters let Rainstorm produce
+  changed pixels through ten draws and CLOSE/WEP. Four Fade Away styles change
+  a synthetic starting image and complete shutdown. Lasers, Magic, String Theory
+  and timed Zot! execution expose a shared local-heap requirement. See the
+  [ranked report and all first blockers](research/module-readiness-sweep.md).
+  These probes do not expand the WPF supported-module list or establish visual
+  fidelity, endurance, exact default settings or all-mode compatibility.
 - **Readable runtime boundaries:** startup register conventions, imported-call
   stack management, typed ABI conversion, service dispatch, caller-code emission
   and DOS interrupts now have purpose-named classes. Module profiles and host
@@ -234,11 +254,14 @@ nine educational console lessons (06 needs the optional Watcom fixture;
   overrides, privilege transitions, general pointer translation, and broader
   ABI layouts remain unproven. Two successful host exits/resumes do not establish
   compatibility with arbitrary Win16 guest code.
-- Original execution is limited to the analyzed Mondrian and Spiral Gyra
-  artifacts' startup, initialization, drawing and shutdown; other revisions, other modules,
-  and historical visual/pacing fidelity remain unproven.
-- Only the observed system/module fields for that path have been supplied and
-  consumed. A complete After Dark SDK structure schema remains unrecovered.
+- Supported application playback is limited to the analyzed Mondrian, Spiral
+  Gyra and Rainstorm artifacts. The whole-folder research probes supply narrower
+  observations for other modules without making them supported application
+  playback. Other revisions and historical visual/pacing fidelity remain unproven.
+- Production profiles supply the observed fields for their supported paths.
+  The public SDK system/module structure layouts have since been recovered;
+  the extra observed system words and complete cross-version behavior remain
+  unresolved. Research probes use the public module-record size.
 - Only the rectangle/black-brush and solid cosmetic pen/line drawing subset
   is implemented. Other object types, palettes, text, mapping modes and resource
   rendering remain unproven.
@@ -258,13 +281,14 @@ explicitly.
 
 ## Next planning point
 
-The active branch is `codex/spiral-gyra-player`, created from clean merged main.
-The two-module implementation is ready for the owner's F5 run and review;
-changes are not committed or pushed. Use File > Load AD file… to switch between
-Mondrian and Spiral Gyra. Other files/versions are rejected explicitly.
-Further modules should extend profiles/services from observed needs rather than
-widening the current whitelist without runtime evidence. No multi-hour endurance
-or historical timing/palette comparison has been performed.
+The Rainstorm increment is on `codex/rainstorm-player`, carrying the uncommitted
+readiness sweep forward without discarding it. Rainstorm now joins Mondrian and
+Spiral Gyra in WPF. Other files/versions are still rejected explicitly. The
+owner requested one module at a time, followed by a pause and a short account
+of novel findings. Stop here for review; no Fade Away implementation has begun.
+The [sweep](research/module-readiness-sweep.md) retains the remaining candidates.
+Lightning's intermediate presentation is an explicit remaining fidelity issue,
+and no multi-hour endurance or historical timing comparison has been performed.
 
 The project keeps one F5-able console app, with separate tutorial classes
 invoked through `ITutorial`, alongside the live WPF host. Future expansion
@@ -275,6 +299,50 @@ Tutorial 04 implements the narrow host trap; the broader issue is not complete.
 See [the tutorial guide](tutorials.md).
 
 ## Session log
+
+### 2026-09-19 - Rainstorm, one module at a time
+
+- Added a hash-specific Rainstorm profile and typed guest observations through
+  the existing session/catalog/WPF path. Its fixed controls are strength 60,
+  lightning 50, 52 drops and wind 40; the unrelated speed selector is disabled.
+- Added shared stock BLACK_PEN lookup and PtInRect. POINT is passed by value,
+  with Y/X push order decoded into a named X/Y value; managed implementations
+  stay independent of emulator registers and stack return mechanics.
+- All 261 tests passed with Watcom and all three original-module opt-ins.
+  Rainstorm's 300-draw case executed 15,600 point tests and both lightning
+  inversions; it peaked at one owned pen and completed CLOSE/WEP with no locks
+  or pens remaining. Asymmetric negative-coordinate conformance cases verify
+  marshaling, guest result stores, preserved registers and Pascal cleanup.
+- Actual WPF acceptance passed in both switching directions with Spiral Gyra,
+  including pixel readback, unsupported-file rejection, restart and window close
+  during playback. Captures and original modules remain ignored.
+- New finding: Rainstorm inverts the surface twice during a single DRAWFRAME.
+  The current final-frame mailbox does not present the intermediate lightning
+  image. Kept the actual API behavior and documented this presentation/timing
+  boundary instead of inventing a flash duration. Paused after this increment.
+
+### 2026-09-19 - whole-folder readiness sweep
+
+- Created `codex/module-readiness-sweep` from committed readability work
+  (`8a16729`). Re-scanned all 29 original modules; hashes match the prior census.
+- Used the current loader and runtime in bounded, isolated research processes.
+  Guarded unknown import slots permit reaching the first unsupported call;
+  they do not invent API behavior. Eighteen load plans succeed and eleven fail
+  on relocation/prologue requirements. All baseline processes finish within
+  their watchdog; no production runtime or application code changed.
+- Rainstorm succeeds through ten draws and shutdown with black-pen lookup and
+  PtInRect adapters, with nonblack pixels and zero final locks/pens. Fade Away's
+  Plain, Blinds, Radar and Mesh modes change synthetic initial pixels and
+  complete; other styles expose null-brush/PatBlt gaps. These are research
+  configurations, not supported WPF profiles or full compatibility proofs.
+- An accelerated-clock Zot! probe reaches LocalAlloc after several idle calls.
+  Gravity still loads a sound resource after a failed sound-open response.
+  These observations prevent mistaking idle returns or muted sound for complete
+  rendering support. Recovered AD_SND declarations improve the sound research
+  position; AD_RSRC contracts and WIN87EM behavior remain unresolved.
+- Added a metadata-only registry comparison utility, hash-matched baseline
+  results, and a ranked report covering every file. Original binaries, SDK
+  downloads, probe code and detailed raw results remain ignored locally.
 
 ### 2026-09-19 - runtime readability and contribution map
 

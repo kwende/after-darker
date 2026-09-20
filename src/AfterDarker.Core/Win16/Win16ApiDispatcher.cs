@@ -87,6 +87,12 @@ public static class Win16ApiDispatcher
                 }
             case Win16Imports.Handler.GetStockObject:
                 return new Win16Imports.Reply(api.GetStockObject(arguments.ReadSignedWord()));
+            case Win16Imports.Handler.PtInRect:
+                {
+                    FarPointer16 rectangleAddress = arguments.ReadFarPointer();
+                    Point16 point = arguments.ReadPoint();
+                    return BooleanResult(api.PtInRect(rectangleAddress, point));
+                }
             case Win16Imports.Handler.FillRect:
                 {
                     ushort deviceContext = arguments.ReadWord();

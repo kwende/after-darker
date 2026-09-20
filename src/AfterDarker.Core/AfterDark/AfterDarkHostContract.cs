@@ -2,11 +2,11 @@ using System.Buffers.Binary;
 
 namespace AfterDarker.Core.AfterDark;
 
-/// <summary>Shared host values currently exercised by both supported module dispatchers.</summary>
+/// <summary>Shared host values exercised by supported original module dispatchers.</summary>
 /// <remarks>
 /// SDK field names are now known, but the allocations below still cover only the executed paths.
 /// See docs/research/after-dark-sdk.md before expanding records or naming the unexplained tail words.
-/// This readability pass deliberately preserves the proven record bytes.
+/// Profiles add required fields explicitly while preserving the proven compatibility words.
 /// </remarks>
 public static class AfterDarkHostContract
 {

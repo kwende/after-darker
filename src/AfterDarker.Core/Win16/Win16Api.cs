@@ -34,11 +34,21 @@ public sealed class Win16Api(Win16ApiState state)
     public void SetRect(FarPointer16 destination, short left, short top, short right, short bottom)
         => State.Memory.Write(destination, new Rectangle16(left, top, right, bottom).Encode());
 
-    /// <summary>Return the supported stock black brush; reject unknown stock-object indices.</summary>
-    public ushort GetStockObject(short index)
+    /// <summary>Return a host-owned stock black brush or pen; these do not consume the created-pen pool.</summary>
+    public ushort GetStockObject(short index) => index switch
     {
-        if (index != Win16Drawing.BlackBrushIndex) throw new NotSupportedException($"Unsupported stock object {index}.");
-        return Win16Drawing.BlackBrushHandle;
+        Win16Drawing.BlackBrushIndex => Win16Drawing.BlackBrushHandle,
+        Win16Drawing.BlackPenIndex => Win16Drawing.BlackPenHandle,
+        _ => throw new NotSupportedException($"Unsupported stock object {index}.")
+    };
+
+    /// <summary>Test a signed point against a guest RECT, including left/top and excluding right/bottom.</summary>
+    /// <remarks>Empty or inverted rectangles contain no point. This reads checked guest memory without changing it.</remarks>
+    public bool PtInRect(FarPointer16 rectangleAddress, Point16 point)
+    {
+        Rectangle16 rectangle = Rectangle16.Decode(State.Memory.Read(rectangleAddress, Rectangle16.ByteCount));
+        return point.X >= rectangle.Left && point.X < rectangle.Right &&
+            point.Y >= rectangle.Top && point.Y < rectangle.Bottom;
     }
 
     /// <summary>Read a guest RECT, fill it using the supported black brush, and return success.</summary>

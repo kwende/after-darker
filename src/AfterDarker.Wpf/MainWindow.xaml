@@ -34,7 +34,7 @@
         <Border Grid.Row="2" Background="Black" BorderBrush="#39404C" BorderThickness="1">
             <Image x:Name="Screen" Stretch="Uniform" RenderOptions.BitmapScalingMode="NearestNeighbor"/>
         </Border>
-        <TextBlock x:Name="Status" Grid.Row="3" Text="File → Load AD file… to play Mondrian or Spiral Gyra." TextWrapping="Wrap"
+        <TextBlock x:Name="Status" Grid.Row="3" Text="File → Load AD file… to play Mondrian, Spiral Gyra or Rainstorm." TextWrapping="Wrap"
                    Margin="0,14,0,0" Foreground="#BFC9D8" FontSize="13"/>
     </Grid>
     </DockPanel>

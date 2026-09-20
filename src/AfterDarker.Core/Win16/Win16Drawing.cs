@@ -12,6 +12,8 @@ public sealed class Win16Drawing
 {
     /// <summary>Win16 stock-object index understood by the supported GetStockObject handler.</summary>
     public const short BlackBrushIndex = 4;
+    /// <summary>Win16 BLACK_PEN stock-object index, distinct from our guest pen handle.</summary>
+    public const short BlackPenIndex = 7;
     /// <summary>Host-owned guest identity for the stock black brush; never a native pointer.</summary>
     public const ushort BlackBrushHandle = 0x201; // Guest identity, never a native pointer.
     /// <summary>Host-owned guest identity for the default selected black pen.</summary>

@@ -12,6 +12,7 @@ ushort GlobalUnlock(ushort handle);
 FarPointer16 GetDOSEnvironment();
 uint GetTickCount();
 void SetRect(FarPointer16 destination, short left, short top, short right, short bottom);
+bool PtInRect(FarPointer16 rectangleAddress, Point16 point);
 ushort GetStockObject(short index);
 short FillRect(ushort hdc, FarPointer16 rectangle, ushort brush);
 void InvertRect(ushort hdc, FarPointer16 rectangle);
@@ -30,7 +31,8 @@ not yet been placed into CPU registers.
 | GetDOSEnvironment | Returns the address of a supplied empty guest environment; rejects absent or unsupported contents. |
 | GetTickCount | Returns the current virtual tick and advances it by a configured amount. |
 | SetRect | Writes the four signed corners unchanged to checked guest memory. |
-| GetStockObject | Returns the guest stock-black-brush identity for index 4; rejects others. |
+| GetStockObject | Returns stock black brush (index 4) or black pen (index 7); rejects other indices. Stock objects do not consume created-object capacity. |
+| PtInRect | Reads a checked guest RECT and tests a signed by-value POINT; left/top inclusive, right/bottom exclusive. Empty/inverted rectangles return false. |
 | FillRect | Resolves the HDC and black brush; fills the clipped rectangle on its persistent surface. |
 | InvertRect | Resolves the HDC; inverts the clipped rectangle's RGB bits. |
 | CreatePen | Allocates a bounded, reusable guest identity for a supported solid pen. |
@@ -87,4 +89,15 @@ boundaries and the Win16 void-return distinction.
 
 The direct [Win16ApiTests](../tests/AfterDarker.Tests/Unit/Win16ApiTests.cs) need
 no emulator. Existing CPU/gateway tests verify the marshaling around the same
-methods, and the opt-in tests exercise both real DLLs.
+methods, and the opt-in tests exercise all three supported original modules.
+
+## POINT by value
+
+Rainstorm introduces `PtInRect(const RECT FAR *, POINT)`. The rectangle parameter
+is a pointer; the point is two signed words passed as one value. In guest memory
+POINT stores X then Y. A Pascal caller pushes Y, then X, so the source-ordered
+words given to the dispatcher are `rectangle selector, rectangle offset, Y, X`.
+`Win16ArgumentReader.ReadPoint` produces `Point16(X, Y)` explicitly. The API
+returns BOOL in AX, preserves DX, and removes eight argument bytes plus the
+four-byte far return frame. See [the execution notes](research/rainstorm-execution.md)
+for ABI sources and tests that catch coordinate swaps and invalid pointers.

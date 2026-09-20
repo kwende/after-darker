@@ -19,6 +19,7 @@ public static class Win16Imports
         Environment,
         Ticks,
         SetRect,
+        PtInRect,
         GetStockObject,
         FillRect,
         InvertRect,
@@ -73,6 +74,8 @@ public static class Win16Imports
             ("GDI", 69, "DeleteObject", enableDrawing ? Handler.DeleteObject : Handler.Unsupported, 2, Win16ReturnLayout.WordInAx),
             ("GDI", 20, "MoveTo", enableDrawing ? Handler.MoveTo : Handler.Unsupported, 6, Win16ReturnLayout.DwordInDxAx),
             ("GDI", 19, "LineTo", enableDrawing ? Handler.LineTo : Handler.Unsupported, 6, Win16ReturnLayout.WordInAx),
+            // Geometry needs checked memory, but does not require a drawing surface.
+            ("USER", 76, "PtInRect", Handler.PtInRect, 8, Win16ReturnLayout.WordInAx),
         };
         const int firstGatewayOffset = 0x100, gatewaySpacing = 0x10;
         return Array.AsReadOnly(image.Imports.Select(import =>
