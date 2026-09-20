@@ -16,6 +16,10 @@ record the present registry hash and fresh first failures.
 **Follow-up, 2026-09-20:** [Rainstorm's lightning presentation](rainstorm-execution.md)
 is now implemented using the shared checkpoint mechanism. The next-module
 ranking and historical probe results below are unchanged.
+The subsequent [Hard Rain increment](hard-rain-execution.md) now implements
+playback with pen widths, selected stock brushes and a documented software ellipse
+raster. Shapes is next; owned brushes, null pens and its palette request still
+need implementation. The original probe results below remain historical evidence.
 
 ## What was checked again
 

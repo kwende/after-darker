@@ -27,7 +27,8 @@ larger boundaries and proof requirements, see [architecture](architecture.md).
 | Where does Magic supply its settings and expose its circular line history? | [MagicProfile](../src/AfterDarker.Runtime/Modules/MagicProfile.cs), [MagicState](../src/AfterDarker.Runtime/Modules/MagicState.cs) and [execution evidence](research/magic-execution.md); the guest updates that history itself |
 | Where are String Theory's groups, history and colors observed? | [StringTheoryProfile](../src/AfterDarker.Runtime/Modules/StringTheoryProfile.cs), [StringTheoryState](../src/AfterDarker.Runtime/Modules/StringTheoryState.cs) and [evidence](research/string-theory-execution.md) |
 | Where are Zot!'s fixed blocks, clock gate and flash points defined? | [ZotProfile](../src/AfterDarker.Runtime/Modules/ZotProfile.cs), [ZotState](../src/AfterDarker.Runtime/Modules/ZotState.cs) and [evidence](research/zot-execution.md) |
-| Who writes the shared SDK record layout for the two newest modules? | [StandardModuleRecords](../src/AfterDarker.Runtime/Modules/StandardModuleRecords.cs); profiles supply the meanings of its four control words |
+| Where are Hard Rain's drop records and square-pixel inputs? | [HardRainProfile](../src/AfterDarker.Runtime/Modules/HardRainProfile.cs), [HardRainState](../src/AfterDarker.Runtime/Modules/HardRainState.cs) and [evidence](research/hard-rain-execution.md) |
+| Who writes the shared SDK record layout for newer modules? | [StandardModuleRecords](../src/AfterDarker.Runtime/Modules/StandardModuleRecords.cs); profiles supply the meanings of its four control words |
 | Who runs and resumes machine code? | [SegmentedGuest.RunUntil](../src/AfterDarker.Runtime/SegmentedGuest.cs) |
 | What do the register snapshots mean? | [SegmentedGuest diagnostics](../src/AfterDarker.Runtime/SegmentedGuest.Diagnostics.cs) |
 | How do we make the initial call into the DLL? | [GuestCallerBuilder](../src/AfterDarker.Runtime/Calls/GuestCallerBuilder.cs) |
@@ -43,7 +44,8 @@ larger boundaries and proof requirements, see [architecture](architecture.md).
 | How can an image be presented before DRAWFRAME returns? | [ImportFrameCheckpoint](../src/AfterDarker.Runtime/Presentation/ImportFrameCheckpoint.cs) describes a profile's image boundary; [ImportFrameCapture](../src/AfterDarker.Runtime/Presentation/ImportFrameCapture.cs) matches it after gateway dispatch and emits `IntermediateFrameReady` |
 | Where is Rainstorm's brief inverted image made visible? | [RainstormProfile.FrameCheckpoints](../src/AfterDarker.Runtime/Modules/RainstormProfile.cs) identifies the first InvertRect return; [the evidence](research/rainstorm-execution.md) explains its 80-ms hold |
 | Can a presenter identify an intermediate image? | [FrameInfo.IsIntermediate](../src/AfterDarker.Runtime/LatestFrameMailbox.cs) is copied atomically with the pixels; WPF's `--smoke-intermediate` mode requires that marker |
-| Where are selected pens and the current point stored? | [Win16Drawing](../src/AfterDarker.Core/Win16/Win16Drawing.cs) and [Win16DeviceContext](../src/AfterDarker.Core/Win16/Win16DeviceContext.cs) |
+| Where are selected pens, brushes and the current point stored? | [Win16Drawing](../src/AfterDarker.Core/Win16/Win16Drawing.cs), [Win16Pen](../src/AfterDarker.Core/Win16/Win16Pen.cs) and [Win16DeviceContext](../src/AfterDarker.Core/Win16/Win16DeviceContext.cs) |
+| Where are ellipse outlines, fills and the raster approximation explained? | [EllipseRasterizer](../src/AfterDarker.Core/Rendering/EllipseRasterizer.cs) builds row spans; [Hard Rain's notes](research/hard-rain-execution.md) record the native comparison |
 | Where do operations become pixels? | [PixelSurface](../src/AfterDarker.Core/Rendering/PixelSurface.cs) and [CosmeticLineRasterizer](../src/AfterDarker.Core/Rendering/CosmeticLineRasterizer.cs) |
 
 Folders group responsibilities; new runtime files retain the `AfterDarker.Runtime`
@@ -133,7 +135,7 @@ tests preserve this distinction.
 
 ## Drawing state and pixels
 
-An HDC identifies `Win16DeviceContext`, retaining the selected pen and current
+An HDC identifies `Win16DeviceContext`, retaining separate pen/brush slots and current
 position. `Win16Drawing` owns the HDC/pen registries and object lifetimes.
 `PixelSurface` owns bytes, clipping and change counts. `CosmeticLineRasterizer`
 names the longer-axis step and shorter-axis rounding separately. Clipping
@@ -141,6 +143,9 @@ follows pixel generation so an off-screen start cannot change rounding phase.
 
 The raster is compared with modern native GDI in 1,500 line cases. This is a
 measured compatibility result, not complete historical Win3.1 fidelity.
+Ellipse uses a separately documented software policy: its tested Hard Rain ring
+sizes stay within one pixel of native GDI colors, but are not pixel-exact.
+The pen carries its width; a brush selection never replaces the selected pen.
 
 ## Tutorials and contribution style
 

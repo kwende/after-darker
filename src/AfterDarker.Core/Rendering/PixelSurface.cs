@@ -86,6 +86,31 @@ public sealed class PixelSurface
         pixels.AsSpan().CopyTo(destination);
     }
 
+    /// <summary>Fill and outline a clipped ellipse with solid COLORREFs; return the number of changed pixels.</summary>
+    /// <remarks>The two-pixel stroke policy is documented in EllipseRasterizer and the Hard Rain execution guide.</remarks>
+    public int Ellipse(Rectangle16 rectangle, uint penColor, int penWidth, uint brushColor)
+    {
+        if (penWidth is < 1 or > 2) throw new ArgumentOutOfRangeException(nameof(penWidth));
+        EllipseRasterizer.Row[] rows = EllipseRasterizer.BuildRows(rectangle, penWidth, Height);
+        int changedPixels = 0;
+        for (int rowIndex = 0; rowIndex < rows.Length; rowIndex++)
+        {
+            var row = rows[rowIndex];
+            int firstColumn = Math.Max(0, row.Left), lastColumn = Math.Min(Width - 1, row.Right);
+            for (int column = firstColumn; column <= lastColumn; column++)
+            {
+                uint color = column >= row.BrushLeft && column <= row.BrushRight ? brushColor : penColor;
+                int byteOffset = (rowIndex * Width + column) * 3;
+                byte red = (byte)color, green = (byte)(color >> 8), blue = (byte)(color >> 16);
+                if (pixels[byteOffset] == red && pixels[byteOffset + 1] == green && pixels[byteOffset + 2] == blue) continue;
+                pixels[byteOffset] = red; pixels[byteOffset + 1] = green; pixels[byteOffset + 2] = blue;
+                changedPixels++;
+            }
+        }
+        if (changedPixels != 0 && Revision < long.MaxValue) Revision++;
+        return changedPixels;
+    }
+
     // Win16 FillRect16/InvertRect16 pass (left, top, right-left, bottom-top)
     // to PatBlt. Our Windows memory-DC oracle demonstrates that, in this
     // identity-coordinate mode, backwards extents cover the sorted half-open

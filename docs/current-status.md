@@ -29,6 +29,10 @@ String Theory is the seventh, with three groups of 100 strings using that same
 heap and renderer. Zot! is the eighth: fixed local blocks and a clock alias
 support its original lightning, with explicit intermediate presentation because
 it draws and erases inside a single DRAWFRAME. These complete row 3 of the sweep.
+Hard Rain is the ninth: selected stock brushes, stored pen widths and software
+ellipse drawing support its original growing rings. Its profile supplies the
+SDK's square-pixel aspect values. Ellipse pixels approximate modern GDI, with
+a measured one-pixel neighborhood bound for the tested ring sizes.
 This remains narrow compatibility support, not general Win16 emulation.
 `AfterDarker.Core` contains two extracted binary-layout helpers, a Windows NE
 metadata reader, a CPU-independent load plan, and a separate After Dark
@@ -37,6 +41,19 @@ ten educational console lessons (06 needs the optional Watcom fixture;
 08/09 need the analyzed local Mondrian file).
 
 ## Established evidence
+
+- **Hard Rain playback:** fixed controls select five drops, size 20 and Clear
+  Screen First. Original code executes 1,000 draws, 1,211 ellipses and 211
+  regenerations in 308,751 instructions. Both pen widths execute, the peak is
+  one created pen, and cleanup leaves no pens, allocations or locks. Six private
+  cases include independent guests and dimension extremes. Actual WPF acceptance
+  passes standalone and switching both ways with Rainstorm, RGB readback,
+  restart and close while playing. Public cases cover pen/brush slots, Ellipse
+  ABI/guards, clipping, width and arithmetic limits. Software ellipse boundaries
+  are not pixel-exact native GDI; both widths have a measured one-pixel color
+  neighborhood bound across radii 4–27. All **352 combined cases** pass; the
+  **250 public cases** also pass separately without private files or Watcom.
+  See [the evidence and limits](research/hard-rain-execution.md).
 
 - **Rainstorm lightning presentation:** the profile now captures the original
   inverted image when USER!InvertRect returns to S2:02EB. It reuses Zot!'s
@@ -338,10 +355,12 @@ ten educational console lessons (06 needs the optional Watcom fixture;
   ABI layouts remain unproven. Two successful host exits/resumes do not establish
   compatibility with arbitrary Win16 guest code.
 - Supported application playback is limited to the analyzed Mondrian, Spiral
-  Gyra, Rainstorm, Fade Away, Lasers, Magic, String Theory and Zot! artifacts, with Radar as the only
+  Gyra, Rainstorm, Fade Away, Lasers, Magic, String Theory, Zot! and Hard Rain artifacts, with Radar as the only
   Fade Away style, Lasers fixed to three rays and Magic fixed to 100 lines with
   horizontal mirroring. String Theory uses three groups of 100 strings; Zot!
   uses Few Forks and Stormy frequency, with explicitly adapted flash timing.
+  Hard Rain uses five drops, size 20 and square pixels; its software ellipse
+  edges have a documented approximation relative to modern GDI.
   Lasers requires dimensions of at least 141x141; Magic and String Theory
   require at least 3x3 to avoid zero divisors in coordinate calculations.
   The whole-folder research probes supply narrower
@@ -351,8 +370,9 @@ ten educational console lessons (06 needs the optional Watcom fixture;
   The public SDK system/module structure layouts have since been recovered;
   the extra observed system words and complete cross-version behavior remain
   unresolved. Research probes use the public module-record size.
-- Only the rectangle/black-brush and solid cosmetic pen/line drawing subset
-  is implemented. Other object types, palettes, text, mapping modes and resource
+- The drawing subset includes black rectangle fill/inversion, solid cosmetic
+  lines, selected stock brushes and solid ellipses with widths one/two. Other
+  object types, owned brushes, wide lines, palettes, text, mapping modes and resource
   rendering remain unproven.
 - The permanent engine strategy—WineVDM sidecar, custom in-process runtime, or a
   staged combination—has not been selected.
@@ -371,12 +391,14 @@ explicitly.
 ## Next planning point
 
 String Theory/Zot! completed row 3 of the [sweep](research/module-readiness-sweep.md).
-The reassessment merged in PR #19 (`732b1f8`); its recommended order remains
+The reassessment merged in PR #19 (`732b1f8`); its recommended order was
 Hard Rain, Shapes, then constrained Stained Glass. Later bitmap/sound candidates
 are provisional. See the [report](research/module-readiness-after-heap.md).
-At the owner's request, `codex/rainstorm-lightning` fixes the earlier presentation
-gap first. These changes remain uncommitted for review; no next module has been
-started. Continue down the list only after this work is merged.
+Rainstorm's lightning fix merged in PR #20 (`05a435f`). The requested
+`codex/hard-rain` branch now implements Hard Rain and remains uncommitted for
+review. Pause after this module. Shapes is next, still requiring null pens,
+owned brushes, Rectangle and an explicit palette-request policy; this branch
+does not implement it.
 The heap guide and Tutorial 10 retain the focused allocation lesson; Zot!'s and
 Rainstorm's notes explain presentation inside an active call. Other Fade Away
 styles and historical pixel/timing comparisons remain explicit limitations.
@@ -390,6 +412,37 @@ Tutorial 04 implements the narrow host trap; the broader issue is not complete.
 See [the tutorial guide](tutorials.md).
 
 ## Session log
+
+### 2026-09-20 - Hard Rain and selected pen/brush geometry
+
+- Created `codex/hard-rain` from clean reviewed main `05a435f`, after Rainstorm's
+  lightning fix merged. The supported hash and fixed controls are recorded in
+  [Hard Rain's guide](research/hard-rain-execution.md).
+- Added independent brush selection and a pen record retaining width. Ellipse
+  now uses both selected objects; CreatePen permits width two, while LineTo
+  still rejects that unimplemented width before changing state. The guest's
+  static 18-byte drop records are decoded into typed snapshots; no new heap is
+  needed. Default instruction/service limits suffice.
+- The first playback attempt exposed a guest divide-by-zero in its integer
+  radius helper. SDK `ptAspect` fields had been zero because earlier modules
+  did not need them. Named the offsets and supplied 1:1 in Hard Rain's profile.
+- Software ellipse stepping adapts the MIT-licensed Zingl algorithm with its
+  notice included. Width two uses expanded/contracted ellipse spans. Native
+  comparison found 990 differing pixels at width one and 3,178 at width two
+  across radii 4–27, all within one pixel of matching colors in both directions.
+  This is a recorded approximation, not pixel-exact GDI or historical fidelity.
+- Six private cases pass, including 1,000 draws with every radius/index checked:
+  308,751 instructions, 211 regenerations, 1,211 ellipses, peak one owned pen.
+  Both widths execute; all handles and locks balance at CLOSE/WEP.
+- All 352 combined cases pass, including all nine supported module profiles and
+  compiler-built fixture. The default suite separately passes all 250 public
+  cases. Hard Rain's six cases also pass after the final profile cleanup and
+  stronger per-draw pen-width/color assertions.
+- Actual WPF acceptance passes standalone and switching both ways with Rainstorm,
+  including RGB readback, rejection of unsupported content without stopping,
+  restart and close during playback. Captures/reports remain ignored under
+  `artifacts/wpf-smoke/hard-rain*` and `artifacts/wpf-smoke/rainstorm-to-hard-rain`.
+- Code and documentation remain uncommitted for review. Shapes has not started.
 
 ### 2026-09-20 - present Rainstorm's original lightning image
 
