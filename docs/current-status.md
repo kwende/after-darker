@@ -1,6 +1,6 @@
 # Current Status
 
-Last updated: 2026-09-20
+Last updated: 2026-09-21
 
 ## Project phase
 
@@ -492,6 +492,13 @@ explicitly.
 
 ## Next planning point
 
+The owner has paused module expansion to evaluate reuse of existing Win16/GDI
+implementations. The [reuse assessment](research/win16-reuse-assessment.md)
+compares native Windows GDI, Win3mu, WineVDM, Wine, ReactOS and original helper
+DLLs. Its recommendation is a small native-GDI backend experiment and shared
+loader planning; neither is implemented or accepted as a runtime replacement.
+The candidate ranking below remains evidence for resuming module work.
+
 String Theory/Zot! completed row 3 of the [sweep](research/module-readiness-sweep.md).
 The recommended Hard Rain, Shapes, Stained Glass and Gravity work is now done,
 and the four remaining bitmap-family candidates have executable profiles.
@@ -522,6 +529,22 @@ Tutorial 04 implements the narrow host trap; the broader issue is not complete.
 See [the tutorial guide](tutorials.md).
 
 ## Session log
+
+### 2026-09-21 - reassess Win16/GDI implementation reuse
+
+- Inspected Win3mu's C# bridge and WineVDM's GDI forwarding, handle conversion,
+  palette behavior and x86 build dependencies, plus Wine/ReactOS context.
+  Recorded primary sources, source revisions, integration costs and licenses in
+  the [assessment](research/win16-reuse-assessment.md).
+- The existing test-only WindowsDrawingOracle already renders to a native
+  memory DC/DIB and copies pixels. Re-ran its three associated raster test
+  classes: 13 passed, zero failed/skipped. This is not a production backend.
+- Reuse cannot remove the observed loader barriers: 32 of the 36 additional
+  modules stop before execution. Recommended shared capability work alongside
+  per-module regression evidence, rather than predicting full compatibility.
+- No runtime behavior, dependency, supported profile or public contract changed.
+  No external project was compiled; Windows 98 system DLLs were not examined.
+  Ocuvera's copied-frame/worker ownership requirements remain the design boundary.
 
 ### 2026-09-20 - audit all 65 extracted modules against current services
 
