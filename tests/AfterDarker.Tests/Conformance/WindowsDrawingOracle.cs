@@ -84,6 +84,9 @@ internal sealed class WindowsDrawingOracle : IDisposable
     [DllImport("gdi32.dll")] internal static extern bool LineTo(nint context, int horizontal, int vertical);
     [DllImport("gdi32.dll")] internal static extern bool Rectangle(nint context, int left, int top, int right, int bottom);
     [DllImport("gdi32.dll")] internal static extern uint SetPixel(nint context, int horizontal, int vertical, uint color);
+    // Test oracle only: production scrolling stays entirely in our hand rolled renderer.
+    [DllImport("user32.dll")] internal static extern bool ScrollDC(nint context, int horizontal, int vertical,
+        [In] NativeRect[]? scroll, [In] NativeRect[]? clip, nint updateRegion, [Out] NativeRect[] update);
     [DllImport("user32.dll")] internal static extern int FrameRect(nint context, ref NativeRect rectangle, nint brush);
     [DllImport("gdi32.dll")] internal static extern bool BitBlt(nint destination, int x, int y, int width, int height, nint source, int sourceX, int sourceY, uint operation);
 }

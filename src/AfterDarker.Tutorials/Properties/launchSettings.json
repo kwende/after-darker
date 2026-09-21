@@ -55,6 +55,10 @@
     "Tutorial 11 - NE bitmap resources": {
       "commandName": "Project",
       "commandLineArgs": "11"
+    },
+    "Tutorial 12 - Puzzle with hand rolled scrolling": {
+      "commandName": "Project",
+      "commandLineArgs": "12"
     }
   }
 }

@@ -4,6 +4,36 @@ Last updated: 2026-09-21
 
 ## Project phase
 
+**Production playback remains hand rolled. Puzzle is supported.** The native
+Gravity/Puzzle spike was removed after the controlled comparison did not establish
+a clear quicker/easier delivery path. The [decision record](research/native-gdi-spike-decision.md)
+preserves code examples, measured costs, outcomes and conditions for revisiting
+reuse. `AGENTS.md` points future work there before repeating the experiment.
+
+Puzzle adds CopyRect, UnionRect and hand rolled ScrollDC around our existing
+bitmap copier. Lesson 12 produces 1,800 draws and thirty animation captures;
+the WPF profile is **Puzzle - hand rolled**. See [the mechanism and limits](research/puzzle-execution.md).
+
+Post-removal verification (2026-09-21):
+
+- **364 tests passed**, zero failures/skips: 353 public + 7 local Gravity + 4 local Puzzle.
+- WPF build: zero warnings/errors.
+- Fresh lesson 12: 1,800 draws, 1,639 changed frames, 388,768 instructions,
+  30,183 imports and clean CLOSE/WEP. All thirty animation PNGs match the archived
+  hand rolled comparison byte for byte.
+- WPF Puzzle playback/readback, stop/restart, switch to Gravity and close while
+  playing passed. Rainstorm's intermediate-lightning smoke also passed after
+  restoring the pre-spike sequential asynchronous playback owner.
+- Private evidence: `artifacts/puzzle/final-hand-rolled/report.json`,
+  `artifacts/puzzle/final-wpf/report.json`, `artifacts/puzzle/final-rainstorm/report.json`.
+  Inputs, captures and the private source archive remain ignored.
+
+Native Windows calls remain only as conformance oracles for rendering. There is
+no production native drawing backend, toggle, extra interface or native DC
+ownership requirement. This proves the supported paths above, not historical
+Windows pixel fidelity or all remaining AD modules. Wine and other reuse options
+are the next discussion before more screensavers; no new reuse experiment has begun.
+
 After Darker has a C# tutorial console host with real-mode addition and
 near-call experiments, plus 16-bit protected-mode far-call and synthetic host
 gateway experiments using Unicorn 2.1.3. Tutorial 06 adds a narrow NE load plan
@@ -44,7 +74,8 @@ Gravity is the twelfth: off-screen bitmap ownership, temporary memory DCs,
 PATCOPY and two mask blits support its original colored ball trails. The fixed
 four-ball profile runs silently through an unavailable AD_SND implementation;
 it still reaches sound calls even with the Sound control off.
-Can of Worms, GeoBounce, Nocturnes and Punch Out bring the total to sixteen.
+Can of Worms, GeoBounce, Nocturnes and Punch Out brought the total to sixteen;
+Puzzle now brings it to seventeen.
 They add stock white-pen lookup, IsRectEmpty, Polygon, resource-backed LoadBitmap,
 DC text/background attributes and copied rectangular/elliptic clip regions.
 Worms and Punch Out use white input images. Tutorial 11 walks NE resource aliases
@@ -495,8 +526,9 @@ explicitly.
 The owner has paused module expansion to evaluate reuse of existing Win16/GDI
 implementations. The [reuse assessment](research/win16-reuse-assessment.md)
 compares native Windows GDI, Win3mu, WineVDM, Wine, ReactOS and original helper
-DLLs. Its recommendation is a small native-GDI backend experiment and shared
-loader planning; neither is implemented or accepted as a runtime replacement.
+DLLs. Its native-GDI experiment has now been completed and retired; see
+[the decision](research/native-gdi-spike-decision.md). Reassess Wine and other
+faster options with the owner before implementing more modules.
 The candidate ranking below remains evidence for resuming module work.
 
 String Theory/Zot! completed row 3 of the [sweep](research/module-readiness-sweep.md).
@@ -508,8 +540,8 @@ The owner then supplied an [additional Windows 98 collection](research/windows98
 inexpensive candidates: Spheres and Warp each draw 600 times and shut down
 through existing Win16 services under explicit diagnostic host choices. Spheres
 needs a PRIMARY_PAL policy; Warp needs MODULESELECTED and constrained controls.
-Neither is registered in the player yet. Prefer their production profiles next,
-then Puzzle's reached UnionRect/related scrolling work. The original thirteen
+Neither is registered in the player yet. They remain candidates after the reuse
+discussion; Puzzle is now supported through the hand rolled scrolling path. The original thirteen
 unsupported modules remain candidates as well.
 Proprietary AD_RSRC contracts, WIN87EM/OS fixups and
 general global allocations remain distinct areas; a DIB decoder does not solve

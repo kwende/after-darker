@@ -127,9 +127,15 @@ where their own imports can be satisfied. Matching a helper filename is not
 enough; preserve versions and test initialization/resource ownership. Neither
 native GDI nor an alternative Windows runtime supplies the AD lifecycle for us.
 
-## Proposed next discriminating experiment
+## Original proposed experiment — completed and superseded
 
-Before continuing module-specific raster expansion, prototype one optional
+**2026-09-21 follow-up:** This proposal was carried out with Gravity and Puzzle.
+The native playback implementation was then removed. Read the
+[decision and controlled comparison](native-gdi-spike-decision.md); the proposal
+below is historical, not an instruction to repeat it. Wine remains open for a
+separate reassessment.
+
+The original proposal was: before further module-specific raster expansion, prototype one optional
 native GDI backend for a supported bitmap module such as Gravity. Use the same
 guest file, controls, seed, clock, surface size and execution bounds. Verify
 original-code execution, copied color frames, intermediate-frame behavior where

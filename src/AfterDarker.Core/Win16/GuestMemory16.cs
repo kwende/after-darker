@@ -7,6 +7,10 @@ public interface IGuestMemory16
 {
     byte[] Read(FarPointer16 address, int count);
     void Write(FarPointer16 address, byte[] bytes);
+    /// <summary>Check output storage without modifying it, before an external operation with side effects.</summary>
+    /// <remarks>Memory providers must opt in to this check before hosting ScrollDC. The default fails closed.</remarks>
+    void ValidateWrite(FarPointer16 address, int count) =>
+        throw new NotSupportedException("This guest memory provider does not support preflight write validation.");
 }
 
 /// <summary>

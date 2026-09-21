@@ -628,3 +628,15 @@ erases the image in two passes and then stays black. A future desktop-image
 source can use the same loading boundary without rewriting guest animation or
 teaching GDI about screenshots. Its unused style imports are bound to named,
 unsupported gateway entries, with no guessed ABI or automatic success.
+
+## Rendering decision — 2026-09-21
+
+The production renderer remains `Win16Drawing`, operating on our managed pixel
+surfaces. The native Windows GDI spike did not show a clear delivery advantage
+for Gravity/Puzzle and has been removed, including the extra drawing interface,
+backend selector, native ownership model and dedicated-thread worker changes.
+The existing sequential asynchronous playback owner remains. Direct Windows GDI
+calls in conformance tests are test-only oracles, not an alternative runtime.
+See [the decision record](research/native-gdi-spike-decision.md) before reopening
+this experiment. Puzzle adds hand rolled scrolling to the existing bitmap copier;
+it does not change the loader, gateway or presentation boundary.

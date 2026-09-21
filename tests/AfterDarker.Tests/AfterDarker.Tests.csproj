@@ -56,6 +56,9 @@
   <ItemGroup Condition="'$(TestLocalStainedGlass)' != 'true'">
     <Compile Remove="LocalStainedGlass/**/*.cs" />
   </ItemGroup>
+  <ItemGroup Condition="'$(TestLocalPuzzle)' != 'true'">
+    <Compile Remove="LocalPuzzle/**/*.cs" />
+  </ItemGroup>
   <ItemGroup Condition="'$(TestLocalGravity)' != 'true'">
     <Compile Remove="LocalGravity/**/*.cs" />
   </ItemGroup>

@@ -122,6 +122,7 @@ public partial class MainWindow : Window
             "Hard Rain" => "Hard Rain uses five drops, size 20 and Clear Screen First in this version.",
             "Shapes" => "Shapes uses Color and Clear Screen First; each update draws one original shape.",
             "Stained Glass" => "Stained Glass uses Complexity 10, Duplication 100 and Color 100 in this version.",
+            "Puzzle" => "Puzzle uses small tiles, slow motion, no inversion and unavailable audio, on a generated color pattern.",
             "Gravity" => "Gravity uses four colored balls, size 20 and Clear Screen, with audio unavailable.",
             "Can of Worms" => "Can of Worms uses ten colored worms with eleven segments on a white starting image.",
             "GeoBounce" => "GeoBounce uses a colored, shaded tetrahedron, size 55 and speed 50.",
@@ -202,7 +203,7 @@ public partial class MainWindow : Window
     private void SetBusy(bool busy)
     {
         ModulePath.IsEnabled = BrowseButton.IsEnabled = RunButton.IsEnabled = !busy && !loading && !closing;
-        Speed.IsEnabled = !busy && !loading && !closing && selectedModuleName is not ("Rainstorm" or "Fade Away" or "Lasers" or "Magic" or "String Theory" or "Zot!" or "Hard Rain" or "Shapes" or "Stained Glass" or "Gravity" or "Can of Worms" or "GeoBounce" or "Nocturnes" or "Punch Out");
+        Speed.IsEnabled = !busy && !loading && !closing && selectedModuleName is not ("Rainstorm" or "Fade Away" or "Lasers" or "Magic" or "String Theory" or "Zot!" or "Hard Rain" or "Shapes" or "Stained Glass" or "Gravity" or "Can of Worms" or "GeoBounce" or "Nocturnes" or "Punch Out" or "Puzzle");
         StopButton.IsEnabled = busy;
     }
     private async void OnClosing(object? sender, CancelEventArgs e)

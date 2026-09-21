@@ -518,3 +518,24 @@ Passing the probe test means a report was written; module failures are fields
 in that report, not compatibility-test assertions. See the
 [collection audit](research/windows98-readiness-audit.md) for commands, bounds,
 captured outcomes and the distinction from supported-profile integration tests.
+
+## Puzzle and hand rolled scrolling
+
+Public tests execute synthetic x86 CopyRect/UnionRect/ScrollDC calls and verify
+signed words, far pointers, aliases, return registers, stack cleanup and output
+write protection before pixel mutation. `ScrollingTests` verifies overlapping
+movement, rectangular DC clips and explicit unsupported regions.
+`ScrollingRasterTests` compares 459 geometry/origin combinations with the
+existing test-only Windows GDI oracle. Production playback does not call it.
+
+Four private cases run Puzzle at three seeded 600-draw sizes and the maximum
+2048x2048 surface. Enable them with your own supported file:
+
+```powershell
+$env:AFTER_DARKER_PUZZLE = 'path/to/PUZZLE.AD'
+dotnet test --project tests/AfterDarker.Tests -p:TestLocalPuzzle=true
+```
+
+Lesson 12 captures 1,800 draws; see [Puzzle verification](research/puzzle-execution.md).
+Historical native comparison results and their limits are preserved in
+[the decision record](research/native-gdi-spike-decision.md).

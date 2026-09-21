@@ -218,3 +218,12 @@ still pass without private inputs. No proprietary files or images are committed.
 Observed captures establish original code producing changing pixels for these
 configurations. They do not establish historical visual fidelity, full settings
 coverage, arbitrary dimensions/seeds, live WPF behavior or Ocuvera integration.
+
+## Supported-profile follow-up — 2026-09-21
+
+Puzzle's analyzed AD30 artifact is now supported through hand rolled ScrollDC,
+CopyRect and UnionRect. This supersedes its older readiness result above, not
+other files with the same name. See [execution evidence](puzzle-execution.md).
+The intervening native experiment was retired; its [decision record](native-gdi-spike-decision.md)
+explains the comparison. Historical audit results remain observations of the
+runtime at the time they were collected.

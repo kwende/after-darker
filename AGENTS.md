@@ -287,3 +287,15 @@ A compatibility feature is done when:
 - `docs/current-status.md` records the result.
 - The user can understand the under-the-hood behavior without reverse
   engineering the implementation again.
+
+## Rendering decision: consult before repeating the experiment
+
+Production playback uses our **hand rolled** C# GDI implementations. The 2026-09-21
+Gravity/Puzzle spike compared those with **native** Windows GDI plus compatibility
+work. It did not establish a clear quicker/easier delivery path, so the native
+playback backend was removed. Read [the decision and preserved examples](docs/research/native-gdi-spike-decision.md)
+before proposing the same experiment again. Native Windows calls remain useful
+as test-only conformance oracles. Revisit production delegation only against a
+specific new blocker with a credible reduction in total implementation and
+maintenance work. Wine and other reuse options remain a separate open discussion;
+this decision does not evaluate them all.

@@ -517,7 +517,7 @@ public sealed partial class Win16ImportGatewayTests
         public Probe(bool drawing = false, uint initialTick = Win16ApiState.DefaultInitialTick, Win16ModuleResources? resources = null)
         {
             var imports = new[] { new NeImport("KERNEL", 4, null), new("KERNEL", 18, null), new("KERNEL", 19, null),
-                new("USER", 75, null), new("USER", 175, null), new("GDI", 36, null), new("GDI", 44, null),
+                new("USER", 74, null), new("USER", 80, null), new("USER", 221, null), new("USER", 75, null), new("USER", 175, null), new("GDI", 36, null), new("GDI", 44, null),
                 new("GDI", 55, null), new("GDI", 65, null), new("GDI", 1, null), new("GDI", 2, null), new("GDI", 9, null),
                 new("KERNEL", 131, null), new("USER", 13, null), new("USER", 82, null), new("USER", 72, null), new("USER", 81, null), new("GDI", 87, null),
                 new("GDI", 61, null), new("GDI", 45, null), new("GDI", 69, null), new("GDI", 20, null), new("GDI", 19, null), new("USER", 76, null),
