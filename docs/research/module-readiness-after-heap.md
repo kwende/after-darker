@@ -24,10 +24,12 @@ approved direct-RGB policy. [Stained Glass](stained-glass-execution.md) now runs
 with fixed color controls, adding origins, raster mixing, geometry helpers and
 SRCCOPY BitBlt. [Gravity](gravity-execution.md) subsequently adds separate bitmap
 and memory-DC lifetimes, masked blits and an explicit unavailable-audio helper.
-Its fixed color profile now completes drawing and shutdown in WPF. GeoBounce
-is the next provisional candidate for re-probing against these shared services;
-Polygon and any newly reached sound/resource calls still need evidence. The
-original probe results and ranking below remain historical evidence.
+Its fixed color profile now completes drawing and shutdown in WPF.
+[Can of Worms, GeoBounce, Nocturnes and Punch Out](bitmap-module-family.md)
+subsequently complete this bitmap family, bringing support to sixteen modules.
+Shared Polygon, NE bitmap-resource loading, DC colors and copied clipping regions
+now have execution evidence. The original probe results and ranking below remain
+historical evidence, not a current list of missing APIs.
 
 ## What was checked again
 

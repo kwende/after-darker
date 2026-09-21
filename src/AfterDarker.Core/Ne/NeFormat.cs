@@ -7,6 +7,15 @@ namespace AfterDarker.Core.Ne;
 /// </summary>
 public static class NeFormat
 {
+    /// <summary>Numeric Win16 resource kinds, before the NE directory's high-bit encoding.</summary>
+    public static class ResourceTypes
+    {
+        /// <summary>RT_BITMAP: a DIB payload without a BMP file header.</summary>
+        public const ushort Bitmap = 2;
+        /// <summary>RT_NAMETABLE: legacy textual aliases for numeric resource identities.</summary>
+        public const ushort NameTable = 15;
+    }
+
     public static class HeaderFlags
     {
         public const ushort DataModeMask = 0x0003;

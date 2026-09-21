@@ -545,6 +545,18 @@ and multi-monitor behavior need consumer acceptance tests. See the
 
 ## Shared module sessions
 
+[The four bitmap modules](research/bitmap-module-family.md) extend Core with
+resource lookup/DIB decoding, polygon filling and copied clipping regions.
+An immutable `NeResourceCatalog` owns a file snapshot; `LoadBitmap` resolves a
+checked guest identifier into a separately owned GDI bitmap. Its lifetime is
+independent of both the module's local heap and DC selection. A selected clip
+is copied device-coordinate geometry, not a retained region handle. Each
+synchronous raster operation scopes that DC's clip and restores surface state
+in `finally`. Bitmap-source reads are unaffected by source-DC clipping.
+Canonical one-bit resources expand through destination text/background colors.
+These services introduce no WPF dependency or change to `IAnimationSession`.
+Region ownership is visible through additive `PlaybackResult` diagnostics.
+
 [Gravity](research/gravity-execution.md) adds separately owned color bitmaps and
 memory DCs. A DC owns drawing attributes and a bitmap selection; deleting the DC
 releases the selection while the bitmap's pixels survive. Bitmap ownership,

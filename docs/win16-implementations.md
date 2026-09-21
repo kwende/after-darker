@@ -40,21 +40,27 @@ not yet been placed into CPU registers.
 | GetDOSEnvironment | Returns the address of a supplied empty guest environment; rejects absent or unsupported contents. |
 | GetTickCount | Reads the per-guest clock: deterministic stepping for tests/captures or monotonic elapsed time for live playback. USER #15 GetCurrentTime uses this same method. |
 | SetRect | Writes the four signed corners unchanged to checked guest memory. |
-| GetStockObject | Returns stock white/black/null brushes (0/4/5) and black/null pens (7/8); rejects other indices. Stock objects do not consume created-object capacity. |
+| GetStockObject | Returns stock white/black/null brushes (0/4/5) and white/black/null pens (6/7/8); rejects other indices. Stock objects do not consume created-object capacity. |
+| IsRectEmpty | Reads a checked signed RECT; nonpositive width or height returns TRUE without mutation. |
 | PtInRect | Reads a checked guest RECT and tests a signed by-value POINT; left/top inclusive, right/bottom exclusive. Empty/inverted rectangles return false. |
 | FillRect / FrameRect | Use the explicit brush to fill or border a clipped rectangle, independently of the selected brush and ROP2. |
 | InvertRect | Resolves the HDC; inverts the clipped rectangle's RGB bits. |
 | CreatePen | Allocates a bounded, reusable guest identity retaining solid RGB color and width 0–3. Width zero becomes one. |
 | CreateSolidBrush | Allocates a bounded guest brush using RGB/PALETTERGB components directly; palette-index colors fail before allocation. |
 | SelectObject | Selects a supported pen/brush/bitmap into its own HDC slot and returns the previous object of that kind. A bitmap requires a memory DC and cannot be selected by two DCs. |
-| DeleteObject | Releases an owned pen/brush/bitmap only when no HDC selects it; also supports deleting an owned memory DC. Stock objects stay host-owned. |
+| DeleteObject | Releases an owned pen/brush/bitmap only when no HDC selects it; also deletes owned regions and memory DCs. Selected region geometry was copied and survives handle deletion. Stock objects stay host-owned. |
 | MoveTo | Updates the HDC current point and returns its previous coordinates. |
 | LineTo | Draws with a one-pixel pen or approximated width-three pen and advances the current point. A null pen only moves the point; a width-two pen fails before mutation. |
 | Ellipse | Uses the selected solid brush and optional pen without changing the current point; software raster policy is documented in the Hard Rain/Shapes guides. |
 | Rectangle | Uses the selected solid brush and null/one-pixel pen, preserving the current point; native-tested bounds include NULL_PEN's additional right/bottom contraction. |
 | CreateCompatibleDC / DeleteDC | Allocate/release a bounded memory DC with default attributes; deleting it releases selections but retains separately owned bitmap pixels. |
 | CreateCompatibleBitmap | Allocate bounded RGB storage against a color DC, returning an owned guest handle; unsupported monochrome requests fail explicitly. |
-| BitBlt | Combine clipped source/destination pixels using SRCCOPY, SRCAND or the supported brush-through-mask operation; preserve overlapping source pixels. |
+| BitBlt | Combine source/destination pixels using SRCCOPY, SRCAND, SRCPAINT or the supported brush-through-mask operation; preserve overlapping source pixels. Destination clipping applies, source clipping does not. |
+| Polygon | Read checked signed vertices, fill alternate crossing pairs and close the selected cosmetic outline; preserve the current position. |
+| LoadBitmap | Resolve a checked guest name/ordinal through NE directory/alias tables, decode an uncompressed DIB and allocate an owned bitmap. |
+| CreateRectRgnIndirect / CreateEllipticRgnIndirect | Read a checked signed RECT and allocate bounded immutable device-coordinate geometry. Ellipse edges use the documented approximation. |
+| SelectClipRgn | Copy geometry into the DC, or clear the explicit clip for handle zero; return region complexity. |
+| SetTextColor / SetBkColor / SetBkMode | Retain per-DC attributes and return previous values. Text/background colors also expand zero/one bits of monochrome source bitmaps. |
 | PatBlt | Fill using the selected brush and PATCOPY, independently of ROP2; reject other operation codes. |
 | AD_SND named calls | Report unavailable audio and null sound resources through the separate stateless implementation; no decoding, playback or audio handles. |
 
@@ -115,7 +121,7 @@ boundaries and the Win16 void-return distinction.
 
 The direct [Win16ApiTests](../tests/AfterDarker.Tests/Unit/Win16ApiTests.cs) need
 no emulator. Existing CPU/gateway tests verify the marshaling around the same
-methods, and the opt-in tests exercise all twelve supported original modules.
+methods, and the opt-in tests exercise all sixteen supported original modules.
 
 Zot! adds the `USER!GetCurrentTime` identity with zero Pascal argument bytes
 and a DWORD return in DX:AX. Both it and `GetTickCount` bind to `Handler.Ticks`;

@@ -114,13 +114,13 @@ public sealed partial class PixelSurface
         else if (right - left == 1 && bottom - top == 1) return 0;
         int changedPixels = 0;
         for (int row = Math.Max(0, top); row < Math.Min(Height, bottom); row++)
-        for (int column = Math.Max(0, left); column < Math.Min(Width, right); column++)
-        {
-            bool boundary = row == top || row == bottom - 1 || column == left || column == right - 1;
-            uint? color = outline && boundary ? penColor : brushColor;
-            int offset = (row * Width + column) * 3;
-            if (color is uint paintedColor && WriteMixedPixel(offset, paintedColor, mix)) changedPixels++;
-        }
+            for (int column = Math.Max(0, left); column < Math.Min(Width, right); column++)
+            {
+                bool boundary = row == top || row == bottom - 1 || column == left || column == right - 1;
+                uint? color = outline && boundary ? penColor : brushColor;
+                int offset = (row * Width + column) * 3;
+                if (color is uint paintedColor && WriteMixedPixel(offset, paintedColor, mix)) changedPixels++;
+            }
         if (changedPixels != 0 && Revision < long.MaxValue) Revision++;
         return changedPixels;
     }
@@ -149,9 +149,7 @@ public sealed partial class PixelSurface
             for (int x = left; x < right; x++)
             {
                 int index = (y * Width + x) * 3;
-                if (invert || pixels[index] != 0 || pixels[index + 1] != 0 || pixels[index + 2] != 0) changed++;
-                for (int channel = 0; channel < 3; channel++)
-                    pixels[index + channel] = invert ? (byte)~pixels[index + channel] : (byte)0;
+                if (WriteMixedPixel(index, 0, invert ? RasterMix.InvertDestination : RasterMix.CopyPen)) changed++;
             }
         if (changed != 0 && Revision < long.MaxValue) Revision++;
         return changed;
@@ -160,6 +158,11 @@ public sealed partial class PixelSurface
     /// <summary>Change one in-bounds pixel; callers aggregate revisions once per drawing operation.</summary>
     private bool WriteMixedPixel(int byteOffset, uint source, RasterMix mix)
     {
+        if (activeClip is not null)
+        {
+            int pixelIndex = byteOffset / 3;
+            if (!activeClip.Contains(pixelIndex % Width, pixelIndex / Width)) return false;
+        }
         uint destination = (uint)(pixels[byteOffset] | pixels[byteOffset + 1] << 8 | pixels[byteOffset + 2] << 16);
         uint color = RasterMixOperations.Apply(mix, source, destination);
         if (color == destination) return false;

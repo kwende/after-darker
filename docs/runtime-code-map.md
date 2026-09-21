@@ -149,6 +149,21 @@ tests preserve this distinction.
 
 ## Drawing state and pixels
 
+For the bitmap/resource family, start with these purpose-named files:
+
+| Question | Implementation |
+| --- | --- |
+| Where does a resource name become a file range? | `Core/Ne/NeResourceCatalog.cs`, `NeResourceAlias.cs` |
+| Where are packed image bytes turned into RGB? | `Core/Rendering/DibBitmapDecoder.cs`, `DecodedBitmap.cs` |
+| Where does a guest LoadBitmap call create an HBITMAP? | `Core/Win16/Win16Api.Resources.cs`, `Win16Drawing.Bitmaps.cs` |
+| Where do selected regions constrain pixels? | `Win16Drawing.Regions.cs`, `Win16DeviceContext.Draw`, `PixelSurface.Clipping.cs` |
+| Why do text colors matter to sprites? | `Win16Drawing.Colors.cs`, `Win16Drawing.Blits.cs` |
+| Where is GeoBounce's polygon filled? | `Win16Api.Polygons.cs`, `Rendering/PixelSurface.Polygon.cs` |
+
+The [resource walkthrough](ne-bitmap-resources.md) connects these responsibilities;
+Tutorial 11 uses the same catalog and decoder without CPU execution. Module
+profiles supply only artifact identity, controls and checked global observations.
+
 An HDC identifies `Win16DeviceContext`, retaining separate pen/brush slots, current
 position, window origin and ROP2. `Win16Drawing` owns the HDC/object registries and lifetimes.
 `PixelSurface` owns bytes, clipping and change counts. `CosmeticLineRasterizer`

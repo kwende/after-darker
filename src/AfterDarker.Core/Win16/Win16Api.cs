@@ -48,12 +48,13 @@ public sealed partial class Win16Api(Win16ApiState state)
     public void SetRect(FarPointer16 destination, short left, short top, short right, short bottom)
         => State.Memory.Write(destination, new Rectangle16(left, top, right, bottom).Encode());
 
-    /// <summary>Return a stock white/black/null brush or black/null pen; stock objects do not consume owned-object pools.</summary>
+    /// <summary>Return a stock white/black/null brush or pen; stock objects do not consume owned-object pools.</summary>
     public ushort GetStockObject(short index) => index switch
     {
         Win16Drawing.BlackBrushIndex => Win16Drawing.BlackBrushHandle,
         Win16Drawing.WhiteBrushIndex => Win16Drawing.WhiteBrushHandle,
         Win16Drawing.BlackPenIndex => Win16Drawing.BlackPenHandle,
+        Win16Drawing.WhitePenIndex => Win16Drawing.WhitePenHandle,
         Win16Drawing.NullPenIndex => Win16Drawing.NullPenHandle,
         Win16Drawing.NullBrushIndex => Win16Drawing.NullBrushHandle,
         _ => throw new NotSupportedException($"Unsupported stock object {index}.")

@@ -108,11 +108,19 @@ public partial class AfterDarkSession<TState> : IAnimationSession
         var result = GetResult();
         return new(ModuleName, result.Phases.Select(phase => new PlaybackPhase(phase.Name, phase.StoredAx, phase.Registers)).ToArray(),
             result.Instructions, result.OutstandingLocks, result.Calls.Count, LivePenCount, PeakPenCount, result.Diagnostics.ImportCalls)
-        { LocalHeap = result.LocalHeap, IntermediateFrames = intermediateFrames?.TotalVisits ?? 0,
-            LiveBrushes = LiveBrushCount, PeakBrushes = PeakBrushCount,
-            LiveBitmaps = drawing?.LiveBitmapCount ?? 0, PeakBitmaps = drawing?.PeakBitmapCount ?? 0,
-            LiveMemoryDcs = drawing?.LiveMemoryDcCount ?? 0, PeakMemoryDcs = drawing?.PeakMemoryDcCount ?? 0,
-            BitmapBytes = drawing?.BitmapBytes ?? 0 };
+        {
+            LocalHeap = result.LocalHeap,
+            IntermediateFrames = intermediateFrames?.TotalVisits ?? 0,
+            LiveBrushes = LiveBrushCount,
+            PeakBrushes = PeakBrushCount,
+            LiveBitmaps = drawing?.LiveBitmapCount ?? 0,
+            PeakBitmaps = drawing?.PeakBitmapCount ?? 0,
+            LiveRegions = drawing?.LiveRegionCount ?? 0,
+            PeakRegions = drawing?.PeakRegionCount ?? 0,
+            LiveMemoryDcs = drawing?.LiveMemoryDcCount ?? 0,
+            PeakMemoryDcs = drawing?.PeakMemoryDcCount ?? 0,
+            BitmapBytes = drawing?.BitmapBytes ?? 0
+        };
     }
 
     /// <summary>Valid lifecycle stages; faults forbid further guest execution.</summary>
@@ -183,7 +191,8 @@ public partial class AfterDarkSession<TState> : IAnimationSession
             MapLibrarySegments();
             var records = profile.CreateRecords(this.options);
             MapHostSegments(records);
-            services = CreateWindowsServices(image.Header.HeapBytes, records);
+            services = CreateWindowsServices(image.Header.HeapBytes, records,
+                new(libraryDataSelector, new NeResourceCatalog(file, image)));
             output.WriteLine($"2. HOST RECORDS: handle 0101 -> {HostData:X4}:{SystemOffset:X4}; handle 0102 -> {HostData:X4}:{ModuleOffset:X4}");
             output.WriteLine($"   Options {options.Width}x{options.Height}, speed={options.Speed}, clear={options.Clear}; empty environment {HostData:X4}:{EnvironmentOffset:X4}");
 
@@ -271,7 +280,8 @@ public partial class AfterDarkSession<TState> : IAnimationSession
     }
 
     /// <summary>Give Windows services checked guest memory and registered global-block handles.</summary>
-    private Win16Api CreateWindowsServices(ushort heapBytes, (byte[] System, byte[] Module) records)
+    private Win16Api CreateWindowsServices(ushort heapBytes, (byte[] System, byte[] Module) records,
+        Win16ModuleResources moduleResources)
     {
         int heapStart = Math.Max(automaticDataSegment.Source.FileBytes, automaticDataSegment.Source.MinimumAllocationBytes);
         if (automaticDataSegment.Bytes.Length != heapStart + heapBytes)
@@ -283,7 +293,8 @@ public partial class AfterDarkSession<TState> : IAnimationSession
         var apiState = new Win16ApiState(guest, heapReservation, environmentAddress, clock: timing.Clock,
             localHeapCapacityBytes: heapCapacity)
         {
-            Drawing = drawing
+            Drawing = drawing,
+            ModuleResources = moduleResources
         };
         var api = new Win16Api(apiState);
         api.State.Blocks.Register(AfterDarkHostContract.SystemHandle, new(HostData, SystemOffset), records.System.Length);
@@ -361,6 +372,7 @@ public partial class AfterDarkSession<TState> : IAnimationSession
             if (wep.StoredAx != 1) throw new InvalidOperationException("Module WEP did not return success.");
             if (LivePenCount != 0) throw new InvalidOperationException("Module shutdown leaked guest pens.");
             if (LiveBrushCount != 0) throw new InvalidOperationException("Module shutdown leaked guest brushes.");
+            if (drawing?.LiveRegionCount > 0) throw new InvalidOperationException("Module shutdown leaked guest regions.");
             if (drawing?.LiveMemoryDcCount > 0 || drawing?.LiveBitmapCount > 0 || drawing?.BitmapBytes > 0)
                 throw new InvalidOperationException("Module shutdown leaked guest bitmap/DC resources.");
             if (services.State.LocalHeap?.Snapshot().Allocations.Count > 0)

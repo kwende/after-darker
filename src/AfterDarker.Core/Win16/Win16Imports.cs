@@ -45,7 +45,9 @@ public static class Win16Imports
         FrameRect,
         SetPixel,
         BitBlt,
-        CreateCompatibleDC, CreateCompatibleBitmap, DeleteDC, PatBlt,
+        CreateCompatibleDC, CreateCompatibleBitmap, DeleteDC, PatBlt, IsRectEmpty, Polygon, LoadBitmap,
+        CreateRectRgnIndirect, CreateEllipticRgnIndirect, SelectClipRgn,
+        SetTextColor, SetBkColor, SetBkMode,
         SoundOpen, SoundClose, SoundAsyncCapability, SoundLoadResource, SoundSetMode, SoundPlay, SoundFree
     }
     /// <summary>One NE import bound to our synthetic code address and its known ABI.</summary>
@@ -83,9 +85,9 @@ public static class Win16Imports
             ("KERNEL", 1, "FatalExit", Handler.Unsupported, null, null),
             ("KERNEL", 115, "OutputDebugString", Handler.Unsupported, null, null),
             ("KERNEL", 137, "FatalAppExit", Handler.Unsupported, null, null),
-            ("GDI", 1, "SetBkColor", Handler.Unsupported, null, null),
-            ("GDI", 2, "SetBkMode", Handler.Unsupported, null, null),
-            ("GDI", 9, "SetTextColor", Handler.Unsupported, null, null),
+            ("GDI", 1, "SetBkColor", enableDrawing ? Handler.SetBkColor : Handler.Unsupported, 6, Win16ReturnLayout.DwordInDxAx),
+            ("GDI", 2, "SetBkMode", enableDrawing ? Handler.SetBkMode : Handler.Unsupported, 4, Win16ReturnLayout.WordInAx),
+            ("GDI", 9, "SetTextColor", enableDrawing ? Handler.SetTextColor : Handler.Unsupported, 6, Win16ReturnLayout.DwordInDxAx),
             ("GDI", 33, "TextOut", Handler.Unsupported, null, null),
             ("GDI", 87, "GetStockObject", enableDrawing ? Handler.GetStockObject : Handler.Unsupported, 2, Win16ReturnLayout.WordInAx),
             ("GDI", 346, "SetTextAlign", Handler.Unsupported, null, null),
@@ -126,6 +128,13 @@ public static class Win16Imports
             ("GDI", 52, "CreateCompatibleDC", enableDrawing ? Handler.CreateCompatibleDC : Handler.Unsupported, 2, Win16ReturnLayout.WordInAx),
             ("GDI", 51, "CreateCompatibleBitmap", enableDrawing ? Handler.CreateCompatibleBitmap : Handler.Unsupported, 6, Win16ReturnLayout.WordInAx),
             ("GDI", 68, "DeleteDC", enableDrawing ? Handler.DeleteDC : Handler.Unsupported, 2, Win16ReturnLayout.WordInAx),
+            ("USER", 75, "IsRectEmpty", Handler.IsRectEmpty, 4, Win16ReturnLayout.WordInAx),
+            ("GDI", 36, "Polygon", enableDrawing ? Handler.Polygon : Handler.Unsupported, 8, Win16ReturnLayout.WordInAx),
+            ("KERNEL", 88, "lstrcpy", Handler.Unsupported, null, null),
+            ("USER", 175, "LoadBitmap", enableDrawing ? Handler.LoadBitmap : Handler.Unsupported, 6, Win16ReturnLayout.WordInAx),
+            ("GDI", 44, "SelectClipRgn", enableDrawing ? Handler.SelectClipRgn : Handler.Unsupported, 4, Win16ReturnLayout.WordInAx),
+            ("GDI", 55, "CreateEllipticRgnIndirect", enableDrawing ? Handler.CreateEllipticRgnIndirect : Handler.Unsupported, 4, Win16ReturnLayout.WordInAx),
+            ("GDI", 65, "CreateRectRgnIndirect", enableDrawing ? Handler.CreateRectRgnIndirect : Handler.Unsupported, 4, Win16ReturnLayout.WordInAx),
         };
         // Recovered AD_SND.H uses named FAR PASCAL exports. Every BOOL/HSOUND
         // return is a WORD; a resource name is a far pointer, not a host string.

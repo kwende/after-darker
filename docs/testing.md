@@ -37,12 +37,12 @@ is verified; an interactive Test Explorer session remains a manual check.
 
 | Category | Cases | What is established |
 | --- | ---: | --- |
-| Unit | 174 | Descriptor/frame layout, NE metadata/SDK plans/relocations, host record fields, lock lifetime, DOS date/time packing, invalid-input rejection, lossless PNG encoding, ring retention, reusable pixel buffers, initial-image ownership/validation, monotonic timing, pacing, concurrent latest-frame transfer, pen ownership/capacity, supported-file rejection, local-heap identity, locking, fragmentation, growth, reuse and bounds; intermediate image matching, ownership and bounds |
-| Conformance | 99 | Actual Unicorn execution: arithmetic, near/far calls, imported-call marshaling/results/cleanup, guest dereferences of locked blocks, protected-mode DOS interrupt stop/resume, bounded failures, rectangle and pen/line ABIs, and software rectangles compared with native Windows PatBlt, bounded interrupt history with per-call budgets, and 1,500 line cases compared with native GDI, plus explicit startup-register and checked stack-frame contracts, by-value POINT arguments, stock black-pen lookup, unused Fade Away import guards, local-heap implicit DS, guest writes, unsigned allocation failure and Pascal cleanup; shared GetCurrentTime/GetTickCount DWORD clock and bounded larger service budgets |
+| Unit | 200 | Descriptor/frame layout, NE metadata/SDK plans/relocations, host record fields, lock lifetime, DOS date/time packing, invalid-input rejection, lossless PNG encoding, ring retention, reusable pixel buffers, initial-image ownership/validation, monotonic timing, pacing, concurrent latest-frame transfer, pen ownership/capacity, supported-file rejection, local-heap identity, locking, fragmentation, growth, reuse and bounds; intermediate image matching, ownership and bounds |
+| Conformance | 117 | Actual Unicorn execution: arithmetic, near/far calls, imported-call marshaling/results/cleanup, guest dereferences of locked blocks, protected-mode DOS interrupt stop/resume, bounded failures, rectangle and pen/line ABIs, and software rectangles compared with native Windows PatBlt, bounded interrupt history with per-call budgets, and 1,500 line cases compared with native GDI, plus explicit startup-register and checked stack-frame contracts, by-value POINT arguments, stock black-pen lookup, unused Fade Away import guards, local-heap implicit DS, guest writes, unsigned allocation failure and Pascal cleanup; shared GetCurrentTime/GetTickCount DWORD clock and bounded larger service budgets |
 | Tutorial | 12 | Five CPU/heap lessons, NE inspection, and six relocation report/step/cancel/file-path checks using generated input |
-| **Default total** | **285** | All passing on the current Windows x64 development host; no Watcom or private file required |
+| **Default total** | **329** | All passing on the current Windows x64 development host; no Watcom or private file required |
 | Toolchain (opt-in) | 12 | Three real-DLL metadata cases plus nine startup/export/exit execution, ABI, failure, mutation, trace, and console checks |
-| **With Watcom** | **297** | Includes rebuilding the project-owned Win16 fixture |
+| **With Watcom** | **341** | Includes rebuilding the project-owned Win16 fixture |
 | LocalModule (opt-in) | 34 | Original initialization plus deterministic 30-frame capture, 180-frame removal path, slower timing gate, capture-budget failure, eight session lifetime/state/failure cases, and six retention/buffer cases including 5,000 draws; live timing, CLOSE/WEP, failure, cancellation and restart |
 | LocalSpiralGyra (opt-in) | 7 | Original colored line rendering, five speeds, independent deterministic guests, pen reuse and CLOSE/WEP |
 | LocalRainstorm (opt-in) | 9 | 300 draws with unchanged instruction count, exact intermediate flash pixels at three sizes, 452 deterministic draws through two flashes, cancellation during a live flash, dimension extremes, cleanup and exact-artifact rejection |
@@ -55,7 +55,8 @@ is verified; an interactive Test Explorer session remains a manual check.
 | LocalShapes (opt-in) | 6 | 1,000 original random shape/color/bounds decisions, independent guests, dimension guards, brush cleanup and artifact rejection |
 | LocalStainedGlass (opt-in) | 7 | 2,000 draws through all ten new imports, varied seeds/sizes, independent guests, object/heap cleanup and artifact rejection |
 | LocalGravity (opt-in) | 7 | 1,000 silent original draws, varied sizes/seeds, independent bitmaps, advancing live time, input rejection and bitmap/DC/sound cleanup |
-| **With all thirteen opt-ins** | **407** | Requires the compiler and all twelve supported private modules |
+| LocalBitmapFamily (opt-in) | 20 | Four original modules: 600 draws each, size/seed variation, live timing, independent guests, input rejection, bitmap/DC/region cleanup |
+| **With all fourteen opt-ins** | **471** | Requires the compiler and all sixteen supported private modules |
 
 Hard Rain adds five public unit cases for pen/brush selection, width handling,
 ellipse clipping/empty/reversed bounds and signed-coordinate extremes. Three
@@ -408,7 +409,8 @@ $env:AFTER_DARKER_HARD_RAIN = (Resolve-Path 'ad/Hard Rain.ad').Path
 $env:AFTER_DARKER_SHAPES = (Resolve-Path ad/Shapes.ad).Path
 $env:AFTER_DARKER_STAINED_GLASS = (Resolve-Path 'ad/Stained Glass.ad').Path
 $env:AFTER_DARKER_GRAVITY = (Resolve-Path ad/Gravity.ad).Path
-dotnet test -p:BuildWin16Fixture=true -p:TestLocalMondrian=true -p:TestLocalSpiralGyra=true -p:TestLocalRainstorm=true -p:TestLocalFadeAway=true -p:TestLocalLasers=true -p:TestLocalMagic=true -p:TestLocalStringTheory=true -p:TestLocalZot=true -p:TestLocalHardRain=true -p:TestLocalShapes=true -p:TestLocalStainedGlass=true -p:TestLocalGravity=true --report-trx
+$env:AFTER_DARKER_MODULE_DIRECTORY = (Resolve-Path ad).Path
+dotnet test -p:BuildWin16Fixture=true -p:TestLocalMondrian=true -p:TestLocalSpiralGyra=true -p:TestLocalRainstorm=true -p:TestLocalFadeAway=true -p:TestLocalLasers=true -p:TestLocalMagic=true -p:TestLocalStringTheory=true -p:TestLocalZot=true -p:TestLocalHardRain=true -p:TestLocalShapes=true -p:TestLocalStainedGlass=true -p:TestLocalGravity=true -p:TestLocalBitmapFamily=true --report-trx
 ```
 
 See the [String Theory evidence](research/string-theory-execution.md) and
@@ -476,3 +478,43 @@ kinds. The file is read in place and never copied into outputs. Set
 tenth draw from the 1,000-draw case. See [Gravity's guide](research/gravity-execution.md)
 for source signatures, masks, limits and actual WPF acceptance. Finite tests
 establish bounded execution and observed pixels, not general audio or Win16 support.
+
+## Optional bitmap-family tests and resource lesson
+
+```powershell
+$env:AFTER_DARKER_MODULE_DIRECTORY = (Resolve-Path ad).Path
+# Optional: six captures per module from each 600-draw case.
+$env:AFTER_DARKER_BITMAP_CAPTURE = Join-Path $PWD artifacts/bitmap-family/frames
+dotnet test -p:TestLocalBitmapFamily=true --filter TestCategory=LocalBitmapFamily --report-trx
+
+# Resource inspection and PNG decoding, without executing the original module:
+dotnet run --project src/AfterDarker.Tutorials --no-launch-profile -- 11 "ad/Nocturnes.ad" artifacts/nocturnes-resources
+```
+
+Twenty private cases cover Can of Worms, GeoBounce, Nocturnes and Punch Out:
+600 deterministic draws each; minimum/odd/maximum-width dimensions and changed
+seed; an advancing live clock at 640×480; independent guests and unrelated
+speed settings; invalid dimensions and changed hashes. Every successful
+shutdown must free regions as well as all earlier object/heap/lock types.
+Files are read from the local directory and never copied to build output.
+
+Forty-four new public cases cover generated DIBs and alias records, malformed
+resource bounds, typed tutorial output, copied clipping and source/destination
+clip separation, region capacity, monochrome-source color expansion, Polygon
+coverage, and real synthetic x86 calls through the nine added import ABIs.
+The two polygon samples and rectangular clipping/SRCPAINT match modern GDI
+exactly. The elliptic clip comparison records its explicit boundary tolerance;
+it is not a historical-pixel-fidelity assertion. See the
+[resource walkthrough](ne-bitmap-resources.md) and
+[four-module evidence](research/bitmap-module-family.md).
+
+## Optional collection readiness research
+
+`dotnet build tests/AfterDarker.Tests -p:AuditLocalModules=true` includes the
+report-producing probe in `tools/ModuleReadinessProbe.cs`. Run it through
+`tools/audit-local-modules.py`, which isolates each module in its own process
+and enforces a wall-clock watchdog. Normal builds exclude this research source.
+Passing the probe test means a report was written; module failures are fields
+in that report, not compatibility-test assertions. See the
+[collection audit](research/windows98-readiness-audit.md) for commands, bounds,
+captured outcomes and the distinction from supported-profile integration tests.

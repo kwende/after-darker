@@ -553,3 +553,17 @@ The [drawing walkthrough](tutorial-09-mondrian-frames.md) follows original code
 through the four additional APIs into a persistent software surface, then PNG
 capture. Each run writes an ignored output directory with a play/step viewer and
 JSON evidence. Synthetic clocks and presentation cadence are explicit host choices.
+
+## Tutorial 11: follow an NE bitmap resource
+
+Select **Tutorial 11 - NE bitmap resources** to choose a local NE module, or run:
+
+```powershell
+dotnet run --project src/AfterDarker.Tutorials --no-launch-profile -- 11 "ad/Nocturnes.ad" artifacts/nocturnes-resources
+```
+
+This lesson follows the parser's resource directory and legacy name aliases into
+the same DIB decoder used by `LoadBitmap`. It returns typed resource/image
+records, prints dimensions and offsets, writes PNGs and exits without a CPU.
+The [walkthrough](ne-bitmap-resources.md) includes byte layouts, ownership,
+format boundaries and the Wine/WineVDM/Kaitai references that informed the work.

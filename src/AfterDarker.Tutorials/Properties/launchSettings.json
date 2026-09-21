@@ -51,6 +51,10 @@
     "Tutorial 10 - local heap and guest writes": {
       "commandName": "Project",
       "commandLineArgs": "10"
+    },
+    "Tutorial 11 - NE bitmap resources": {
+      "commandName": "Project",
+      "commandLineArgs": "11"
     }
   }
 }

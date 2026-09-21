@@ -54,6 +54,12 @@ internal sealed class WindowsDrawingOracle : IDisposable
     }
 
     [StructLayout(LayoutKind.Sequential)]
+    internal struct NativePoint(int x, int y) { public int X = x, Y = y; }
+    [DllImport("gdi32.dll")] internal static extern bool Polygon(nint context, NativePoint[] points, int count);
+    [DllImport("gdi32.dll")] internal static extern nint CreateRectRgn(int left, int top, int right, int bottom);
+    [DllImport("gdi32.dll")] internal static extern nint CreateEllipticRgn(int left, int top, int right, int bottom);
+    [DllImport("gdi32.dll")] internal static extern int SelectClipRgn(nint context, nint region);
+    [StructLayout(LayoutKind.Sequential)]
     internal struct NativeRect(int left, int top, int right, int bottom) { public int Left = left, Top = top, Right = right, Bottom = bottom; }
     [StructLayout(LayoutKind.Sequential)]
     private struct BitmapInfo

@@ -123,6 +123,10 @@ public partial class MainWindow : Window
             "Shapes" => "Shapes uses Color and Clear Screen First; each update draws one original shape.",
             "Stained Glass" => "Stained Glass uses Complexity 10, Duplication 100 and Color 100 in this version.",
             "Gravity" => "Gravity uses four colored balls, size 20 and Clear Screen, with audio unavailable.",
+            "Can of Worms" => "Can of Worms uses ten colored worms with eleven segments on a white starting image.",
+            "GeoBounce" => "GeoBounce uses a colored, shaded tetrahedron, size 55 and speed 50.",
+            "Nocturnes" => "Nocturnes uses colored eyes and density 50, with audio unavailable.",
+            "Punch Out" => "Punch Out uses circular punches, size 40 and speed 5, on a white starting image.",
             _ => "Original module speed; applies on Run"
         };
         Title = $"After Darker — {name}";
@@ -198,7 +202,7 @@ public partial class MainWindow : Window
     private void SetBusy(bool busy)
     {
         ModulePath.IsEnabled = BrowseButton.IsEnabled = RunButton.IsEnabled = !busy && !loading && !closing;
-        Speed.IsEnabled = !busy && !loading && !closing && selectedModuleName is not ("Rainstorm" or "Fade Away" or "Lasers" or "Magic" or "String Theory" or "Zot!" or "Hard Rain" or "Shapes" or "Stained Glass" or "Gravity");
+        Speed.IsEnabled = !busy && !loading && !closing && selectedModuleName is not ("Rainstorm" or "Fade Away" or "Lasers" or "Magic" or "String Theory" or "Zot!" or "Hard Rain" or "Shapes" or "Stained Glass" or "Gravity" or "Can of Worms" or "GeoBounce" or "Nocturnes" or "Punch Out");
         StopButton.IsEnabled = busy;
     }
     private async void OnClosing(object? sender, CancelEventArgs e)
@@ -310,16 +314,29 @@ public partial class MainWindow : Window
             }
             File.WriteAllText(Path.Combine(smokeDirectory!, "report.json"), JsonSerializer.Serialize(new
             {
-                Status = error is null ? "passed" : "failed", Error = error?.Message,
+                Status = error is null ? "passed" : "failed",
+                Error = error?.Message,
                 RequiredIntermediateImage = smokeRequiresIntermediateImage,
-                Presented = firstPresented, Frame = firstFrame, RgbSha256 = firstHash,
-                RestartPresented = presented, ClosedWhilePlaying = windowClosed.Task.IsCompletedSuccessfully,
+                Presented = firstPresented,
+                Frame = firstFrame,
+                RgbSha256 = firstHash,
+                RestartPresented = presented,
+                ClosedWhilePlaying = windowClosed.Task.IsCompletedSuccessfully,
                 ShutdownPhases = lastResult?.Phases.TakeLast(2).Select(p => new { p.Name, p.StoredAx, p.Registers.Sp, p.Registers.Ds }),
-                Module = lastResult?.ModuleName, SwitchedFrom = switchedFrom, Instructions = lastResult?.Instructions, OutstandingLocks = lastResult?.OutstandingLocks,
-                LivePens = lastResult?.LivePens, PeakPens = lastResult?.PeakPens,
-                LiveBrushes = lastResult?.LiveBrushes, PeakBrushes = lastResult?.PeakBrushes,
-                LiveBitmaps = lastResult?.LiveBitmaps, PeakBitmaps = lastResult?.PeakBitmaps,
-                LiveMemoryDcs = lastResult?.LiveMemoryDcs, PeakMemoryDcs = lastResult?.PeakMemoryDcs,
+                Module = lastResult?.ModuleName,
+                SwitchedFrom = switchedFrom,
+                Instructions = lastResult?.Instructions,
+                OutstandingLocks = lastResult?.OutstandingLocks,
+                LivePens = lastResult?.LivePens,
+                PeakPens = lastResult?.PeakPens,
+                LiveBrushes = lastResult?.LiveBrushes,
+                PeakBrushes = lastResult?.PeakBrushes,
+                LiveBitmaps = lastResult?.LiveBitmaps,
+                PeakBitmaps = lastResult?.PeakBitmaps,
+                LiveRegions = lastResult?.LiveRegions,
+                PeakRegions = lastResult?.PeakRegions,
+                LiveMemoryDcs = lastResult?.LiveMemoryDcs,
+                PeakMemoryDcs = lastResult?.PeakMemoryDcs,
                 BitmapBytes = lastResult?.BitmapBytes,
                 LocalHeap = lastResult?.LocalHeap,
                 IntermediateFrames = lastResult?.IntermediateFrames,
@@ -348,7 +365,7 @@ public partial class MainWindow : Window
             var result = completed ?? lastResult;
             if (result is null || result.Phases.Count < 2 || result.Phases[^2].Name != "CLOSE" ||
                 result.Phases[^1].Name != "WEP" || result.Phases[^1].StoredAx != 1 || result.OutstandingLocks != 0 || result.LivePens != 0 || result.LiveBrushes != 0 ||
-                result.LiveBitmaps != 0 || result.LiveMemoryDcs != 0 || result.BitmapBytes != 0 ||
+                result.LiveBitmaps != 0 || result.LiveMemoryDcs != 0 || result.BitmapBytes != 0 || result.LiveRegions != 0 ||
                 result.LocalHeap?.Allocations.Count > 0 || result.LocalHeap?.OutstandingLocks > 0)
                 throw new InvalidOperationException("Original guest shutdown did not complete with WEP success and balanced locks.");
         }

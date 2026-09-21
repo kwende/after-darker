@@ -44,8 +44,10 @@ are the largest unresolved part of this scan.
 | WIN87EM | 1 | 10 | Ordinal 1 maps to `_fpMath` |
 | **Total** | **199** | **29 distinct modules** | **129 Windows targets + 70 helper targets** |
 
-`AD_RSRC`, `AD_SND`, and `WIN87EM` are not supplied as helper files in this local
-folder. Their transitive imports have **not** been scanned. Wine's export tables
+`AD_RSRC`, `AD_SND`, and `WIN87EM` were not supplied as helper files in this
+original local folder. Their transitive imports were **not** scanned in this
+census. The later [Windows 98 extraction](windows98-collection-inventory.md)
+recovers all three and records their direct imports separately. Wine's export tables
 resolve the Windows and WIN87EM ordinals; these are reference mappings, not
 export tables read from the original Windows installation.
 

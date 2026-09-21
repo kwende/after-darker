@@ -28,6 +28,10 @@ public static class AfterDarkHostContract
     public const ushort ReservedHdc = 0x103;
     /// <summary>Current allocation covering observed accesses, including an unexplained private tail.</summary>
     public const int SystemBytes = 0x36;
+    /// <summary>Offset of AD_SYSTEM.ptScreenSize.x, the desktop width in pixels.</summary>
+    public const int ScreenWidth = 0x06;
+    /// <summary>Offset of AD_SYSTEM.ptScreenSize.y, the desktop height in pixels.</summary>
+    public const int ScreenHeight = 0x08;
     /// <summary>Offset of the SDK iBitsPerPixel field.</summary>
     public const int ColorDepth = 0x0A;
     /// <summary>Offset of AD_SYSTEM.ptAspect.x, the SDK's relative horizontal pixel aspect.</summary>
