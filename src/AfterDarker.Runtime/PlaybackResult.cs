@@ -20,6 +20,10 @@ public sealed record PlaybackPhase(string Name, ushort StoredAx, SegmentedGuest.
 public sealed record PlaybackResult(string ModuleName, IReadOnlyList<PlaybackPhase> Phases, long Instructions,
     int OutstandingLocks, int RetainedCalls, int LivePens, int PeakPens, IReadOnlyDictionary<string, long> ImportCalls)
 {
+    /// <summary>Owned clipping-region handles remaining; copied DC clips are excluded.</summary>
+    public int LiveRegions { get; init; }
+    /// <summary>Maximum simultaneous owned clipping regions.</summary>
+    public int PeakRegions { get; init; }
     /// <summary>Owned brushes remaining; zero after successful guest shutdown.</summary>
     public int LiveBrushes { get; init; }
     /// <summary>Maximum simultaneous owned brushes, excluding stock objects.</summary>

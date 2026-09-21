@@ -14,6 +14,10 @@
     <ProjectReference Include="../../src/AfterDarker.Runtime/AfterDarker.Runtime.csproj" />
     <ProjectReference Include="../../src/AfterDarker.Tutorials/AfterDarker.Tutorials.csproj" />
   </ItemGroup>
+  <!-- Research reports are explicitly opt-in and are not compatibility assertions. -->
+  <ItemGroup Condition="'$(AuditLocalModules)' == 'true'">
+    <Compile Include="../../tools/ModuleReadinessProbe.cs" Link="Research/ModuleReadinessProbe.cs" />
+  </ItemGroup>
   <!-- Opt in so ordinary parser/CPU tests do not require the external compiler. -->
   <ItemGroup Condition="'$(BuildWin16Fixture)' != 'true'">
     <Compile Remove="Toolchain/**/*.cs" />
@@ -54,6 +58,9 @@
   </ItemGroup>
   <ItemGroup Condition="'$(TestLocalGravity)' != 'true'">
     <Compile Remove="LocalGravity/**/*.cs" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TestLocalBitmapFamily)' != 'true'">
+    <Compile Remove="LocalBitmapFamily/**/*.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(BuildWin16Fixture)' == 'true'">
     <None Include="../../artifacts/win16/hello42/hello42.dll" Link="Fixtures/hello42.dll" CopyToOutputDirectory="Always" />

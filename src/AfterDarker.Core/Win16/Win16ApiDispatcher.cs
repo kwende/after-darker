@@ -27,6 +27,24 @@ public static class Win16ApiDispatcher
         var arguments = new Win16ArgumentReader(argumentWords);
         switch (entry.Implementation)
         {
+            case Win16Imports.Handler.SetTextColor:
+                return new(api.SetTextColor(arguments.ReadWord(), arguments.ReadDoubleWord()));
+            case Win16Imports.Handler.SetBkColor:
+                return new(api.SetBkColor(arguments.ReadWord(), arguments.ReadDoubleWord()));
+            case Win16Imports.Handler.SetBkMode:
+                return new(api.SetBkMode(arguments.ReadWord(), arguments.ReadWord()));
+            case Win16Imports.Handler.CreateRectRgnIndirect:
+                return new(api.CreateRectRgnIndirect(arguments.ReadFarPointer()));
+            case Win16Imports.Handler.CreateEllipticRgnIndirect:
+                return new(api.CreateEllipticRgnIndirect(arguments.ReadFarPointer()));
+            case Win16Imports.Handler.SelectClipRgn:
+                return new(api.SelectClipRgn(arguments.ReadWord(), arguments.ReadWord()));
+            case Win16Imports.Handler.IsRectEmpty:
+                return BooleanResult(api.IsRectEmpty(arguments.ReadFarPointer()));
+            case Win16Imports.Handler.Polygon:
+                return BooleanResult(api.Polygon(arguments.ReadWord(), arguments.ReadFarPointer(), arguments.ReadSignedWord()));
+            case Win16Imports.Handler.LoadBitmap:
+                return new(api.LoadBitmap(arguments.ReadWord(), arguments.ReadFarPointer()));
             case Win16Imports.Handler.LocalAlloc:
                 {
                     var flags = (LocalMemoryFlags)arguments.ReadWord();

@@ -50,12 +50,20 @@ entire desktop.
 Set **AfterDarker.Wpf** as the startup project and press F5. It finds your local
 `ad/Mondrian.ad` automatically. Use **File > Load AD file…** to play
 **Mondrian**, **Spiral Gyra**, **Rainstorm**, **Fade Away**, **Lasers**, **Magic**,
-**String Theory**, **Zot!**, **Hard Rain**, **Shapes**, **Stained Glass**, or **Gravity**, or switch between them while running. See the [WPF player guide](docs/wpf-player.md)
+**String Theory**, **Zot!**, **Hard Rain**, **Shapes**, **Stained Glass**, **Gravity**,
+**Can of Worms**, **GeoBounce**, **Nocturnes**, or **Punch Out**, or switch between
+them while running. See the [WPF player guide](docs/wpf-player.md)
 for controls, command-line launch and the original-code execution boundary.
 
 ## Status
 
-The repository now runs twelve original modules in a live WPF window.
+The repository now runs sixteen original modules in a live WPF window.
+[Can of Worms, GeoBounce, Nocturnes and Punch Out](docs/research/bitmap-module-family.md)
+extend the shared layer with polygon filling, bitmap resources and copied clipping
+regions. Worms and Punch Out receive white starting images; all four run silently.
+**[Tutorial 11](docs/ne-bitmap-resources.md)** follows a resource name through the
+NE alias table and DIB decoder into typed RGB pixels and a PNG, using the same
+implementation as the runtime's `LoadBitmap` handler.
 [Gravity](docs/research/gravity-execution.md) adds separately owned off-screen
 bitmaps, temporary memory DCs and masked blits for its original colored ball
 trails. Its four-ball profile runs silently through an explicit unavailable-audio
@@ -124,6 +132,7 @@ See:
 - [Architecture](docs/architecture.md)
 - [Current status and proof boundary](docs/current-status.md)
 - [Local module import/API census](docs/research/ad-import-census.md)
+- [Readiness audit of the expanded 65-module collection](docs/research/windows98-readiness-audit.md)
 - [Next modules after the heap group: current reassessment](docs/research/module-readiness-after-heap.md)
 - [Original whole-folder compatibility sweep](docs/research/module-readiness-sweep.md)
 - [Mondrian's constrained visuals path](docs/research/mondrian-static-analysis.md)
@@ -203,6 +212,11 @@ Local After Dark copies and supporting files for testing belong in the root
 `ad/` directory, which Git ignores in its entirety. These are private,
 bring-your-own inputs; do not force-add or redistribute them. Public tests must
 use self-contained fixtures or artifacts generated from source.
+
+To recover additional modules from a Windows 98 VM, follow
+[Copying files out of VirtualBox with 7-Zip](docs/virtualbox-file-transfer.md).
+The guide includes the observed local setup, shutdown and extraction steps,
+read-only discovery commands, and how to preserve helper DLLs and separate releases.
 
 ## Two possible execution strategies
 

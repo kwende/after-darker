@@ -12,14 +12,15 @@ public sealed partial class Win16Drawing
         ushort sourceHdc, short sourceX, short sourceY, uint rasterOperation)
     {
         var operation = (BitmapRasterOperation)rasterOperation;
-        if (operation is not (BitmapRasterOperation.SourceCopy or BitmapRasterOperation.SourceAnd or BitmapRasterOperation.BrushThroughSourceMask))
+        if (operation is not (BitmapRasterOperation.SourceCopy or BitmapRasterOperation.SourceAnd or BitmapRasterOperation.SourcePaint or BitmapRasterOperation.BrushThroughSourceMask))
             throw new NotSupportedException($"Unsupported BitBlt raster operation {rasterOperation:X8}.");
         Win16DeviceContext destination = RequireDeviceContext(destinationHdc), source = RequireDeviceContext(sourceHdc);
         uint brush = operation == BitmapRasterOperation.BrushThroughSourceMask
             ? SelectedBrushColor(destination) ?? throw new NotSupportedException("Masked pattern blits require a solid brush.") : 0;
-        int changed = destination.Surface.CopyRegion(source.Surface,
+        int changed = destination.Draw(surface => surface.CopyRegion(source.Surface,
             destinationX - destination.WindowOrigin.X, destinationY - destination.WindowOrigin.Y, width, height,
-            sourceX - source.WindowOrigin.X, sourceY - source.WindowOrigin.Y, operation, brush);
+            sourceX - source.WindowOrigin.X, sourceY - source.WindowOrigin.Y, operation, brush,
+            source.IsMonochrome ? destination.TextColor : null, destination.BackgroundColor));
         RecordOperation("BitBlt", destinationHdc, new(destinationX, destinationY,
             unchecked((short)(destinationX + width)), unchecked((short)(destinationY + height))), changed);
         return true;
@@ -32,8 +33,8 @@ public sealed partial class Win16Drawing
             throw new NotSupportedException($"Unsupported PatBlt raster operation {operation:X8}; expected PATCOPY.");
         Win16DeviceContext context = RequireDeviceContext(hdc);
         uint? brush = SelectedBrushColor(context);
-        int changed = brush is uint color ? context.Surface.PaintPattern(left - context.WindowOrigin.X,
-            top - context.WindowOrigin.Y, width, height, color) : 0;
+        int changed = brush is uint color ? context.Draw(surface => surface.PaintPattern(left - context.WindowOrigin.X,
+            top - context.WindowOrigin.Y, width, height, color)) : 0;
         RecordOperation("PatBlt", hdc, new(left, top, unchecked((short)(left + width)), unchecked((short)(top + height))), changed);
         return true;
     }

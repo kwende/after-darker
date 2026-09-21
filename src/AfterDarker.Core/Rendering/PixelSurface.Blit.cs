@@ -5,11 +5,13 @@ namespace AfterDarker.Core.Rendering;
 public sealed partial class PixelSurface
 {
     /// <summary>Combine source, destination and optional brush pixels with a supported ROP3, preserving overlapping source pixels.</summary>
-    /// <remarks>Clips to both surfaces. The explicit bitmap operation is independent of a DC's pen/brush ROP2 setting.</remarks>
+    /// <remarks>Bounds reads/writes to both surfaces, but only the destination's selected clip applies.
+    /// Optional monochrome colors expand source zero/one before the ROP3 operation; ROP2 does not apply.</remarks>
     public int CopyRegion(PixelSurface source, int destinationX, int destinationY, int width, int height,
-        int sourceX, int sourceY, BitmapRasterOperation operation = BitmapRasterOperation.SourceCopy, uint brushColor = 0)
+        int sourceX, int sourceY, BitmapRasterOperation operation = BitmapRasterOperation.SourceCopy, uint brushColor = 0,
+        uint? monochromeZero = null, uint monochromeOne = 0xFFFFFF)
     {
-        if (operation is not (BitmapRasterOperation.SourceCopy or BitmapRasterOperation.SourceAnd or BitmapRasterOperation.BrushThroughSourceMask))
+        if (operation is not (BitmapRasterOperation.SourceCopy or BitmapRasterOperation.SourceAnd or BitmapRasterOperation.SourcePaint or BitmapRasterOperation.BrushThroughSourceMask))
             throw new NotSupportedException($"Unsupported bitmap raster operation {(uint)operation:X8}.");
         if (width < 0 || height < 0) throw new NotSupportedException("Negative BitBlt extents are not supported.");
         // Bound work by actual destination pixels, not the caller's requested extents.
@@ -28,22 +30,24 @@ public sealed partial class PixelSurface
             source.pixels.CopyTo(snapshot, 0);
             int changed = 0;
             for (int row = firstRow; row < lastRow; row++)
-            for (int column = firstColumn; column < lastColumn; column++)
-            {
-                int sourceOffset = ((sourceY + row) * source.Width + sourceX + column) * 3;
-                uint color = (uint)(snapshot[sourceOffset] | snapshot[sourceOffset + 1] << 8 | snapshot[sourceOffset + 2] << 16);
-                int destinationOffset = ((destinationY + row) * Width + destinationX + column) * 3;
-                uint destinationColor = (uint)(pixels[destinationOffset] | pixels[destinationOffset + 1] << 8 | pixels[destinationOffset + 2] << 16);
-                uint result = operation switch
+                for (int column = firstColumn; column < lastColumn; column++)
                 {
-                    BitmapRasterOperation.SourceCopy => color,
-                    BitmapRasterOperation.SourceAnd => color & destinationColor,
-                    // The source is a per-bit mask; zero preserves old pixels,
-                    // one paints the DC's brush. This is ROP3, independent of ROP2.
-                    _ => (color & brushColor) | (~color & destinationColor)
-                };
-                if (WriteMixedPixel(destinationOffset, result, RasterMix.CopyPen)) changed++;
-            }
+                    int sourceOffset = ((sourceY + row) * source.Width + sourceX + column) * 3;
+                    uint color = (uint)(snapshot[sourceOffset] | snapshot[sourceOffset + 1] << 8 | snapshot[sourceOffset + 2] << 16);
+                    if (monochromeZero is uint zero) color = color == 0 ? zero : monochromeOne;
+                    int destinationOffset = ((destinationY + row) * Width + destinationX + column) * 3;
+                    uint destinationColor = (uint)(pixels[destinationOffset] | pixels[destinationOffset + 1] << 8 | pixels[destinationOffset + 2] << 16);
+                    uint result = operation switch
+                    {
+                        BitmapRasterOperation.SourceCopy => color,
+                        BitmapRasterOperation.SourceAnd => color & destinationColor,
+                        BitmapRasterOperation.SourcePaint => color | destinationColor,
+                        // The source is a per-bit mask; zero preserves old pixels,
+                        // one paints the DC's brush. This is ROP3, independent of ROP2.
+                        _ => (color & brushColor) | (~color & destinationColor)
+                    };
+                    if (WriteMixedPixel(destinationOffset, result, RasterMix.CopyPen)) changed++;
+                }
             if (changed != 0 && Revision < long.MaxValue) Revision++;
             return changed;
         }

@@ -232,3 +232,14 @@ The durable model is: **Ocuvera chooses and presents; After Darker executes;
 the adapter manages their shared lifetime and transfers images.** Future module
 support should usually arrive through an updated runtime package and catalog,
 without a new Ocuvera drawing implementation.
+
+## Bitmap-family compatibility check (2026-09-20)
+
+Rechecked the current `screensaver/Modules/IScreensaverScene.cs`: its synchronous
+Attach/Detach/Resize/Update contract remains the future adapter boundary.
+This work adds four profiles and UI-independent Core resource/raster services;
+`IAnimationSession`, frame transport and timing contracts are unchanged.
+`PlaybackResult.LiveRegions` / `PeakRegions` are additive diagnostics for future
+shutdown assertions. Resource bytes come from the supplied module, without
+developer paths or WPF dependencies. No changes were made to Ocuvera, and package
+publication / single-file .scr behavior remain unproven and deliberately parked.

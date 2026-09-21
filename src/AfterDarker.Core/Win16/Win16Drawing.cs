@@ -4,7 +4,7 @@ namespace AfterDarker.Core.Win16;
 
 /// <summary>
 /// The supported device-context state: a display surface or selected bitmap per guest HDC,
-/// MM_TEXT coordinates with a translated window origin, full-surface clip, stock objects,
+/// MM_TEXT coordinates with a translated window origin, copied region clip, stock objects,
 /// selected solid pens/brushes, current drawing position and per-DC binary raster mixing.
 /// Extend explicitly when a module needs other objects, widths or raster modes.
 /// </summary>
@@ -16,6 +16,10 @@ public sealed partial class Win16Drawing
     public const short BlackBrushIndex = 4;
     /// <summary>Win16 BLACK_PEN stock-object index, distinct from our guest pen handle.</summary>
     public const short BlackPenIndex = 7;
+    /// <summary>WHITE_PEN stock index, used while constructing bitmap masks.</summary>
+    public const short WhitePenIndex = 6;
+    /// <summary>Non-owned stock white pen; independent of the white brush.</summary>
+    public const ushort WhitePenHandle = 0x207;
     /// <summary>Win16 NULL_PEN stock index: draw fills without an outline.</summary>
     public const short NullPenIndex = 8;
     /// <summary>NULL_BRUSH/HOLLOW_BRUSH stock index: outline a shape without filling its interior.</summary>
@@ -57,7 +61,7 @@ public sealed partial class Win16Drawing
     public void Register(ushort hdc, PixelSurface surface)
     {
         if (hdc == 0) throw new ArgumentException("A null HDC is not a surface.");
-        if (hdc >= FirstPen && hdc < FirstMemoryDc + MemoryDcCapacity)
+        if (hdc >= FirstPen && hdc < FirstRegion + RegionCapacity)
             throw new ArgumentException("Host HDC identity overlaps the reserved guest GDI object ranges.");
         contexts.Add(hdc, new(surface));
     }
@@ -87,7 +91,7 @@ public sealed partial class Win16Drawing
     public void Paint(ushort hdc, Rectangle16 rectangle, bool invert)
     {
         Win16DeviceContext deviceContext = RequireDeviceContext(hdc);
-        int changedPixels = deviceContext.Surface.Paint(rectangle, invert, deviceContext.WindowOrigin);
+        int changedPixels = deviceContext.Draw(surface => surface.Paint(rectangle, invert, deviceContext.WindowOrigin));
         LastOperation = new(invert ? "InvertRect" : "FillRect", hdc, rectangle, changedPixels);
         if (OperationCount < long.MaxValue) OperationCount++;
     }
@@ -129,7 +133,7 @@ public sealed partial class Win16Drawing
             deviceContext.SelectedBrush = handle;
             return previousBrush;
         }
-        if (handle is not (BlackPenHandle or NullPenHandle) && !pens.ContainsKey(handle)) throw new NotSupportedException($"Unknown GDI object {handle:X4}.");
+        if (handle is not (BlackPenHandle or WhitePenHandle or NullPenHandle) && !pens.ContainsKey(handle)) throw new NotSupportedException($"Unknown GDI object {handle:X4}.");
         ushort previouslySelectedPen = deviceContext.SelectedPen;
         deviceContext.SelectedPen = handle;
         return previouslySelectedPen;
@@ -142,7 +146,8 @@ public sealed partial class Win16Drawing
         if (contexts.ContainsKey(handle)) return DeleteDC(handle);
         if (handle == DefaultBitmapHandle) return true;
         if (bitmaps.ContainsKey(handle)) return DeleteBitmap(handle);
-        if (handle is BlackPenHandle or NullPenHandle or BlackBrushHandle or WhiteBrushHandle or NullBrushHandle) return true;
+        if (regions.Remove(handle)) return true;
+        if (handle is BlackPenHandle or WhitePenHandle or NullPenHandle or BlackBrushHandle or WhiteBrushHandle or NullBrushHandle) return true;
         if (contexts.Values.Any(context => context.SelectedPen == handle || context.SelectedBrush == handle)) return false;
         return pens.Remove(handle) || brushColors.Remove(handle);
     }
@@ -161,11 +166,11 @@ public sealed partial class Win16Drawing
         Win16DeviceContext deviceContext = RequireDeviceContext(hdc);
         Win16Pen? pen = SelectedPen(deviceContext);
         if (pen is { Width: 2 }) throw new NotSupportedException("Width-two LineTo is not implemented; Ellipse supports that width.");
-        int changedPixels = pen is null ? 0 : pen.Width == 3
-            ? deviceContext.Surface.WideLine(deviceContext.CurrentX, deviceContext.CurrentY, destinationX, destinationY,
+        int changedPixels = pen is null ? 0 : deviceContext.Draw(surface => pen.Width == 3
+            ? surface.WideLine(deviceContext.CurrentX, deviceContext.CurrentY, destinationX, destinationY,
                 pen.Color, deviceContext.Mix, deviceContext.WindowOrigin)
-            : deviceContext.Surface.Line(deviceContext.CurrentX, deviceContext.CurrentY, destinationX, destinationY,
-                pen.Color, deviceContext.Mix, deviceContext.WindowOrigin);
+            : surface.Line(deviceContext.CurrentX, deviceContext.CurrentY, destinationX, destinationY,
+                pen.Color, deviceContext.Mix, deviceContext.WindowOrigin));
         LastOperation = new("LineTo", hdc, new(deviceContext.CurrentX, deviceContext.CurrentY, destinationX, destinationY), changedPixels);
         deviceContext.CurrentX = destinationX;
         deviceContext.CurrentY = destinationY;
@@ -179,8 +184,8 @@ public sealed partial class Win16Drawing
         Win16DeviceContext deviceContext = RequireDeviceContext(hdc);
         Win16Pen? pen = SelectedPen(deviceContext);
         uint? brushColor = SelectedBrushColor(deviceContext);
-        int changedPixels = deviceContext.Surface.Ellipse(rectangle, pen?.Color ?? 0, pen?.Width ?? 0, brushColor,
-            deviceContext.Mix, deviceContext.WindowOrigin);
+        int changedPixels = deviceContext.Draw(surface => surface.Ellipse(rectangle, pen?.Color ?? 0, pen?.Width ?? 0, brushColor,
+            deviceContext.Mix, deviceContext.WindowOrigin));
         LastOperation = new("Ellipse", hdc, rectangle, changedPixels);
         if (OperationCount < long.MaxValue) OperationCount++;
         return true;
@@ -192,8 +197,7 @@ public sealed partial class Win16Drawing
         Win16DeviceContext deviceContext = RequireDeviceContext(hdc);
         Win16Pen? pen = SelectedPen(deviceContext);
         if (pen is { Width: not 1 }) throw new NotSupportedException("Rectangle supports a null or one-pixel pen only.");
-        int changedPixels = deviceContext.Surface.Rectangle(rectangle, pen?.Color ?? 0, pen is not null,
-            SelectedBrushColor(deviceContext), deviceContext.Mix, deviceContext.WindowOrigin);
+        int changedPixels = deviceContext.DrawRectangle(rectangle, pen?.Color, SelectedBrushColor(deviceContext));
         LastOperation = new("Rectangle", hdc, rectangle, changedPixels);
         if (OperationCount < long.MaxValue) OperationCount++;
         return true;
@@ -216,6 +220,7 @@ public sealed partial class Win16Drawing
     {
         NullPenHandle => null,
         BlackPenHandle => new(0, 1),
+        WhitePenHandle => new(0xFFFFFF, 1),
         _ => pens[deviceContext.SelectedPen]
     };
     /// <summary>Resolve a guest HDC or fail before any drawing state changes.</summary>

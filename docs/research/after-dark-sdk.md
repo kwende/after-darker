@@ -59,6 +59,11 @@ Its drawing code divides by the X word while correcting a ring's horizontal
 radius. The profile supplies 1:1 for the software surface's square pixels;
 zero-filled values cause a guest divide-by-zero. See [the execution evidence](hard-rain-execution.md).
 
+The bitmap-family profiles also supply `ptScreenSize.x/y` at 0x06/0x08.
+The shared single-surface host gives AD_SYSTEM and AD_MODULE matching dimensions.
+Punch Out uses the system dimensions when allocating its desktop backing bitmap;
+zero-filled system dimensions would not describe the host's actual pixels.
+
 **Unresolved:** our current host also supplies compatibility words at system
 offsets 0x2C and 0x34. Those are beyond this public structure. Do not assign
 them SDK field names, shrink the existing allocation, or claim the header

@@ -6,6 +6,14 @@ namespace AfterDarker.Runtime;
 /// <summary>Verified artifact identities, not file names or a claim of general AD compatibility.</summary>
 public static class SupportedModules
 {
+    /// <summary>Exact Can of Worms artifact analyzed for the bitmap-family profile.</summary>
+    public const string CanOfWormsSha256 = "1FD824FCDA5ED65D3903E5158B8F20A2F2C2614E5E64EA48E0EB14B81D27D72E";
+    /// <summary>Exact GeoBounce artifact analyzed for the bitmap-family profile.</summary>
+    public const string GeoBounceSha256 = "19B6058BB0EF1D63E5A081894837FC5E17224F11B907EF4C08697C948FED32A5";
+    /// <summary>Exact Nocturnes artifact analyzed for the bitmap-family profile.</summary>
+    public const string NocturnesSha256 = "525AC95FAAB662835D497D3D491512BC2F24A7AA752C1CE014B413288E3036BF";
+    /// <summary>Exact Punch Out artifact analyzed for the bitmap-family profile.</summary>
+    public const string PunchOutSha256 = "FABAFCEBF8638660C00B3E4314F0D72E5F4B796907A0B1A4E8E4AF3B582B6FC2";
     /// <summary>Analyzed Gravity artifact, using four colored balls and unavailable audio.</summary>
     public const string GravitySha256 = "ADDF0B0A5A9F2341C2EE094398F02AC98BC7306BB2938A41905AE66F734E0482";
     /// <summary>Exact Stained Glass artifact analyzed with fixed color controls.</summary>
@@ -43,7 +51,11 @@ public static class SupportedModules
         ShapesSha256 => "Shapes",
         StainedGlassSha256 => "Stained Glass",
         GravitySha256 => "Gravity",
-        _ => throw new NotSupportedException("This AD file is not supported yet. Supported modules: the analyzed Mondrian, Spiral Gyra, Rainstorm, Fade Away, Lasers, Magic, String Theory, Zot!, Hard Rain, Shapes, Stained Glass and Gravity versions. File names alone do not identify a supported version.")
+        CanOfWormsSha256 => "Can of Worms",
+        GeoBounceSha256 => "GeoBounce",
+        NocturnesSha256 => "Nocturnes",
+        PunchOutSha256 => "Punch Out",
+        _ => throw new NotSupportedException("This AD file is not supported yet. Supported modules: the analyzed Mondrian, Spiral Gyra, Rainstorm, Fade Away, Lasers, Magic, String Theory, Zot!, Hard Rain, Shapes, Stained Glass, Gravity, Can of Worms, GeoBounce, Nocturnes and Punch Out versions. File names alone do not identify a supported version.")
     };
     /// <summary>Construct the selected profile and shared session without yet executing guest code.</summary>
     public static IAnimationSession Open(byte[] file, PlaybackOptions options, SessionTiming? timing = null,
@@ -74,6 +86,15 @@ public static class SupportedModules
                 instructionLimit: 2_000_000, timing: timing, diagnostics: diagnostics, output: output),
             "Gravity" => new AfterDarkSession<GravityState>(file, new GravityProfile(), options,
                 instructionLimit: 200_000, timing: timing, diagnostics: diagnostics, output: output),
+
+            "Can of Worms" => new AfterDarkSession<BitmapModuleState>(file, new CanOfWormsProfile(), options,
+                instructionLimit: 500_000, timing: timing, diagnostics: diagnostics, output: output),
+            "GeoBounce" => new AfterDarkSession<BitmapModuleState>(file, new GeoBounceProfile(), options,
+                instructionLimit: 500_000, timing: timing, diagnostics: diagnostics, output: output),
+            "Nocturnes" => new AfterDarkSession<BitmapModuleState>(file, new NocturnesProfile(), options,
+                instructionLimit: 500_000, timing: timing, diagnostics: diagnostics, output: output),
+            "Punch Out" => new AfterDarkSession<BitmapModuleState>(file, new PunchOutProfile(), options,
+                instructionLimit: 500_000, timing: timing, diagnostics: diagnostics, output: output),
             _ => throw new InvalidOperationException()
         };
 }

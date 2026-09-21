@@ -20,6 +20,8 @@ ITutorial[] tutorials =
     new Tutorial09MondrianFrames(args.Length >= 2 && args[0] == "09" ? args[1] : null,
         args.Length == 3 && args[0] == "09" ? args[2] : null),
     new Tutorial10LocalHeap(),
+    new Tutorial11BitmapResources(args.Length >= 2 && args[0] == "11" ? args[1] : null,
+        args.Length == 3 && args[0] == "11" ? args[2] : null),
 ];
 
 if (args is ["--list"])
@@ -37,12 +39,13 @@ bool validArguments = selectedId switch
     "06" => args is ["06"] or ["06", _] or ["06", _, "--trace"],
     "07" => args is ["07"] or ["07", _] or ["07", _, "--step"],
     "09" => args.Length <= 3,
+    "11" => args.Length <= 3,
     "08" => args is ["08"] or ["08", _] or ["08", _, "--trace"],
     _ => args.Length <= 1,
 };
 if (selected is null || !validArguments)
 {
-    Console.Error.WriteLine("Usage: AfterDarker.Tutorials [01 | 02 | 03 | 04 | 05 [file.ad] | 06 [hello42.dll] [--trace] | 07 [file.ad | --file] [--step] | 08 [Mondrian.ad] [--trace] | 09 [Mondrian.ad] [frame-count] | 10 | --list]");
+    Console.Error.WriteLine("Usage: AfterDarker.Tutorials [01 | 02 | 03 | 04 | 05 [file.ad] | 06 [hello42.dll] [--trace] | 07 [file.ad | --file] [--step] | 08 [Mondrian.ad] [--trace] | 09 [Mondrian.ad] [frame-count] | 10 | 11 [file.ad] [output-directory] | --list]");
     return 1;
 }
 

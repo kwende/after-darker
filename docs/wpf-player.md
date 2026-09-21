@@ -3,11 +3,20 @@
 Open `AfterDarker.sln`, set **AfterDarker.Wpf** as the startup project, and press
 F5. With the analyzed `ad/Mondrian.ad` present, the window starts automatically.
 Choose **File > Load AD file…** to select **Mondrian**, **Spiral Gyra**, **Rainstorm**,
-**Fade Away**, **Lasers**, **Magic**, **String Theory**, **Zot!**, **Hard Rain**, **Shapes**, **Stained Glass**, or **Gravity**. Loading
+**Fade Away**, **Lasers**, **Magic**, **String Theory**, **Zot!**, **Hard Rain**, **Shapes**,
+**Stained Glass**, **Gravity**, **Can of Worms**, **GeoBounce**, **Nocturnes**, or **Punch Out**. Loading
 starts playback automatically; the menu can also switch modules while playing.
 The previous guest shuts down before the new one starts. Unsupported files or
 versions are rejected by their content hash before stopping an active guest.
 Stop lets you change speed and Run a fresh guest. No original modules are distributed.
+
+Can of Worms uses ten eleven-segment worms on a white image. GeoBounce uses a
+colored/shaded tetrahedron. Nocturnes uses colored eyes decoded from its own
+bitmap resource. Punch Out cuts circular holes in a white image. These four
+profiles have fixed controls and run silently; their generic speed selector is
+disabled. Minimum size is 128×128, and Punch Out reserves room for its bitmap
+border by limiting each dimension to 2028. See the
+[four-module evidence and visual limits](research/bitmap-module-family.md).
 
 Gravity uses four balls, size 20, Clear Screen and Sound off; the generic speed
 selector is disabled. Its original code constructs a bitmap mask strip and draws
@@ -71,10 +80,10 @@ dotnet run --project src/AfterDarker.Wpf --no-launch-profile
 dotnet run --project src/AfterDarker.Wpf --no-launch-profile -- C:\path\Mondrian.ad
 ```
 
-All twelve supported modules execute their original, hash-checked Win16 code through
+All sixteen supported modules execute their original, hash-checked Win16 code through
 `AfterDarkSession<TState>`. Mondrian's tutorial facade uses that same runtime.
 Spiral adds five pen/line imports; see the [execution notes](research/spiral-gyra-execution.md).
-The file picker accepts AD files generally, but only the twelve analyzed versions
+The file picker accepts AD files generally, but only the sixteen analyzed versions
 are executable today. A renamed supported file works; an unknown file named
 Mondrian.ad does not bypass validation.
 

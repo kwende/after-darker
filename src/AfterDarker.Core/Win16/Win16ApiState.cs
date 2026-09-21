@@ -21,6 +21,8 @@ public sealed class Win16ApiState
     public IWin16Clock Clock { get; }
     public uint? LastReturnedTick { get; internal set; }
     public Win16Drawing? Drawing { get; init; }
+    /// <summary>File resources belonging to the loaded guest DLL, independent of mapped code/data segments.</summary>
+    public Win16ModuleResources? ModuleResources { get; init; }
 
     public Win16ApiState(IGuestMemory16 memory, LocalHeapReservation reservedHeap,
         FarPointer16? environment = null, uint windowsVersion = DefaultWindowsVersion,

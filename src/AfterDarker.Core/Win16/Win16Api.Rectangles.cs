@@ -5,6 +5,13 @@ namespace AfterDarker.Core.Win16;
 /// <summary>Guest RECT operations; these change coordinates in memory without drawing.</summary>
 public sealed partial class Win16Api
 {
+    /// <summary>TRUE when either signed extent is zero or negative; does not reorder or modify the RECT.</summary>
+    public bool IsRectEmpty(FarPointer16 address)
+    {
+        Rectangle16 rectangle = ReadRectangle(address);
+        return rectangle.Left >= rectangle.Right || rectangle.Top >= rectangle.Bottom;
+    }
+
     /// <summary>Move all four edges by signed deltas. Win16 stores wrapping 16-bit results and returns void.</summary>
     public void OffsetRect(FarPointer16 address, short horizontal, short vertical)
     {

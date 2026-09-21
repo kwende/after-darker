@@ -251,6 +251,14 @@ in-process engine remains an architectural option, not a proven decision.
   they are redistributable and asks for that exact addition.
 - Use local bring-your-own-module paths for integration tests. Keep public tests
   self-contained or generated from source.
+- For extracting additional inputs from a Windows 98 VM, follow
+  [the VirtualBox file-transfer guide](docs/virtualbox-file-transfer.md). Recheck
+  the attached disk, powered-off state and snapshots; keep each collection and
+  its helper files under the ignored root `ad/` tree.
+- Preserve distinct module/helper versions across imports. The owner accepts
+  old and updated versions, but never overwrite by filename: retain original
+  paths in separate collection folders and compare full SHA-256 hashes. If
+  renaming is necessary, retain the original identity in a local inventory.
 - Do not log personal paths, binary contents, or unrelated private data in
   public artifacts.
 - Preserve unrelated work in a dirty worktree. Do not reset, discard, or rewrite

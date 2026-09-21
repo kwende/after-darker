@@ -1,6 +1,6 @@
 # Current Status
 
-Last updated: 2026-09-20
+Last updated: 2026-09-21
 
 ## Project phase
 
@@ -44,12 +44,17 @@ Gravity is the twelfth: off-screen bitmap ownership, temporary memory DCs,
 PATCOPY and two mask blits support its original colored ball trails. The fixed
 four-ball profile runs silently through an unavailable AD_SND implementation;
 it still reaches sound calls even with the Sound control off.
+Can of Worms, GeoBounce, Nocturnes and Punch Out bring the total to sixteen.
+They add stock white-pen lookup, IsRectEmpty, Polygon, resource-backed LoadBitmap,
+DC text/background attributes and copied rectangular/elliptic clip regions.
+Worms and Punch Out use white input images. Tutorial 11 walks NE resource aliases
+and DIB decoding into typed RGB images without constructing a guest CPU.
 This remains narrow compatibility support, not general Win16 emulation.
 `AfterDarker.Core` contains two extracted binary-layout helpers, a Windows NE
 metadata reader, a CPU-independent load plan, and a separate After Dark
 invocation-plan model. The C# MSTest project covers these mechanisms and the
-ten educational console lessons (06 needs the optional Watcom fixture;
-08/09 need the analyzed local Mondrian file).
+eleven educational console lessons (06 needs the optional Watcom fixture;
+08/09 need the analyzed local Mondrian file; 11 accepts a local NE file).
 
 ## Active scope decisions
 
@@ -72,6 +77,23 @@ ten educational console lessons (06 needs the optional Watcom fixture;
   This generalizes the earlier Shapes-only decision and is recorded in AGENTS.md.
 
 ## Established evidence
+
+- **Bitmap-module family:** implemented on `codex/bitmap-module-family` from
+  reviewed main `299fab6`. All four exact profiles complete 600 deterministic
+  draws and CLOSE/WEP. Twenty private cases pass, covering size/seed variation,
+  live clocks at 640×480, independent sessions, input rejection and cleanup.
+  Actual WPF checks pass for all four in a switching cycle, including RGB
+  readback, unsupported-file rejection, restart and close while playing.
+  No owned pens, brushes, bitmaps, DCs, regions, local blocks or locks remain.
+  Nocturnes resolves EYES through RT_NAMETABLE to bitmap #1, decodes its 102×80
+  one-bit DIB and uses it as a color mask. Punch Out recycles three bitmaps and
+  two regions while animating; cumulative allocations do not grow live ownership.
+  Rectangle clipping/SRCPAINT and two polygon samples match modern GDI exactly.
+  Elliptic clipping retains a measured software edge approximation. See the
+  [execution evidence](research/bitmap-module-family.md) and
+  [resource mechanism/open-source references](ne-bitmap-resources.md).
+  The full regression passes **471/471** cases with Watcom and all sixteen
+  modules enabled (9m 49s); the public subset contains **329** cases.
 
 - **Gravity playback:** implemented on `codex/gravity` from reviewed main
   `67a0bf7`, after Stained Glass merged. Four balls, size 20, Clear Screen and
@@ -373,8 +395,10 @@ ten educational console lessons (06 needs the optional Watcom fixture;
   imported constant), plus 59 AD_RSRC, 10 AD_SND, and one WIN87EM target.
   No direct thread/synchronization or Win16 task-wait/yield imports were found.
   Memory management, files/settings, clocks, dialog callbacks, helper libraries,
-  and GraphStat's `WinExec` import are visible. The helper DLLs are absent, so
-  their transitive dependencies remain unexamined. This is artifact evidence,
+  and GraphStat's `WinExec` import are visible. Helper DLLs were absent from that
+  original input folder; the subsequent [Windows 98 extraction](research/windows98-collection-inventory.md)
+  recovered all three and records their direct imports. Their execution remains
+  unproven. This is artifact evidence,
   not proof of which APIs run during drawing. Per-input hashes and the full
   API-to-module mapping accompany the report.
 - Tutorial 01 runs `MOV AX, 7; ADD AX, 5` in Unicorn from a native Windows C#
@@ -468,15 +492,30 @@ explicitly.
 
 ## Next planning point
 
+The owner has paused module expansion to evaluate reuse of existing Win16/GDI
+implementations. The [reuse assessment](research/win16-reuse-assessment.md)
+compares native Windows GDI, Win3mu, WineVDM, Wine, ReactOS and original helper
+DLLs. Its recommendation is a small native-GDI backend experiment and shared
+loader planning; neither is implemented or accepted as a runtime replacement.
+The candidate ranking below remains evidence for resuming module work.
+
 String Theory/Zot! completed row 3 of the [sweep](research/module-readiness-sweep.md).
-The reassessment merged in PR #19 (`732b1f8`); its recommended order was
-Hard Rain, Shapes, then constrained Stained Glass. Later bitmap/sound candidates
-are provisional. See the [report](research/module-readiness-after-heap.md).
-Rainstorm's lightning fix merged in PR #20 (`05a435f`), Hard Rain in PR #21
-(`31042b2`), and Shapes in PR #22 (`ddd273c`). Module expansion is paused for the
-[Ocuvera integration assessment](ocuvera-compatibility.md). Constrained Stained
-Glass remains the next module candidate; its coordinate, raster-operation and
-blit behavior still requires investigation.
+The recommended Hard Rain, Shapes, Stained Glass and Gravity work is now done,
+and the four remaining bitmap-family candidates have executable profiles.
+The owner then supplied an [additional Windows 98 collection](research/windows98-collection-inventory.md):
+36 additional NE modules plus the previously missing helper DLLs. The
+[completed readiness audit](research/windows98-readiness-audit.md) finds two
+inexpensive candidates: Spheres and Warp each draw 600 times and shut down
+through existing Win16 services under explicit diagnostic host choices. Spheres
+needs a PRIMARY_PAL policy; Warp needs MODULESELECTED and constrained controls.
+Neither is registered in the player yet. Prefer their production profiles next,
+then Puzzle's reached UnionRect/related scrolling work. The original thirteen
+unsupported modules remain candidates as well.
+Proprietary AD_RSRC contracts, WIN87EM/OS fixups and
+general global allocations remain distinct areas; a DIB decoder does not solve
+all three. The [earlier ranking](research/module-readiness-after-heap.md) is
+historical. Packaging into [Ocuvera](ocuvera-compatibility.md) remains parked
+until the owner is ready to resume integration.
 The heap guide and Tutorial 10 retain the focused allocation lesson; Zot!'s and
 Rainstorm's notes explain presentation inside an active call. Other Fade Away
 styles and historical pixel/timing comparisons remain explicit limitations.
@@ -490,6 +529,82 @@ Tutorial 04 implements the narrow host trap; the broader issue is not complete.
 See [the tutorial guide](tutorials.md).
 
 ## Session log
+
+### 2026-09-21 - reassess Win16/GDI implementation reuse
+
+- Inspected Win3mu's C# bridge and WineVDM's GDI forwarding, handle conversion,
+  palette behavior and x86 build dependencies, plus Wine/ReactOS context.
+  Recorded primary sources, source revisions, integration costs and licenses in
+  the [assessment](research/win16-reuse-assessment.md).
+- The existing test-only WindowsDrawingOracle already renders to a native
+  memory DC/DIB and copies pixels. Re-ran its three associated raster test
+  classes: 13 passed, zero failed/skipped. This is not a production backend.
+- Reuse cannot remove the observed loader barriers: 32 of the 36 additional
+  modules stop before execution. Recommended shared capability work alongside
+  per-module regression evidence, rather than predicting full compatibility.
+- No runtime behavior, dependency, supported profile or public contract changed.
+  No external project was compiled; Windows 98 system DLLs were not examined.
+  Ocuvera's copied-frame/worker ownership requirements remain the design boundary.
+
+### 2026-09-20 - audit all 65 extracted modules against current services
+
+- Added an opt-in C# research probe and Python process watchdog; no production
+  loader, API, renderer or supported-module identity was changed. The probe uses
+  the real registry, including named sound services, and stops on unknown calls.
+- All 16 recognized hashes complete 30 draws and shutdown through production
+  profiles. Of the 36 additional modules, 32 stop in loading, Puzzle reaches
+  DRAWFRAME/UnionRect, Satori reaches INITIALIZE/CreatePalette, Spheres reaches
+  its PRIMARY_PAL host request, and Warp completes the short baseline.
+- Extended Spheres through 600 color draws using a direct-RGB primary-palette
+  policy. Extended Warp through 600 color draws after sending MODULESELECTED
+  and choosing 30 small stars. Both clean up all tracked objects and locks;
+  Warp's larger mixed-star configuration instead exceeds the CLOSE service
+  budget and is recorded as a failed attempt.
+- The [audit and per-file JSON](research/windows98-readiness-audit.md) record
+  hashes, every first failure, configuration choices and proof limits. The 329
+  default public tests pass; captures and full diagnostics remain ignored.
+- Twelve new AD3 modules share ADXPL300/ADTOOL. The recovered helper code is
+  available for future analysis, but recursive helper execution is not present.
+
+### 2026-09-20 - preserve the Windows 98 file-transfer procedure
+
+- Added a [VirtualBox file-transfer guide](virtualbox-file-transfer.md), linked
+  from README and AGENTS, for extracting local inputs with host-side 7-Zip.
+- Read-only inspection found the `windows98` VM running with a directly attached
+  VDI and no snapshots. VirtualBox and 7-Zip are installed. The guide requires
+  fresh state checks and normal guest shutdown before extraction.
+- After the owner identified guest `C:\AFTERDRK` and the VM was verified powered
+  off, extracted that directory plus AD_RSRC/WIN87EM from Windows directories.
+  The [collection inventory](research/windows98-collection-inventory.md) records
+  175 files, 65 NE modules (29 existing hashes and 36 additional modules), and
+  the recovered helpers' direct imports. Everything stays in ignored local
+  input/artifact folders. New playback compatibility remains to be assessed.
+- The owner ran both v2 and v3 installers in that guest and requests preserving
+  older and updated binaries if versions conflict. Separate collection paths
+  and hash inventories preserve the inputs; all 29 extracted AD20 module hashes
+  match the prior collection. This does not establish unchanged helper versions
+  or recover any files already overwritten inside the guest.
+
+### 2026-09-20 - four bitmap modules and a resource walkthrough
+
+- Created `codex/bitmap-module-family` from reviewed main `299fab6`; implemented
+  Can of Worms, GeoBounce, Nocturnes and Punch Out without requiring owner input.
+- White starting images support the requested Worms behavior and Punch Out's
+  desktop-image effect. All four run original code with fixed color controls
+  and the existing explicit unavailable-sound contract.
+- Added nine shared import implementations, WHITE_PEN, Polygon, SRCPAINT,
+  copied device-coordinate regions, DC colors and bounded resource loading.
+  Nocturnes requires RT_NAMETABLE alias resolution before decoding bitmap #1.
+  Wine supplied useful prior art; no external code or dependency was vendored.
+- Tutorial 11 follows the same resource catalog/decoder without a CPU, returning
+  typed bitmap records and writing local PNGs. Its guide explains both byte
+  layouts and the separation from proprietary AD_RSRC helper APIs.
+- All 20 new private cases and the 471-case complete regression pass; four WPF
+  runs cover every new module plus switching, restart, readback and clean close.
+  Reports/captures remain under ignored `artifacts/bitmap-family/`.
+- Core/Runtime remain UI-independent. The scene interface and frame transport
+  are unchanged; region counts are additive diagnostics. Ocuvera integration
+  remains parked. No proprietary file was added to Git.
 
 ### 2026-09-20 - Stained Glass and shared GDI state/copying
 

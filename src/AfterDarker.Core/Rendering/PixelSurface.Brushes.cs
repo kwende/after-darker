@@ -28,16 +28,16 @@ public sealed partial class PixelSurface
         int lastRow = borderOnly ? Math.Max(bottom, top + 1) : bottom;
         int changed = 0;
         for (int row = Math.Max(0, firstRow); row < Math.Min(Height, lastRow); row++)
-        for (int column = Math.Max(0, firstColumn); column < Math.Min(Width, lastColumn); column++)
-        {
-            // Side strips exclude the top/bottom rows. GDI normalizes their
-            // negative height for degenerate rectangles, just as PatBlt does.
-            bool verticalEdge = (column == left || column == right - 1) &&
-                row >= Math.Min(top + 1, bottom - 1) && row < Math.Max(top + 1, bottom - 1);
-            bool horizontalEdge = (row == top || row == bottom - 1) && column >= left && column < right;
-            if (borderOnly && !verticalEdge && !horizontalEdge) continue;
-            if (WriteMixedPixel((row * Width + column) * 3, color, RasterMix.CopyPen)) changed++;
-        }
+            for (int column = Math.Max(0, firstColumn); column < Math.Min(Width, lastColumn); column++)
+            {
+                // Side strips exclude the top/bottom rows. GDI normalizes their
+                // negative height for degenerate rectangles, just as PatBlt does.
+                bool verticalEdge = (column == left || column == right - 1) &&
+                    row >= Math.Min(top + 1, bottom - 1) && row < Math.Max(top + 1, bottom - 1);
+                bool horizontalEdge = (row == top || row == bottom - 1) && column >= left && column < right;
+                if (borderOnly && !verticalEdge && !horizontalEdge) continue;
+                if (WriteMixedPixel((row * Width + column) * 3, color, RasterMix.CopyPen)) changed++;
+            }
         if (changed != 0 && Revision < long.MaxValue) Revision++;
         return changed;
     }
@@ -45,7 +45,7 @@ public sealed partial class PixelSurface
     /// <summary>Set one device pixel to an RGB COLORREF, or return CLR_INVALID when clipped. ROP2 does not apply.</summary>
     public uint SetPixel(int horizontal, int vertical, uint color)
     {
-        if (horizontal < 0 || horizontal >= Width || vertical < 0 || vertical >= Height) return uint.MaxValue;
+        if (horizontal < 0 || horizontal >= Width || vertical < 0 || vertical >= Height || !IsPixelVisible(horizontal, vertical)) return uint.MaxValue;
         uint rgb = color & 0xFFFFFF;
         if (WriteMixedPixel((vertical * Width + horizontal) * 3, rgb, RasterMix.CopyPen) && Revision < long.MaxValue) Revision++;
         return rgb;
