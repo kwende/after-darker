@@ -32,7 +32,8 @@ Native Windows calls remain only as conformance oracles for rendering. There is
 no production native drawing backend, toggle, extra interface or native DC
 ownership requirement. This proves the supported paths above, not historical
 Windows pixel fidelity or all remaining AD modules. Wine and other reuse options
-are the next discussion before more screensavers; no new reuse experiment has begun.
+are being evaluated before more screensavers. The [original-host WineVDM trial](research/winevdm-original-host-trial.md)
+has reached the original ADW30 startup warning; animation is not yet verified.
 
 After Darker has a C# tutorial console host with real-mode addition and
 near-call experiments, plus 16-bit protected-mode far-call and synthetic host
