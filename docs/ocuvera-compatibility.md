@@ -243,3 +243,13 @@ This work adds four profiles and UI-independent Core resource/raster services;
 shutdown assertions. Resource bytes come from the supplied module, without
 developer paths or WPF dependencies. No changes were made to Ocuvera, and package
 publication / single-file .scr behavior remain unproven and deliberately parked.
+
+## Rendering follow-up — 2026-09-21
+
+The native GDI playback spike was removed after it failed to establish a clear
+quicker/easier delivery path. There is no renderer selection or native DC thread
+ownership requirement for an Ocuvera adapter. Existing copied RGB frames,
+sequential guest ownership and awaitable shutdown remain the contract. Puzzle
+is another supported profile, with no adapter-specific rendering code needed.
+This does not prove package or single-file integration. See
+[the decision](research/native-gdi-spike-decision.md).

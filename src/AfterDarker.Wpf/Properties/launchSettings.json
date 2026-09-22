@@ -2,6 +2,11 @@
   "profiles": {
     "Original After Dark player": {
       "commandName": "Project"
+    },
+    "Puzzle - hand rolled": {
+      "commandName": "Project",
+      "commandLineArgs": "ad/windows98-2026-09-20/AFTERDRK/AD30/PUZZLE.AD",
+      "workingDirectory": "$(ProjectDir)../.."
     }
   }
 }

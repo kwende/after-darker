@@ -567,3 +567,18 @@ the same DIB decoder used by `LoadBitmap`. It returns typed resource/image
 records, prints dimensions and offsets, writes PNGs and exits without a CPU.
 The [walkthrough](ne-bitmap-resources.md) includes byte layouts, ownership,
 format boundaries and the Wine/WineVDM/Kaitai references that informed the work.
+
+## Tutorial 12 — Puzzle with hand rolled scrolling
+
+Select **Tutorial 12 - Puzzle with hand rolled scrolling**, or run:
+
+```powershell
+dotnet run --project src/AfterDarker.Tutorials --no-launch-profile -- 12 path/to/PUZZLE.AD
+```
+
+The lesson executes the original module for 1,800 draws and writes an initial
+PNG, thirty animation PNGs and a typed report to a fresh ignored capture directory.
+An optional third argument supplies a new output directory. Follow
+`Win16Api.ScrollDC` into `Win16Drawing.ScrollDC` to see the exposed rectangle
+returned to the guest, which subsequently erases it. See [the walkthrough](research/puzzle-execution.md).
+The uncommitted native lessons 12–14 were retired; this is the surviving lesson 12.

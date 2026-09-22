@@ -245,3 +245,12 @@ untouched. `report.json` records the module names, completed CLOSE/WEP phases,
 remaining/peak pen counts, local-heap capacity/live allocations/locks, and
 `IntermediateFrames` (checkpoint visits, not a count of UI presentations).
 The native file dialog itself is not automated.
+
+## Puzzle
+
+Use **Puzzle - hand rolled** or load the supported AD30 Puzzle artifact through
+**Load AD file**. Its fixed profile selects small tiles, slow motion, no inversion
+and unavailable audio. A generated color pattern supplies visible content to
+scramble. The normal hand rolled renderer is the only playback path; the native
+experiment menu/flag/profiles were removed. See [Puzzle](research/puzzle-execution.md)
+and [why the native spike was retired](research/native-gdi-spike-decision.md).

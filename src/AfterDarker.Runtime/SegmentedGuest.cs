@@ -240,6 +240,8 @@ public sealed partial class SegmentedGuest : IGuestMemory16, IDisposable
     }
     /// <summary>Write checked guest data; code segments cannot be modified through this interface.</summary>
     public void Write(FarPointer16 address, byte[] bytes) => engine.MemWrite(Translate(address, bytes.Length, write: true), bytes);
+    /// <inheritdoc/>
+    public void ValidateWrite(FarPointer16 address, int count) => _ = Translate(address, count, write: true);
     /// <summary>Require a mapped code segment and a valid instruction-size range.</summary>
     public void RequireCode(FarPointer16 address, int count)
     {

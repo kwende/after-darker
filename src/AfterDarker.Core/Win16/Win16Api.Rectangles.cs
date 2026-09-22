@@ -45,6 +45,26 @@ public sealed partial class Win16Api
     /// <summary>Compare the four signed coordinates exactly; differently encoded empty rectangles are not equal.</summary>
     public bool EqualRect(FarPointer16 first, FarPointer16 second) => ReadRectangle(first) == ReadRectangle(second);
 
+    /// <summary>Copy eight guest bytes, including inverted bounds. Read first so source and destination may overlap.</summary>
+    /// <remarks>Win16 CopyRect returns void; importing Win32's BOOL signature would corrupt the guest convention.</remarks>
+    public void CopyRect(FarPointer16 destination, FarPointer16 source) => WriteRectangle(destination, ReadRectangle(source));
+
+    /// <summary>Write the bounding rectangle of nonempty inputs, or zero and FALSE if both are empty. Inputs may alias output.</summary>
+    public bool UnionRect(FarPointer16 destination, FarPointer16 firstAddress, FarPointer16 secondAddress)
+    {
+        Rectangle16 first = ReadRectangle(firstAddress), second = ReadRectangle(secondAddress);
+        bool firstEmpty = first.Left >= first.Right || first.Top >= first.Bottom;
+        bool secondEmpty = second.Left >= second.Right || second.Top >= second.Bottom;
+        Rectangle16 result;
+        if (firstEmpty && secondEmpty) result = default;
+        else if (firstEmpty) result = second;
+        else if (secondEmpty) result = first;
+        else result = new(Math.Min(first.Left, second.Left), Math.Min(first.Top, second.Top),
+            Math.Max(first.Right, second.Right), Math.Max(first.Bottom, second.Bottom));
+        WriteRectangle(destination, result);
+        return !firstEmpty || !secondEmpty;
+    }
+
     private Rectangle16 ReadRectangle(FarPointer16 address) =>
         Rectangle16.Decode(State.Memory.Read(address, Rectangle16.ByteCount));
     private void WriteRectangle(FarPointer16 address, Rectangle16 rectangle) => State.Memory.Write(address, rectangle.Encode());

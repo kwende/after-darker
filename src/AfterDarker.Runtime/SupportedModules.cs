@@ -6,6 +6,8 @@ namespace AfterDarker.Runtime;
 /// <summary>Verified artifact identities, not file names or a claim of general AD compatibility.</summary>
 public static class SupportedModules
 {
+    /// <summary>Exact AD30 Puzzle artifact verified through hand rolled ScrollDC.</summary>
+    public const string PuzzleSha256 = "1E25FBC9567DA400A09A7056D90178BD6D329BA7B262F44573904C8922F53F5D";
     /// <summary>Exact Can of Worms artifact analyzed for the bitmap-family profile.</summary>
     public const string CanOfWormsSha256 = "1FD824FCDA5ED65D3903E5158B8F20A2F2C2614E5E64EA48E0EB14B81D27D72E";
     /// <summary>Exact GeoBounce artifact analyzed for the bitmap-family profile.</summary>
@@ -51,11 +53,12 @@ public static class SupportedModules
         ShapesSha256 => "Shapes",
         StainedGlassSha256 => "Stained Glass",
         GravitySha256 => "Gravity",
+        PuzzleSha256 => "Puzzle",
         CanOfWormsSha256 => "Can of Worms",
         GeoBounceSha256 => "GeoBounce",
         NocturnesSha256 => "Nocturnes",
         PunchOutSha256 => "Punch Out",
-        _ => throw new NotSupportedException("This AD file is not supported yet. Supported modules: the analyzed Mondrian, Spiral Gyra, Rainstorm, Fade Away, Lasers, Magic, String Theory, Zot!, Hard Rain, Shapes, Stained Glass, Gravity, Can of Worms, GeoBounce, Nocturnes and Punch Out versions. File names alone do not identify a supported version.")
+        _ => throw new NotSupportedException("This AD file is not supported yet. Supported modules: the analyzed Mondrian, Spiral Gyra, Rainstorm, Fade Away, Lasers, Magic, String Theory, Zot!, Hard Rain, Shapes, Stained Glass, Gravity, Can of Worms, GeoBounce, Nocturnes, Punch Out and Puzzle versions. File names alone do not identify a supported version.")
     };
     /// <summary>Construct the selected profile and shared session without yet executing guest code.</summary>
     public static IAnimationSession Open(byte[] file, PlaybackOptions options, SessionTiming? timing = null,
@@ -84,6 +87,8 @@ public static class SupportedModules
                 timing: timing, diagnostics: diagnostics, output: output),
             "Stained Glass" => new AfterDarkSession<StainedGlassState>(file, new StainedGlassProfile(), options,
                 instructionLimit: 2_000_000, timing: timing, diagnostics: diagnostics, output: output),
+            "Puzzle" => new AfterDarkSession<BitmapModuleState>(file, new PuzzleProfile(), options,
+                instructionLimit: 500_000, timing: timing, diagnostics: diagnostics, output: output),
             "Gravity" => new AfterDarkSession<GravityState>(file, new GravityProfile(), options,
                 instructionLimit: 200_000, timing: timing, diagnostics: diagnostics, output: output),
 

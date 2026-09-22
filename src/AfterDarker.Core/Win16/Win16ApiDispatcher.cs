@@ -116,6 +116,14 @@ public static class Win16ApiDispatcher
                     else api.InflateRect(rectangle, horizontal, vertical);
                     return new(0);
                 }
+            case Win16Imports.Handler.CopyRect:
+                api.CopyRect(arguments.ReadFarPointer(), arguments.ReadFarPointer());
+                return new(0); // Win16 void result; preserve AX/DX.
+            case Win16Imports.Handler.UnionRect:
+                return BooleanResult(api.UnionRect(arguments.ReadFarPointer(), arguments.ReadFarPointer(), arguments.ReadFarPointer()));
+            case Win16Imports.Handler.ScrollDC:
+                return BooleanResult(api.ScrollDC(arguments.ReadWord(), arguments.ReadSignedWord(), arguments.ReadSignedWord(),
+                    arguments.ReadFarPointer(), arguments.ReadFarPointer(), arguments.ReadWord(), arguments.ReadFarPointer()));
             case Win16Imports.Handler.IntersectRect:
                 return BooleanResult(api.IntersectRect(arguments.ReadFarPointer(), arguments.ReadFarPointer(), arguments.ReadFarPointer()));
             case Win16Imports.Handler.EqualRect:

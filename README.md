@@ -237,3 +237,13 @@ After Darker is an independent preservation and interoperability experiment. It
 is not affiliated with the original After Dark publishers or module authors.
 No project license has been selected yet. Dependency and distribution licenses
 must be reviewed before code or third-party components are shipped.
+
+## Puzzle and the rendering decision
+
+Puzzle is the seventeenth supported artifact. Select **Puzzle - hand rolled** in
+the WPF launch profiles, load your own supported module, or run console lesson 12.
+See [Puzzle's mechanism and limits](docs/research/puzzle-execution.md).
+
+The native Windows GDI playback spike has been removed. Its controlled comparison,
+code examples and reasons for choosing the hand rolled path are preserved in
+[the decision record](docs/research/native-gdi-spike-decision.md).

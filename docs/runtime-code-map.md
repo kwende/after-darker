@@ -218,3 +218,15 @@ rejection. Import-gateway tests execute real tiny far calls through the shared
 gateway, checking signedness, pointer translation, results and stack cleanup.
 Original-module tests cover lifecycle, state, deterministic pixels, budgets
 and shutdown. See [testing](testing.md) for the default and opt-in commands.
+
+## Puzzle and scrolling
+
+- `Runtime/Modules/PuzzleProfile.cs`: exact artifact, settings, checked globals and starting image.
+- `Core/Win16/Win16Api.Rectangles.cs`: guest-memory CopyRect/UnionRect helpers.
+- `Core/Win16/Win16Api.Scrolling.cs`: checked guest RECT inputs and writable output.
+- `Core/Win16/Win16Drawing.Scrolling.cs`: clipping, overlap-safe copying through PixelSurface and exposed bounds.
+- `Tutorials/Lessons/Tutorial12Puzzle.cs`: bounded original-code playback and PNG report.
+- `Tests/Conformance/ScrollingRasterTests.cs`: direct native test oracle; no production native backend.
+
+Paths above are relative to their corresponding projects under `src/` or `tests/`.
+See [Puzzle](research/puzzle-execution.md) and [the archived native decision](research/native-gdi-spike-decision.md).
