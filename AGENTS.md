@@ -23,6 +23,27 @@ The user values understanding as highly as implementation. Explain the mental
 model behind meaningful changes, record proof boundaries, and leave the code
 more inspectable than you found it.
 
+## Milestone 1 scope
+
+The owner approved a fixed **26-screensaver v1 scope on 2026-09-27**, followed
+by integration into Ocuvera Toasters. Treat
+[Milestone 1](docs/milestones/milestone-1.md) and its
+[identity/status manifest](docs/milestones/milestone-1.json) as authoritative
+for selection and progress. Older readiness lists are research, not additional
+release requirements. More screensavers are optional after this milestone.
+
+- Finish selected original-code profiles before undertaking consumer integration;
+  preserve the Ocuvera compatibility requirements while doing so.
+- One verified version per selection is sufficient; retain distinct versions
+  and identify the supported bytes by hash. Record aliases and target changes.
+- Distinguish production support, diagnostic success, identity investigation
+  and Ocuvera integration. Do not count WineVDM playback or native recreations
+  as completion in our runtime.
+- Keep existing out-of-scope profiles working. Focus tracing and new shared
+  services on selected modules; do not require an exhaustive Wine port or
+  whole-collection audit before advancing a bounded next step.
+- Update the milestone document and manifest when support advances.
+
 ## Product Boundary
 
 After Darker is a narrow compatibility layer, not a general Windows 3.1

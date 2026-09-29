@@ -6,6 +6,8 @@ namespace AfterDarker.Runtime;
 /// <summary>Verified artifact identities, not file names or a claim of general AD compatibility.</summary>
 public static class SupportedModules
 {
+    /// <summary>Exact AD30 Spheres artifact verified with fixed color and periodic-clear controls.</summary>
+    public const string SpheresSha256 = "E9F416BB9DE55020522C77FF45C4D2DD22F6DD80C96C52FE0EABE400859A453F";
     /// <summary>Exact AD30 Puzzle artifact verified through hand rolled ScrollDC.</summary>
     public const string PuzzleSha256 = "1E25FBC9567DA400A09A7056D90178BD6D329BA7B262F44573904C8922F53F5D";
     /// <summary>Exact Can of Worms artifact analyzed for the bitmap-family profile.</summary>
@@ -51,6 +53,7 @@ public static class SupportedModules
         ZotSha256 => "Zot!",
         HardRainSha256 => "Hard Rain",
         ShapesSha256 => "Shapes",
+        SpheresSha256 => "Spheres",
         StainedGlassSha256 => "Stained Glass",
         GravitySha256 => "Gravity",
         PuzzleSha256 => "Puzzle",
@@ -58,7 +61,7 @@ public static class SupportedModules
         GeoBounceSha256 => "GeoBounce",
         NocturnesSha256 => "Nocturnes",
         PunchOutSha256 => "Punch Out",
-        _ => throw new NotSupportedException("This AD file is not supported yet. Supported modules: the analyzed Mondrian, Spiral Gyra, Rainstorm, Fade Away, Lasers, Magic, String Theory, Zot!, Hard Rain, Shapes, Stained Glass, Gravity, Can of Worms, GeoBounce, Nocturnes, Punch Out and Puzzle versions. File names alone do not identify a supported version.")
+        _ => throw new NotSupportedException("This AD file is not supported yet. Supported modules: the analyzed Mondrian, Spiral Gyra, Rainstorm, Fade Away, Lasers, Magic, String Theory, Zot!, Hard Rain, Shapes, Spheres, Stained Glass, Gravity, Can of Worms, GeoBounce, Nocturnes, Punch Out and Puzzle versions. File names alone do not identify a supported version.")
     };
     /// <summary>Construct the selected profile and shared session without yet executing guest code.</summary>
     public static IAnimationSession Open(byte[] file, PlaybackOptions options, SessionTiming? timing = null,
@@ -84,6 +87,8 @@ public static class SupportedModules
             "Hard Rain" => new AfterDarkSession<HardRainState>(file, new HardRainProfile(), options,
                 timing: timing, diagnostics: diagnostics, output: output),
             "Shapes" => new AfterDarkSession<ShapesState>(file, new ShapesProfile(), options,
+                timing: timing, diagnostics: diagnostics, output: output),
+            "Spheres" => new AfterDarkSession<SpheresState>(file, new SpheresProfile(), options,
                 timing: timing, diagnostics: diagnostics, output: output),
             "Stained Glass" => new AfterDarkSession<StainedGlassState>(file, new StainedGlassProfile(), options,
                 instructionLimit: 2_000_000, timing: timing, diagnostics: diagnostics, output: output),

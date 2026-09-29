@@ -1,0 +1,4 @@
+name: after-darker/wine-dependencies
+version: 0.0.1
+dependencies:
+  codeql/cpp-all: 12.1.1

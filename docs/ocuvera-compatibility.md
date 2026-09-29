@@ -4,6 +4,11 @@ Assessment date: 2026-09-20. Source snapshots: After Darker `ddd273c` (Shapes
 merged) and Ocuvera Toasters `db2e78e` (`stained glass`). Both working trees were
 clean on `main` when inspected. Ocuvera was inspected locally without changes.
 
+Scope update, 2026-09-27: the owner selected [26 Milestone 1 screensavers](milestones/milestone-1.md)
+to finish before this integration. Delivering those originals in the Ocuvera
+collection is part of the v1 goal. This changes prioritization, not the verified
+consumer API snapshot below; re-inspect Ocuvera before implementing its adapter.
+
 **Conclusion:** the architecture already fits. The substantial remaining work
 is packaging native execution and integrating lifecycle management, rather
 than rewriting emulation or drawing. The owner controls both projects and

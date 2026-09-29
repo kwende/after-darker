@@ -20,6 +20,8 @@ public static class AfterDarkHostContract
     public const ushort RgbPaletteRequest = 11;
     /// <summary>SDK GREY_PAL reply: prepare the original host's grayscale palette.</summary>
     public const ushort GrayscalePaletteRequest = 12;
+    /// <summary>SDK PRIMARY_PAL reply: prepare primary-color shading ramps in the original indexed host.</summary>
+    public const ushort PrimaryPaletteRequest = 13;
     /// <summary>Guest handle resolved by GlobalLock to our system record.</summary>
     public const ushort SystemHandle = 0x101;
     /// <summary>Guest handle resolved by GlobalLock to our module record.</summary>

@@ -53,6 +53,7 @@ is verified; an interactive Test Explorer session remains a manual check.
 | LocalZot (opt-in) | 9 | 30 timed strikes, fixed-block ABI, strict clock boundary, independent intermediate images, dimensions/seeds, cleanup, cancellation and callback reentry rejection |
 | LocalHardRain (opt-in) | 6 | 1,000 draws with per-record growth/regeneration checks, both pen widths, independent guests, dimension extremes, cleanup and artifact rejection |
 | LocalShapes (opt-in) | 6 | 1,000 original random shape/color/bounds decisions, independent guests, dimension guards, brush cleanup and artifact rejection |
+| LocalSpheres (opt-in) | 6 | 3,401 original shading bands, 100-sphere clear and continuation, independent guests, dimensions, brush cleanup and artifact rejection |
 | LocalStainedGlass (opt-in) | 7 | 2,000 draws through all ten new imports, varied seeds/sizes, independent guests, object/heap cleanup and artifact rejection |
 | LocalGravity (opt-in) | 7 | 1,000 silent original draws, varied sizes/seeds, independent bitmaps, advancing live time, input rejection and bitmap/DC/sound cleanup |
 | LocalBitmapFamily (opt-in) | 20 | Four original modules: 600 draws each, size/seed variation, live timing, independent guests, input rejection, bitmap/DC/region cleanup |
@@ -539,3 +540,17 @@ dotnet test --project tests/AfterDarker.Tests -p:TestLocalPuzzle=true
 Lesson 12 captures 1,800 draws; see [Puzzle verification](research/puzzle-execution.md).
 Historical native comparison results and their limits are preserved in
 [the decision record](research/native-gdi-spike-decision.md).
+
+## Optional Spheres tests and preview capture
+
+```powershell
+$env:AFTER_DARKER_SPHERES = (Resolve-Path ad/windows98-2026-09-20/AFTERDRK/AD30/SPHERES.AD).Path
+$env:AFTER_DARKER_SPHERES_CAPTURE = Join-Path $PWD artifacts/spheres/captures
+# Public suite plus six local cases; omit CAPTURE when images are unnecessary.
+dotnet test --project tests/AfterDarker.Tests -p:TestLocalSpheres=true --report-trx
+```
+
+September 28 verification: 359 passed, zero failures/skips. The [Spheres execution
+record](research/spheres-execution.md) documents the shading cycle, PRIMARY_PAL
+adaptation, captured draws and WPF smoke command. No private module is copied
+into build/test output; captures remain under ignored artifacts.

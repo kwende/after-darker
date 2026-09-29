@@ -3,8 +3,8 @@
 Open `AfterDarker.sln`, set **AfterDarker.Wpf** as the startup project, and press
 F5. With the analyzed `ad/Mondrian.ad` present, the window starts automatically.
 Choose **File > Load AD file…** to select **Mondrian**, **Spiral Gyra**, **Rainstorm**,
-**Fade Away**, **Lasers**, **Magic**, **String Theory**, **Zot!**, **Hard Rain**, **Shapes**,
-**Stained Glass**, **Gravity**, **Can of Worms**, **GeoBounce**, **Nocturnes**, or **Punch Out**. Loading
+**Fade Away**, **Lasers**, **Magic**, **String Theory**, **Zot!**, **Hard Rain**, **Shapes**, **Spheres**,
+**Stained Glass**, **Gravity**, **Can of Worms**, **GeoBounce**, **Nocturnes**, **Punch Out**, or **Puzzle**. Loading
 starts playback automatically; the menu can also switch modules while playing.
 The previous guest shuts down before the new one starts. Unsupported files or
 versions are rejected by their content hash before stopping an active guest.
@@ -29,6 +29,11 @@ selector is disabled. The original code draws and copies repeated patterns using
 window origins and XOR raster mixing. Host presentation remains at the shared
 60-Hz cadence. Three-pixel strokes approximate native GDI; see
 [the tested configuration and raster boundary](research/stained-glass-execution.md).
+
+Spheres uses Max Size 55, Offset 5, Clear Every 100 and Clear Screen First. Each
+DRAWFRAME draws one shading band; 34 calls finish a sphere. The speed selector
+is disabled. Choose the **Spheres** F5 launch profile or load the original AD30
+`SPHERES.AD`. See [the palette adaptation and verification](research/spheres-execution.md).
 
 Shapes uses Color and Clear Screen First. Each original DRAWFRAME paints one
 random rectangle or ellipse. The speed selector is disabled; the host uses its
@@ -183,7 +188,7 @@ halfway through would leave its stack unsuitable for another CALL FAR to CLOSE.
 If execution or cleanup fails, no further guest calls are attempted, and the
 native engine is still disposed. The UI shows the symbolic failure. Cleanup
 ignores the cancelled pacing token but retains bounded native execution: 50,000
-instructions per Mondrian/Fade Away/Magic/Hard Rain/Shapes invocation, 200,000 for
+instructions per Mondrian/Fade Away/Magic/Hard Rain/Shapes/Spheres invocation, 200,000 for
 Spiral Gyra/Rainstorm/Lasers/String Theory/Gravity, or 2,000,000 for Zot!/Stained Glass. Native slices
 are one second normally and three seconds for Zot!'s original CPU delay loops;
 all retain a five-second cumulative native execution budget. Managed image holds

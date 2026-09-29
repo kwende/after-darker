@@ -1,8 +1,38 @@
 # Current Status
 
-Last updated: 2026-09-21
+Last updated: 2026-09-28
 
 ## Project phase
+
+**Milestone 1 is now the fixed v1 target:** [26 owner-selected screensavers](milestones/milestone-1.md),
+then integration into Ocuvera Toasters. Following Spheres production verification
+on September 28, there are 14 supported selections, 11 identified but
+unimplemented modules, and Starry Night requiring an identity/execution
+investigation. All 25 standalone primary files match the prior audit hashes;
+Starry Night text is present in ADW30.EXE and ADTASK.DLL, but no standalone `.AD`
+was found. Flying Toasters maps to the available Flying Toasters Pro artifact.
+Naming aliases, versions and hashes are in the [milestone manifest](milestones/milestone-1.json).
+There are 18 supported profiles overall; four fall outside the selected list
+and remain supported. Ocuvera integration is still pending. The original scope
+audit was metadata-only; Spheres now has fresh production verification below.
+Additional modules are optional after v1.
+
+**Spheres is supported (September 28).** The exact AD30 artifact now has a
+hash-checked production profile with controls 55/5/100/1, square pixels and an
+explicit PRIMARY_PAL-to-direct-RGB host adaptation. No new Win16 API was needed.
+Original code draws one shading band per DRAWFRAME, 34 bands per sphere, clears
+after 100 spheres and continues. See [the mechanism and proof boundary](research/spheres-execution.md).
+
+- **359 tests passed**: 353 public and six opt-in Spheres cases; zero failures/skips.
+- 3,401 draws / 1,126,111 instructions before shutdown, 204 brush colors; exactly
+  balanced brush create/delete calls and a verified black image at draw 3,400.
+- Independent guests, small/odd/maximum dimensions, artifact/option rejection,
+  clean CLOSE/WEP, stack restoration and no outstanding locks/local allocations.
+- WPF build had no warnings/errors; playback/readback, unsupported-file rejection,
+  stop/restart, switch to Shapes and close while playing all passed.
+- Captures visually show shaded overlapping spheres. Historical palette/raster
+  pixel fidelity and untested settings are not claimed. Evidence stays ignored
+  under `artifacts/spheres/`; the **Spheres** F5 launch profile is available.
 
 **Production playback remains hand rolled. Puzzle is supported.** The native
 Gravity/Puzzle spike was removed after the controlled comparison did not establish
@@ -33,7 +63,36 @@ no production native drawing backend, toggle, extra interface or native DC
 ownership requirement. This proves the supported paths above, not historical
 Windows pixel fidelity or all remaining AD modules. Wine and other reuse options
 are being evaluated before more screensavers. The [original-host WineVDM trial](research/winevdm-original-host-trial.md)
-has reached the original ADW30 startup warning; animation is not yet verified.
+reached the original ADW30 startup warning in the tool-driven trial. The owner
+subsequently reported that default Starry Night runs, with difficulty discovering
+other modules; this is user-observed behavior, not a new automated playback proof.
+
+The [Wine CodeQL dependency graph](research/wine-dependency-graph-results.md)
+now covers 24 selected Wine modules: 451 successful extracted compilation units,
+zero extractor failures, and 125,021 call sites. The private inventory covers
+65 screensaver hashes plus seven referenced helper DLLs; 360 referenced Wine
+export identities comprise 354 imports mapped to function roots plus six
+constant/stub identities.
+The portable SQLite dataset and hashed evidence live in ignored
+`artifacts/wine-analysis/`; analysis/reproduction code is in `tools/wine-analysis/`.
+
+The graph separates named calls, structural dispatch candidates and unresolved
+sites. It exposes small scaling algorithms inside much larger shared-runtime
+closures and records state/pointer/handle dependencies for adaptation research.
+There are 6,241 unresolved indirect sites and 218 source symbols with multiple
+definitions in this unlinked-object index. Excluded backends, inactive branches,
+assembly and actual playback paths remain proof gaps. This is not a whole-Wine
+graph, a new supported API surface, or a suite-wide port estimate. Four Python
+tests, a compiled CodeQL dispatch fixture and nine graph consistency/landmark
+checks passed. Production playback remains unchanged.
+
+The [WineVDM tracing assessment](research/winevdm-tracing-assessment.md) verifies
+v0.9.0 source support for Win16 API relay calls/returns, reverse callbacks,
+original-DLL snooping and module diagnostics. Recommended next evidence step:
+a bounded capture of a supported calibration module and a few owner-prioritized
+favorites, producing missing API/argument contracts rather than raw call counts.
+No new trace was captured in this assessment. WineVDM's native Windows delegation
+means these logs cannot be treated as coverage of our upstream Wine source graph.
 
 After Darker has a C# tutorial console host with real-mode addition and
 near-call experiments, plus 16-bit protected-mode far-call and synthetic host
