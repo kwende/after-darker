@@ -7,6 +7,11 @@
       "commandName": "Project",
       "commandLineArgs": "ad/windows98-2026-09-20/AFTERDRK/AD30/PUZZLE.AD",
       "workingDirectory": "$(ProjectDir)../.."
+    },
+    "Spheres": {
+      "commandName": "Project",
+      "commandLineArgs": "ad/windows98-2026-09-20/AFTERDRK/AD30/SPHERES.AD",
+      "workingDirectory": "$(ProjectDir)../.."
     }
   }
 }

@@ -50,14 +50,20 @@ entire desktop.
 Set **AfterDarker.Wpf** as the startup project and press F5. It finds your local
 `ad/Mondrian.ad` automatically. Use **File > Load AD file…** to play
 **Mondrian**, **Spiral Gyra**, **Rainstorm**, **Fade Away**, **Lasers**, **Magic**,
-**String Theory**, **Zot!**, **Hard Rain**, **Shapes**, **Stained Glass**, **Gravity**,
-**Can of Worms**, **GeoBounce**, **Nocturnes**, or **Punch Out**, or switch between
+**String Theory**, **Zot!**, **Hard Rain**, **Shapes**, **Spheres**, **Stained Glass**, **Gravity**,
+**Can of Worms**, **GeoBounce**, **Nocturnes**, **Punch Out**, or **Puzzle**, or switch between
 them while running. See the [WPF player guide](docs/wpf-player.md)
 for controls, command-line launch and the original-code execution boundary.
 
 ## Status
 
-The repository now runs sixteen original modules in a live WPF window.
+The repository now runs eighteen original modules in a live WPF window.
+The owner-approved [Milestone 1](docs/milestones/milestone-1.md) selects 26
+screensavers for v1 and subsequent Ocuvera Toasters integration. Fourteen of
+those selections have supported profiles, including [Spheres](docs/research/spheres-execution.md).
+The remaining selected work
+and exact artifact identities are recorded in the milestone, rather than
+implicitly requiring the entire historical collection.
 [Can of Worms, GeoBounce, Nocturnes and Punch Out](docs/research/bitmap-module-family.md)
 extend the shared layer with polygon filling, bitmap resources and copied clipping
 regions. Worms and Punch Out receive white starting images; all four run silently.

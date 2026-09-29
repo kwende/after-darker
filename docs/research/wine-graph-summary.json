@@ -1,0 +1,834 @@
+{
+  "date": "2026-09-25",
+  "wine_revision": "4f4d68f6a784db76e66cf0f033f90b8288bba11e",
+  "proof_boundary": "Selected compiled-source graph; not observed execution or a count of code to port",
+  "extraction": {
+    "selected_modules": 24,
+    "requested_objects": 430,
+    "successful_compilation_units": 451,
+    "extractor_failures": 0
+  },
+  "graph": {
+    "functions": 45731,
+    "defined_functions": 33829,
+    "call_sites": 125021,
+    "indirect_sites": 7945,
+    "unresolved_sites": 6241,
+    "target_edges": 120005,
+    "state_accesses": 192027,
+    "mapped_apis": 385,
+    "ambiguous_root_apis": 0,
+    "subsystems": [
+      [
+        "@external",
+        12948
+      ],
+      [
+        "win32u",
+        3289
+      ],
+      [
+        "ntdll",
+        2381
+      ],
+      [
+        "shell32",
+        2072
+      ],
+      [
+        "comctl32",
+        1679
+      ],
+      [
+        "msvcrt",
+        1556
+      ],
+      [
+        "kernelbase",
+        1508
+      ],
+      [
+        "user32",
+        1237
+      ],
+      [
+        "include",
+        1046
+      ],
+      [
+        "tools",
+        867
+      ],
+      [
+        "gdi32",
+        865
+      ],
+      [
+        "krnl386.exe16",
+        758
+      ],
+      [
+        "user.exe16",
+        553
+      ],
+      [
+        "comdlg32",
+        535
+      ],
+      [
+        "kernel32",
+        475
+      ],
+      [
+        "win32u/dibdrv",
+        398
+      ],
+      [
+        "advapi32",
+        352
+      ],
+      [
+        "winmm",
+        345
+      ],
+      [
+        "gdi.exe16",
+        319
+      ],
+      [
+        "shlwapi",
+        313
+      ],
+      [
+        "mmsystem.dll16",
+        207
+      ],
+      [
+        "commdlg.dll16",
+        42
+      ],
+      [
+        "shell.dll16",
+        25
+      ],
+      [
+        "sound.drv16",
+        17
+      ],
+      [
+        "keyboard.drv16",
+        16
+      ],
+      [
+        "system.drv16",
+        14
+      ],
+      [
+        "win87em.dll16",
+        7
+      ],
+      [
+        "version",
+        4
+      ],
+      [
+        "symcrypt",
+        1
+      ]
+    ]
+  },
+  "assessment": {
+    "artifact_counts": [
+      {
+        "role": "helper",
+        "reachable": 0,
+        "count": 15
+      },
+      {
+        "role": "helper",
+        "reachable": 1,
+        "count": 7
+      },
+      {
+        "role": "screensaver",
+        "reachable": 1,
+        "count": 65
+      }
+    ],
+    "imports_by_library": [
+      {
+        "module": "ADXPL300",
+        "direct_modules": 312,
+        "including_helpers": 312
+      },
+      {
+        "module": "USER",
+        "direct_modules": 156,
+        "including_helpers": 158
+      },
+      {
+        "module": "GDI",
+        "direct_modules": 88,
+        "including_helpers": 95
+      },
+      {
+        "module": "KERNEL",
+        "direct_modules": 69,
+        "including_helpers": 82
+      },
+      {
+        "module": "AD_RSRC",
+        "direct_modules": 61,
+        "including_helpers": 61
+      },
+      {
+        "module": "AD_SND",
+        "direct_modules": 15,
+        "including_helpers": 20
+      },
+      {
+        "module": "MMSYSTEM",
+        "direct_modules": 1,
+        "including_helpers": 17
+      },
+      {
+        "module": "STOIKDTH",
+        "direct_modules": 0,
+        "including_helpers": 10
+      },
+      {
+        "module": "SHELL",
+        "direct_modules": 3,
+        "including_helpers": 3
+      },
+      {
+        "module": "COMMDLG",
+        "direct_modules": 3,
+        "including_helpers": 3
+      },
+      {
+        "module": "ADTOOL",
+        "direct_modules": 3,
+        "including_helpers": 3
+      },
+      {
+        "module": "WIN87EM",
+        "direct_modules": 1,
+        "including_helpers": 1
+      },
+      {
+        "module": "READFILE",
+        "direct_modules": 1,
+        "including_helpers": 1
+      },
+      {
+        "module": "KEYBOARD",
+        "direct_modules": 1,
+        "including_helpers": 1
+      }
+    ],
+    "wine_root_mapping": {
+      "referenced_wine_exports": 360,
+      "mapped": 354
+    },
+    "distinct_referenced_root_functions": 353,
+    "unmapped_wine_exports": [
+      {
+        "identity": "KERNEL!#1",
+        "name": "FatalExit",
+        "export_kind": "stub"
+      },
+      {
+        "identity": "KERNEL!#113",
+        "name": "__AHSHIFT",
+        "export_kind": "equate"
+      },
+      {
+        "identity": "KERNEL!#114",
+        "name": "__AHINCR",
+        "export_kind": "equate"
+      },
+      {
+        "identity": "KERNEL!#178",
+        "name": "__WINFLAGS",
+        "export_kind": "equate"
+      },
+      {
+        "identity": "KERNEL!__WINFLAGS",
+        "name": "__WINFLAGS",
+        "export_kind": "equate"
+      },
+      {
+        "identity": "USER!#274",
+        "name": "GetNextQueueWindow",
+        "export_kind": "stub"
+      }
+    ],
+    "unresolved_by_kind": [
+      {
+        "kind": "indirect",
+        "count": 6241
+      }
+    ],
+    "dispatch_resolution": {
+      "indirect_sites": 7945,
+      "with_candidates": 1704
+    },
+    "export_forward_edges": 636,
+    "multiple_definition_symbols": 218,
+    "call_arguments": 341282,
+    "direct_wine_registry_coverage": [
+      {
+        "implementation": "guarded_handler",
+        "identities": 49
+      },
+      {
+        "implementation": "unregistered",
+        "identities": 266
+      },
+      {
+        "implementation": "unsupported",
+        "identities": 7
+      }
+    ],
+    "most_shared_missing_imports": [
+      {
+        "identity": "GDI!#33",
+        "name": "TextOut",
+        "implementation": "unsupported",
+        "consumers": 44
+      },
+      {
+        "identity": "KERNEL!#137",
+        "name": "FatalAppExit",
+        "implementation": "unsupported",
+        "consumers": 42
+      },
+      {
+        "identity": "GDI!#346",
+        "name": "SetTextAlign",
+        "implementation": "unsupported",
+        "consumers": 40
+      },
+      {
+        "identity": "KERNEL!#15",
+        "name": "GlobalAlloc",
+        "implementation": "unregistered",
+        "consumers": 38
+      },
+      {
+        "identity": "KERNEL!#17",
+        "name": "GlobalFree",
+        "implementation": "unregistered",
+        "consumers": 38
+      },
+      {
+        "identity": "KERNEL!#88",
+        "name": "lstrcpy",
+        "implementation": "unsupported",
+        "consumers": 35
+      },
+      {
+        "identity": "KERNEL!#115",
+        "name": "OutputDebugString",
+        "implementation": "unsupported",
+        "consumers": 34
+      },
+      {
+        "identity": "USER!#1",
+        "name": "MessageBox",
+        "implementation": "unregistered",
+        "consumers": 29
+      },
+      {
+        "identity": "GDI!#80",
+        "name": "GetDeviceCaps",
+        "implementation": "unregistered",
+        "consumers": 28
+      },
+      {
+        "identity": "KERNEL!#16",
+        "name": "GlobalReAlloc",
+        "implementation": "unregistered",
+        "consumers": 27
+      },
+      {
+        "identity": "KERNEL!#132",
+        "name": "GetWinFlags",
+        "implementation": "unregistered",
+        "consumers": 23
+      },
+      {
+        "identity": "KERNEL!#21",
+        "name": "GlobalHandle",
+        "implementation": "unregistered",
+        "consumers": 23
+      },
+      {
+        "identity": "USER!#282",
+        "name": "SelectPalette",
+        "implementation": "unregistered",
+        "consumers": 22
+      },
+      {
+        "identity": "USER!#283",
+        "name": "RealizePalette",
+        "implementation": "unregistered",
+        "consumers": 22
+      },
+      {
+        "identity": "KERNEL!#51",
+        "name": "MakeProcInstance",
+        "implementation": "unregistered",
+        "consumers": 21
+      },
+      {
+        "identity": "KERNEL!#52",
+        "name": "FreeProcInstance",
+        "implementation": "unregistered",
+        "consumers": 21
+      },
+      {
+        "identity": "KERNEL!#20",
+        "name": "GlobalSize",
+        "implementation": "unregistered",
+        "consumers": 20
+      },
+      {
+        "identity": "KERNEL!#23",
+        "name": "LockSegment",
+        "implementation": "unregistered",
+        "consumers": 18
+      },
+      {
+        "identity": "WIN87EM!#1",
+        "name": "__fpMath",
+        "implementation": "unregistered",
+        "consumers": 18
+      },
+      {
+        "identity": "KERNEL!#49",
+        "name": "GetModuleFileName",
+        "implementation": "unregistered",
+        "consumers": 16
+      },
+      {
+        "identity": "KERNEL!#3",
+        "name": "GetVersion",
+        "implementation": "unregistered",
+        "consumers": 15
+      },
+      {
+        "identity": "KERNEL!#55",
+        "name": "Catch",
+        "implementation": "unregistered",
+        "consumers": 15
+      },
+      {
+        "identity": "KERNEL!#56",
+        "name": "Throw",
+        "implementation": "unregistered",
+        "consumers": 15
+      },
+      {
+        "identity": "KERNEL!#102",
+        "name": "DOS3Call",
+        "implementation": "unregistered",
+        "consumers": 14
+      },
+      {
+        "identity": "KERNEL!#47",
+        "name": "GetModuleHandle",
+        "implementation": "unregistered",
+        "consumers": 14
+      },
+      {
+        "identity": "KERNEL!#48",
+        "name": "GetModuleUsage",
+        "implementation": "unregistered",
+        "consumers": 14
+      },
+      {
+        "identity": "KERNEL!#63",
+        "name": "FreeResource",
+        "implementation": "unregistered",
+        "consumers": 14
+      },
+      {
+        "identity": "KERNEL!#91",
+        "name": "InitTask",
+        "implementation": "unregistered",
+        "consumers": 14
+      },
+      {
+        "identity": "USER!#286",
+        "name": "GetDesktopWindow",
+        "implementation": "unregistered",
+        "consumers": 14
+      },
+      {
+        "identity": "GDI!#13",
+        "name": "SetViewportOrg",
+        "implementation": "unregistered",
+        "consumers": 13
+      },
+      {
+        "identity": "GDI!#82",
+        "name": "GetObject",
+        "implementation": "unregistered",
+        "consumers": 13
+      },
+      {
+        "identity": "KERNEL!#24",
+        "name": "UnlockSegment",
+        "implementation": "unregistered",
+        "consumers": 12
+      },
+      {
+        "identity": "GDI!#360",
+        "name": "CreatePalette",
+        "implementation": "unregistered",
+        "consumers": 11
+      },
+      {
+        "identity": "KERNEL!#74",
+        "name": "OpenFile",
+        "implementation": "unregistered",
+        "consumers": 10
+      },
+      {
+        "identity": "KERNEL!#81",
+        "name": "_lclose",
+        "implementation": "unregistered",
+        "consumers": 10
+      },
+      {
+        "identity": "KERNEL!#90",
+        "name": "lstrlen",
+        "implementation": "unregistered",
+        "consumers": 10
+      },
+      {
+        "identity": "USER!#420",
+        "name": "_wsprintf",
+        "implementation": "unregistered",
+        "consumers": 10
+      },
+      {
+        "identity": "KERNEL!#89",
+        "name": "lstrcat",
+        "implementation": "unregistered",
+        "consumers": 9
+      },
+      {
+        "identity": "USER!#106",
+        "name": "GetKeyState",
+        "implementation": "unregistered",
+        "consumers": 9
+      },
+      {
+        "identity": "USER!#249",
+        "name": "GetAsyncKeyState",
+        "implementation": "unregistered",
+        "consumers": 9
+      }
+    ],
+    "helper_consumers": [
+      {
+        "module": "WIN87EM",
+        "direct_screensaver_consumers": 18
+      },
+      {
+        "module": "AD_SND",
+        "direct_screensaver_consumers": 17
+      },
+      {
+        "module": "ADXPL300",
+        "direct_screensaver_consumers": 12
+      },
+      {
+        "module": "ADTOOL",
+        "direct_screensaver_consumers": 12
+      },
+      {
+        "module": "AD_RSRC",
+        "direct_screensaver_consumers": 11
+      },
+      {
+        "module": "READFILE",
+        "direct_screensaver_consumers": 3
+      }
+    ],
+    "algorithm_samples": [
+      {
+        "function": "OffsetRect16",
+        "root_ids": [
+          17998
+        ],
+        "direct": {
+          "defined_functions": 1,
+          "external_or_builtin_nodes": 0,
+          "subsystems": {
+            "user.exe16": 1
+          }
+        },
+        "candidates": {
+          "defined_functions": 1,
+          "external_or_builtin_nodes": 0,
+          "subsystems": {
+            "user.exe16": 1
+          }
+        }
+      },
+      {
+        "function": "calc_1d_stretch_params",
+        "root_ids": [
+          41473
+        ],
+        "direct": {
+          "defined_functions": 6,
+          "external_or_builtin_nodes": 0,
+          "subsystems": {
+            "win32u/dibdrv": 5,
+            "msvcrt": 1
+          },
+          "dib_directory_functions": 5,
+          "boundary_dependencies": [
+            "abs"
+          ]
+        },
+        "candidates": {
+          "defined_functions": 6,
+          "external_or_builtin_nodes": 0,
+          "subsystems": {
+            "win32u/dibdrv": 5,
+            "msvcrt": 1
+          },
+          "dib_directory_functions": 5,
+          "boundary_dependencies": [
+            "abs"
+          ]
+        }
+      },
+      {
+        "function": "stretch_bitmapinfo",
+        "root_ids": [
+          36399
+        ],
+        "direct": {
+          "defined_functions": 3304,
+          "external_or_builtin_nodes": 173,
+          "subsystems": {
+            "win32u/dibdrv": 25,
+            "win32u": 1088,
+            "include": 158,
+            "msvcrt": 252,
+            "ntdll": 1140,
+            "kernel32": 40,
+            "kernelbase": 193,
+            "user32": 148,
+            "@external": 8,
+            "gdi32": 243,
+            "krnl386.exe16": 9
+          },
+          "dib_directory_functions": 12,
+          "boundary_dependencies": [
+            "OffsetRect",
+            "abs",
+            "get_bounding_rect",
+            "get_dib_stride",
+            "intersect_rect",
+            "wine_dbg_log",
+            "wine_dbgstr_rect"
+          ]
+        },
+        "candidates": {
+          "defined_functions": 4232,
+          "external_or_builtin_nodes": 175,
+          "subsystems": {
+            "win32u/dibdrv": 370,
+            "win32u": 1444,
+            "include": 162,
+            "msvcrt": 269,
+            "ntdll": 1166,
+            "kernel32": 49,
+            "kernelbase": 220,
+            "user32": 167,
+            "@external": 8,
+            "gdi32": 322,
+            "user.exe16": 15,
+            "krnl386.exe16": 40
+          },
+          "dib_directory_functions": 94,
+          "boundary_dependencies": [
+            "IsRectEmpty",
+            "OffsetRect",
+            "__assert_fail",
+            "__assert_single_arg",
+            "abs",
+            "get_bounding_rect",
+            "get_default_color_table",
+            "get_dib_stride",
+            "intersect_rect",
+            "memmove",
+            "memset",
+            "wine_dbg_log",
+            "wine_dbgstr_rect"
+          ]
+        }
+      },
+      {
+        "function": "stretch_row_32",
+        "root_ids": [
+          41710
+        ],
+        "direct": {
+          "defined_functions": 6,
+          "external_or_builtin_nodes": 0,
+          "subsystems": {
+            "win32u/dibdrv": 6
+          },
+          "dib_directory_functions": 6,
+          "boundary_dependencies": []
+        },
+        "candidates": {
+          "defined_functions": 6,
+          "external_or_builtin_nodes": 0,
+          "subsystems": {
+            "win32u/dibdrv": 6
+          },
+          "dib_directory_functions": 6,
+          "boundary_dependencies": []
+        }
+      },
+      {
+        "function": "shrink_row_32",
+        "root_ids": [
+          41703
+        ],
+        "direct": {
+          "defined_functions": 6,
+          "external_or_builtin_nodes": 0,
+          "subsystems": {
+            "win32u/dibdrv": 6
+          },
+          "dib_directory_functions": 6,
+          "boundary_dependencies": []
+        },
+        "candidates": {
+          "defined_functions": 6,
+          "external_or_builtin_nodes": 0,
+          "subsystems": {
+            "win32u/dibdrv": 6
+          },
+          "dib_directory_functions": 6,
+          "boundary_dependencies": []
+        }
+      },
+      {
+        "function": "AnimatePalette16",
+        "root_ids": [
+          17623
+        ],
+        "direct": {
+          "defined_functions": 3300,
+          "external_or_builtin_nodes": 173,
+          "subsystems": {
+            "gdi.exe16": 1,
+            "gdi32": 244,
+            "win32u": 1088,
+            "include": 158,
+            "msvcrt": 252,
+            "user32": 148,
+            "ntdll": 1140,
+            "kernel32": 40,
+            "kernelbase": 193,
+            "@external": 8,
+            "krnl386.exe16": 9,
+            "win32u/dibdrv": 19
+          }
+        },
+        "candidates": {
+          "defined_functions": 4234,
+          "external_or_builtin_nodes": 175,
+          "subsystems": {
+            "gdi.exe16": 1,
+            "gdi32": 323,
+            "win32u": 1444,
+            "include": 162,
+            "msvcrt": 269,
+            "user32": 167,
+            "ntdll": 1166,
+            "win32u/dibdrv": 370,
+            "kernelbase": 220,
+            "kernel32": 49,
+            "@external": 8,
+            "krnl386.exe16": 40,
+            "user.exe16": 15
+          }
+        }
+      },
+      {
+        "function": "LocalAlloc16",
+        "root_ids": [
+          17312
+        ],
+        "direct": {
+          "defined_functions": 3524,
+          "external_or_builtin_nodes": 178,
+          "subsystems": {
+            "krnl386.exe16": 158,
+            "include": 162,
+            "msvcrt": 253,
+            "ntdll": 1166,
+            "kernel32": 48,
+            "kernelbase": 231,
+            "@external": 8,
+            "user32": 148,
+            "win32u": 1088,
+            "gdi32": 243,
+            "win32u/dibdrv": 19
+          }
+        },
+        "candidates": {
+          "defined_functions": 4425,
+          "external_or_builtin_nodes": 180,
+          "subsystems": {
+            "krnl386.exe16": 164,
+            "include": 166,
+            "msvcrt": 270,
+            "ntdll": 1185,
+            "kernel32": 56,
+            "kernelbase": 258,
+            "@external": 8,
+            "user32": 167,
+            "win32u": 1444,
+            "gdi32": 322,
+            "user.exe16": 15,
+            "win32u/dibdrv": 370
+          }
+        }
+      }
+    ]
+  },
+  "verification": {
+    "checks": {
+      "sqlite_integrity": true,
+      "foreign_keys": true,
+      "zero_extraction_failures": true,
+      "StretchBlt16 -> StretchBlt": true,
+      "StretchBlt -> NtGdiStretchBlt": true,
+      "stretch_bitmapinfo -> calc_1d_stretch_params": true,
+      "stretch_driver_candidates": true,
+      "unresolved_dispatch_retained": true,
+      "all_definitions_retained": true
+    },
+    "stretch_driver_candidates": [
+      "dibdrv_StretchBlt",
+      "nulldrv_StretchBlt",
+      "windrv_StretchBlt"
+    ],
+    "passed": true,
+    "proof": "Source extraction and database consistency only"
+  }
+}

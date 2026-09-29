@@ -1,0 +1,746 @@
+{
+  "schema_version": 1,
+  "milestone": "Milestone 1",
+  "approved_date": "2026-09-27",
+  "audit_date": "2026-09-28",
+  "scope": "26 selected original screensavers, followed by integration into the Ocuvera Toasters collection. Additional screensavers are optional after this milestone.",
+  "version_policy": "One identified and verified version per selection is sufficient; preserve alternatives without requiring every revision.",
+  "completion_policy": "Supported original-code color playback with documented options and adaptations, bounded lifecycle/cleanup and tests, then packaged Ocuvera integration. Native recreations and WineVDM playback alone do not count.",
+  "audit_proof": "September 27 artifact/registry audit refreshed September 28 after Spheres production playback, six local tests and WPF smoke verification. Other runtime evidence remains dated separately; Ocuvera integration is pending.",
+  "supported_registry_sha256": "f60523196aeacca59a0aa3ae87f6e0064ce07a57d7f1b7c1c1ff0d93c1f86951",
+  "counts": {
+    "identity_investigation": 1,
+    "unimplemented": 11,
+    "supported": 14
+  },
+  "entries": [
+    {
+      "id": "starry-night",
+      "requested_name": "Starry Night",
+      "name": "Starry Night",
+      "aliases": [],
+      "runtime_status": "identity_investigation",
+      "ocuvera_status": "not_integrated",
+      "note": "No standalone module found; original-host playback was user-observed.",
+      "artifacts": [],
+      "host_evidence": [
+        {
+          "path_relative_to_ad": "windows98-2026-09-20/AFTERDRK/ADW30.EXE",
+          "sha256": "B3881912392A4A9324945AB7D82C17D306ED65D650FDED5638EB9FAF16DB2D18",
+          "observation": "Contains Starry Night text; not proof of an isolated executable module or code ownership."
+        },
+        {
+          "path_relative_to_ad": "windows98-2026-09-20/AFTERDRK/ADTASK.DLL",
+          "sha256": "2EADA22A253E2FDC10D294D742707A63D38F1610BFDFB79D587F140B39D59708",
+          "observation": "Contains Starry Night text; not proof of an isolated executable module or code ownership."
+        }
+      ]
+    },
+    {
+      "id": "rose",
+      "requested_name": "Rose",
+      "name": "Rose",
+      "aliases": [],
+      "runtime_status": "unimplemented",
+      "ocuvera_status": "not_integrated",
+      "note": "",
+      "artifacts": [
+        {
+          "role": "primary",
+          "sha256": "D880905B9968C29E26E3C28366E018FE1BE2C2A2FB3235EF2DA8130CCB704153",
+          "paths_relative_to_ad": [
+            "windows98-2026-09-20/AFTERDRK/AD30/ROSE.AD"
+          ],
+          "resident_name": "ROSE",
+          "supported_profile": null
+        }
+      ],
+      "prior_runtime_evidence": {
+        "date": "2026-09-20",
+        "source": "docs/research/windows98-readiness-audit.json",
+        "category": "os_fixup",
+        "first_failure": "S2:0332: only non-additive internal/imported selector, offset16, and far16:16 relocations are implemented."
+      }
+    },
+    {
+      "id": "spheres",
+      "requested_name": "Spheres",
+      "name": "Spheres",
+      "aliases": [],
+      "runtime_status": "supported",
+      "ocuvera_status": "not_integrated",
+      "note": "Fixed color profile: controls 55/5/100/1, square pixels and explicit PRIMARY_PAL direct-RGB adaptation. 3401 draws verify 100 spheres, periodic clear and continuation; WPF lifecycle verified.",
+      "artifacts": [
+        {
+          "role": "primary",
+          "sha256": "E9F416BB9DE55020522C77FF45C4D2DD22F6DD80C96C52FE0EABE400859A453F",
+          "paths_relative_to_ad": [
+            "windows98-2026-09-20/AFTERDRK/AD30/SPHERES.AD"
+          ],
+          "resident_name": "SPHERES",
+          "supported_profile": "Spheres"
+        }
+      ],
+      "prior_runtime_evidence": {
+        "date": "2026-09-20",
+        "source": "docs/research/windows98-readiness-audit.json",
+        "category": "candidate_primary_rgb_policy",
+        "first_failure": "Module returned 13; no unverified host response was supplied."
+      },
+      "runtime_evidence": {
+        "date": "2026-09-28",
+        "source": "docs/research/spheres-execution.md",
+        "category": "production_supported",
+        "verification": "359 tests passed (353 public + 6 local Spheres); WPF playback/readback, stop/restart, switch to Shapes, and close while playing passed."
+      }
+    },
+    {
+      "id": "aquatic-realm",
+      "requested_name": "Aquatic Realm",
+      "name": "Aquatic Realm",
+      "aliases": [],
+      "runtime_status": "unimplemented",
+      "ocuvera_status": "not_integrated",
+      "note": "FISH3.AD is Fish Pro, not an alias for this target.",
+      "artifacts": [
+        {
+          "role": "primary",
+          "sha256": "91C06F1A7F8283D5811F63E964CBF6BBC6B2BEFFC3BBCD897023CDDA94A34440",
+          "paths_relative_to_ad": [
+            "Aquatic Realm.ad.dll",
+            "windows98-2026-09-20/AFTERDRK/AD20/AQUA.AD"
+          ],
+          "resident_name": "AQUA",
+          "supported_profile": null
+        }
+      ],
+      "prior_runtime_evidence": {
+        "date": "2026-09-20",
+        "source": "docs/research/windows98-readiness-audit.json",
+        "category": "additive_relocation",
+        "first_failure": "S1:0166: only non-additive internal/imported selector, offset16, and far16:16 relocations are implemented."
+      }
+    },
+    {
+      "id": "clocks",
+      "requested_name": "Clocks",
+      "name": "Clocks",
+      "aliases": [],
+      "runtime_status": "unimplemented",
+      "ocuvera_status": "not_integrated",
+      "note": "CLOX3.AD is the separately preserved Clocks 3.0 alternative; both versions are not required.",
+      "artifacts": [
+        {
+          "role": "primary",
+          "sha256": "D3D85EF3AE2A510021086D7ED160AAF38F7B90209C0296BC83E1956F90F3A86F",
+          "paths_relative_to_ad": [
+            "Clocks.ad",
+            "windows98-2026-09-20/AFTERDRK/AD20/CLOCKS.AD"
+          ],
+          "resident_name": "clocks",
+          "supported_profile": null
+        },
+        {
+          "role": "alternative_not_additional_requirement",
+          "name": "Clocks 3.0",
+          "sha256": "50A61BFCCBCA66A45CBD0814992C694E502C1BB3A33638D777770014085FCC4A",
+          "paths_relative_to_ad": [
+            "windows98-2026-09-20/AFTERDRK/AD30/CLOX3.AD"
+          ],
+          "supported_profile": null
+        }
+      ],
+      "prior_runtime_evidence": {
+        "date": "2026-09-20",
+        "source": "docs/research/windows98-readiness-audit.json",
+        "category": "additive_relocation",
+        "first_failure": "S1:0154: only non-additive internal/imported selector, offset16, and far16:16 relocations are implemented."
+      }
+    },
+    {
+      "id": "down-the-drain",
+      "requested_name": "Down the Drain",
+      "name": "Down the Drain",
+      "aliases": [],
+      "runtime_status": "unimplemented",
+      "ocuvera_status": "not_integrated",
+      "note": "TOILET.AD is Flying Toilets, not this module.",
+      "artifacts": [
+        {
+          "role": "primary",
+          "sha256": "63891148DA31989B27352A8C9ABC2788E776FC378E858E63340BC6B7CD79237B",
+          "paths_relative_to_ad": [
+            "Down the Drain.ad",
+            "windows98-2026-09-20/AFTERDRK/AD20/DRAINO.AD"
+          ],
+          "resident_name": "DRAINO",
+          "supported_profile": null
+        }
+      ],
+      "prior_runtime_evidence": {
+        "date": "2026-09-20",
+        "source": "docs/research/windows98-readiness-audit.json",
+        "category": "os_fixup",
+        "first_failure": "S2:039A: only non-additive internal/imported selector, offset16, and far16:16 relocations are implemented."
+      }
+    },
+    {
+      "id": "fade-away",
+      "requested_name": "Fade Away",
+      "name": "Fade Away",
+      "aliases": [],
+      "runtime_status": "supported",
+      "ocuvera_status": "not_integrated",
+      "note": "Radar effect on a white starting image; other styles are not claimed.",
+      "artifacts": [
+        {
+          "role": "primary",
+          "sha256": "D224AF9A0EA75F3B4C24A837F9743B13851D3ACB03BE3607E0C9094DF6E28B21",
+          "paths_relative_to_ad": [
+            "Fade Away.ad",
+            "windows98-2026-09-20/AFTERDRK/AD20/FADE.AD"
+          ],
+          "resident_name": "FADE",
+          "supported_profile": "Fade Away"
+        }
+      ],
+      "prior_runtime_evidence": {
+        "date": "2026-09-20",
+        "source": "docs/research/windows98-readiness-audit.json",
+        "category": "already_supported",
+        "first_failure": null,
+        "verified_profile_draws": 30
+      }
+    },
+    {
+      "id": "geobounce",
+      "requested_name": "Geo Bounce",
+      "name": "GeoBounce",
+      "aliases": [
+        "Geo Bounce"
+      ],
+      "runtime_status": "supported",
+      "ocuvera_status": "not_integrated",
+      "note": "Fixed shaded tetrahedron profile.",
+      "artifacts": [
+        {
+          "role": "primary",
+          "sha256": "19B6058BB0EF1D63E5A081894837FC5E17224F11B907EF4C08697C948FED32A5",
+          "paths_relative_to_ad": [
+            "GeoBounce.ad",
+            "windows98-2026-09-20/AFTERDRK/AD20/3DBOUNCE.AD"
+          ],
+          "resident_name": "BLANKER",
+          "supported_profile": "GeoBounce"
+        }
+      ],
+      "prior_runtime_evidence": {
+        "date": "2026-09-20",
+        "source": "docs/research/windows98-readiness-audit.json",
+        "category": "already_supported",
+        "first_failure": null,
+        "verified_profile_draws": 30
+      }
+    },
+    {
+      "id": "globe",
+      "requested_name": "Globe",
+      "name": "Globe",
+      "aliases": [],
+      "runtime_status": "unimplemented",
+      "ocuvera_status": "not_integrated",
+      "note": "",
+      "artifacts": [
+        {
+          "role": "primary",
+          "sha256": "89841C1100D97CEB306C88D35A5509402B99507941E6A5910F31EC0287F20B07",
+          "paths_relative_to_ad": [
+            "Globe.ad",
+            "windows98-2026-09-20/AFTERDRK/AD20/GLOBE.AD"
+          ],
+          "resident_name": "GLOBE",
+          "supported_profile": null
+        }
+      ],
+      "prior_runtime_evidence": {
+        "date": "2026-09-20",
+        "source": "docs/research/windows98-readiness-audit.json",
+        "category": "additive_relocation",
+        "first_failure": "S1:0166: only non-additive internal/imported selector, offset16, and far16:16 relocations are implemented."
+      }
+    },
+    {
+      "id": "gravity",
+      "requested_name": "Gravity",
+      "name": "Gravity",
+      "aliases": [],
+      "runtime_status": "supported",
+      "ocuvera_status": "not_integrated",
+      "note": "Four colored balls; silent playback.",
+      "artifacts": [
+        {
+          "role": "primary",
+          "sha256": "ADDF0B0A5A9F2341C2EE094398F02AC98BC7306BB2938A41905AE66F734E0482",
+          "paths_relative_to_ad": [
+            "Gravity.ad",
+            "windows98-2026-09-20/AFTERDRK/AD20/GRAV.AD"
+          ],
+          "resident_name": "GRAV",
+          "supported_profile": "Gravity"
+        }
+      ],
+      "prior_runtime_evidence": {
+        "date": "2026-09-20",
+        "source": "docs/research/windows98-readiness-audit.json",
+        "category": "already_supported",
+        "first_failure": null,
+        "verified_profile_draws": 30
+      }
+    },
+    {
+      "id": "hard-rain",
+      "requested_name": "Hard Rain",
+      "name": "Hard Rain",
+      "aliases": [],
+      "runtime_status": "supported",
+      "ocuvera_status": "not_integrated",
+      "note": "Five-drop profile; distinct from Rainstorm.",
+      "artifacts": [
+        {
+          "role": "primary",
+          "sha256": "0A93389EFC588962EAF0FE683836EFCB934BF1D036B2316FF202212A0800B331",
+          "paths_relative_to_ad": [
+            "Hard Rain.ad",
+            "windows98-2026-09-20/AFTERDRK/AD20/RAIN.AD"
+          ],
+          "resident_name": "RAIN",
+          "supported_profile": "Hard Rain"
+        }
+      ],
+      "prior_runtime_evidence": {
+        "date": "2026-09-20",
+        "source": "docs/research/windows98-readiness-audit.json",
+        "category": "already_supported",
+        "first_failure": null,
+        "verified_profile_draws": 30
+      }
+    },
+    {
+      "id": "lasers",
+      "requested_name": "Lasers",
+      "name": "Lasers",
+      "aliases": [],
+      "runtime_status": "supported",
+      "ocuvera_status": "not_integrated",
+      "note": "Three-ray profile.",
+      "artifacts": [
+        {
+          "role": "primary",
+          "sha256": "8B800EABA0E1F121EF52947BB116FC6254724CEEB5E460315DF0F21E347AC430",
+          "paths_relative_to_ad": [
+            "Lasers.ad",
+            "windows98-2026-09-20/AFTERDRK/AD20/LASER.AD"
+          ],
+          "resident_name": "LASER",
+          "supported_profile": "Lasers"
+        }
+      ],
+      "prior_runtime_evidence": {
+        "date": "2026-09-20",
+        "source": "docs/research/windows98-readiness-audit.json",
+        "category": "already_supported",
+        "first_failure": null,
+        "verified_profile_draws": 30
+      }
+    },
+    {
+      "id": "magic",
+      "requested_name": "Magic",
+      "name": "Magic",
+      "aliases": [],
+      "runtime_status": "supported",
+      "ocuvera_status": "not_integrated",
+      "note": "100-line trail and horizontal mirroring.",
+      "artifacts": [
+        {
+          "role": "primary",
+          "sha256": "777DFD7BEA0084E3947EFCD2E4E3E3ACD9BA22445F51D6AB8C19EFC7ABCC2763",
+          "paths_relative_to_ad": [
+            "Magic.ad",
+            "windows98-2026-09-20/AFTERDRK/AD20/MAGIC.AD"
+          ],
+          "resident_name": "NMAGIC",
+          "supported_profile": "Magic"
+        }
+      ],
+      "prior_runtime_evidence": {
+        "date": "2026-09-20",
+        "source": "docs/research/windows98-readiness-audit.json",
+        "category": "already_supported",
+        "first_failure": null,
+        "verified_profile_draws": 30
+      }
+    },
+    {
+      "id": "marbles",
+      "requested_name": "Marbles",
+      "name": "Marbles",
+      "aliases": [],
+      "runtime_status": "unimplemented",
+      "ocuvera_status": "not_integrated",
+      "note": "Distinct from Spheres.",
+      "artifacts": [
+        {
+          "role": "primary",
+          "sha256": "F49847FEEF36A2BE22215C36F76BD82A2152B30794D841914A78A2CC6C22B389",
+          "paths_relative_to_ad": [
+            "Marbles.ad",
+            "windows98-2026-09-20/AFTERDRK/AD20/MARBLES.AD"
+          ],
+          "resident_name": "MARBLES",
+          "supported_profile": null
+        }
+      ],
+      "prior_runtime_evidence": {
+        "date": "2026-09-20",
+        "source": "docs/research/windows98-readiness-audit.json",
+        "category": "additive_relocation",
+        "first_failure": "S1:0154: only non-additive internal/imported selector, offset16, and far16:16 relocations are implemented."
+      }
+    },
+    {
+      "id": "mondrian",
+      "requested_name": "Mondrias",
+      "name": "Mondrian",
+      "aliases": [
+        "Mondrias"
+      ],
+      "runtime_status": "supported",
+      "ocuvera_status": "not_integrated",
+      "note": "Requested spelling normalized to the original module and existing profile.",
+      "artifacts": [
+        {
+          "role": "primary",
+          "sha256": "781979DA1A6A6FDF99EEBEC4DAB67E7A645BFC8787BE1671E20F13A8CA6B1AED",
+          "paths_relative_to_ad": [
+            "Mondrian.ad",
+            "windows98-2026-09-20/AFTERDRK/AD20/MONDRIAN.AD"
+          ],
+          "resident_name": "MONDRIAN",
+          "supported_profile": "Mondrian"
+        }
+      ],
+      "prior_runtime_evidence": {
+        "date": "2026-09-20",
+        "source": "docs/research/windows98-readiness-audit.json",
+        "category": "already_supported",
+        "first_failure": null,
+        "verified_profile_draws": 30
+      }
+    },
+    {
+      "id": "mountains",
+      "requested_name": "Mountains",
+      "name": "Mountains",
+      "aliases": [],
+      "runtime_status": "unimplemented",
+      "ocuvera_status": "not_integrated",
+      "note": "",
+      "artifacts": [
+        {
+          "role": "primary",
+          "sha256": "601D1799169530D319A625B40A18DFA7633B00E27518BB0B3DDDE02E1C44DC86",
+          "paths_relative_to_ad": [
+            "Mountains.ad",
+            "windows98-2026-09-20/AFTERDRK/AD20/MOUNTAIN.AD"
+          ],
+          "resident_name": "MOUNTAIN",
+          "supported_profile": null
+        }
+      ],
+      "prior_runtime_evidence": {
+        "date": "2026-09-20",
+        "source": "docs/research/windows98-readiness-audit.json",
+        "category": "os_fixup",
+        "first_failure": "S2:02E5: only non-additive internal/imported selector, offset16, and far16:16 relocations are implemented."
+      }
+    },
+    {
+      "id": "nocturnes",
+      "requested_name": "Nocturnes",
+      "name": "Nocturnes",
+      "aliases": [],
+      "runtime_status": "supported",
+      "ocuvera_status": "not_integrated",
+      "note": "Colored eye sprites.",
+      "artifacts": [
+        {
+          "role": "primary",
+          "sha256": "525AC95FAAB662835D497D3D491512BC2F24A7AA752C1CE014B413288E3036BF",
+          "paths_relative_to_ad": [
+            "Nocturnes.ad",
+            "windows98-2026-09-20/AFTERDRK/AD20/NOCTURNE.AD"
+          ],
+          "resident_name": "NOCTURNE",
+          "supported_profile": "Nocturnes"
+        }
+      ],
+      "prior_runtime_evidence": {
+        "date": "2026-09-20",
+        "source": "docs/research/windows98-readiness-audit.json",
+        "category": "already_supported",
+        "first_failure": null,
+        "verified_profile_draws": 30
+      }
+    },
+    {
+      "id": "penrose",
+      "requested_name": "Penrose",
+      "name": "Penrose",
+      "aliases": [],
+      "runtime_status": "unimplemented",
+      "ocuvera_status": "not_integrated",
+      "note": "",
+      "artifacts": [
+        {
+          "role": "primary",
+          "sha256": "42C32067DA430B3D4C68B99F196267173AE9E7571A4D8400CF06A2673799093A",
+          "paths_relative_to_ad": [
+            "Penrose.ad",
+            "windows98-2026-09-20/AFTERDRK/AD20/PENROSE.AD"
+          ],
+          "resident_name": "PENROSE",
+          "supported_profile": null
+        }
+      ],
+      "prior_runtime_evidence": {
+        "date": "2026-09-20",
+        "source": "docs/research/windows98-readiness-audit.json",
+        "category": "os_fixup",
+        "first_failure": "S2:0843: only non-additive internal/imported selector, offset16, and far16:16 relocations are implemented."
+      }
+    },
+    {
+      "id": "rainstorm",
+      "requested_name": "Rainstorm",
+      "name": "Rainstorm",
+      "aliases": [],
+      "runtime_status": "supported",
+      "ocuvera_status": "not_integrated",
+      "note": "Includes intermediate lightning presentation.",
+      "artifacts": [
+        {
+          "role": "primary",
+          "sha256": "41611FED9E314B2F4F1C0653D1A5B948E41E70E464293D2F6489691E4C8DF5C7",
+          "paths_relative_to_ad": [
+            "Rainstorm.ad",
+            "windows98-2026-09-20/AFTERDRK/AD20/RAINSTOR.AD"
+          ],
+          "resident_name": "RAINSTOR",
+          "supported_profile": "Rainstorm"
+        }
+      ],
+      "prior_runtime_evidence": {
+        "date": "2026-09-20",
+        "source": "docs/research/windows98-readiness-audit.json",
+        "category": "already_supported",
+        "first_failure": null,
+        "verified_profile_draws": 30
+      }
+    },
+    {
+      "id": "shapes",
+      "requested_name": "Shapes",
+      "name": "Shapes",
+      "aliases": [],
+      "runtime_status": "supported",
+      "ocuvera_status": "not_integrated",
+      "note": "Color profile; direct-RGB palette adaptation.",
+      "artifacts": [
+        {
+          "role": "primary",
+          "sha256": "16E51D41E4BA8E05EBF9ED5E4A59FDCFD32255634304E38DAC2BA93AE1C4C67C",
+          "paths_relative_to_ad": [
+            "Shapes.ad",
+            "windows98-2026-09-20/AFTERDRK/AD20/SHAPES.AD"
+          ],
+          "resident_name": "SHAPES",
+          "supported_profile": "Shapes"
+        }
+      ],
+      "prior_runtime_evidence": {
+        "date": "2026-09-20",
+        "source": "docs/research/windows98-readiness-audit.json",
+        "category": "already_supported",
+        "first_failure": null,
+        "verified_profile_draws": 30
+      }
+    },
+    {
+      "id": "spiral-gyra",
+      "requested_name": "Spyral Glyra",
+      "name": "Spiral Gyra",
+      "aliases": [
+        "Spyral Glyra"
+      ],
+      "runtime_status": "supported",
+      "ocuvera_status": "not_integrated",
+      "note": "Embedded title is Spiral Gyra; retain requested spelling as an alias.",
+      "artifacts": [
+        {
+          "role": "primary",
+          "sha256": "8098AC464BA204E81719828ECDDB9DC78058231EF105F8B512072C21E3167529",
+          "paths_relative_to_ad": [
+            "Spiral Gyra.ad",
+            "windows98-2026-09-20/AFTERDRK/AD20/SGYRA.AD"
+          ],
+          "resident_name": "SGYRA",
+          "supported_profile": "Spiral Gyra"
+        }
+      ],
+      "prior_runtime_evidence": {
+        "date": "2026-09-20",
+        "source": "docs/research/windows98-readiness-audit.json",
+        "category": "already_supported",
+        "first_failure": null,
+        "verified_profile_draws": 30
+      }
+    },
+    {
+      "id": "stained-glass",
+      "requested_name": "Stained Glass",
+      "name": "Stained Glass",
+      "aliases": [],
+      "runtime_status": "supported",
+      "ocuvera_status": "not_integrated",
+      "note": "Fixed tested color controls.",
+      "artifacts": [
+        {
+          "role": "primary",
+          "sha256": "694BDDF2C92E84A2171D3C3885CBBD2A02067D934B9C6F8CE6E298B40AB4096C",
+          "paths_relative_to_ad": [
+            "Stained Glass.ad",
+            "windows98-2026-09-20/AFTERDRK/AD20/STAINED.AD"
+          ],
+          "resident_name": "STAINED",
+          "supported_profile": "Stained Glass"
+        }
+      ],
+      "prior_runtime_evidence": {
+        "date": "2026-09-20",
+        "source": "docs/research/windows98-readiness-audit.json",
+        "category": "already_supported",
+        "first_failure": null,
+        "verified_profile_draws": 30
+      }
+    },
+    {
+      "id": "string-theory",
+      "requested_name": "String Theory",
+      "name": "String Theory",
+      "aliases": [],
+      "runtime_status": "supported",
+      "ocuvera_status": "not_integrated",
+      "note": "Three groups of 100 strings.",
+      "artifacts": [
+        {
+          "role": "primary",
+          "sha256": "76A6905FBA156A2B510EE645511B74EA7DECE650BAA62781941D4FE95B9B66B8",
+          "paths_relative_to_ad": [
+            "String Theory.ad",
+            "windows98-2026-09-20/AFTERDRK/AD20/STRING.AD"
+          ],
+          "resident_name": "STRING",
+          "supported_profile": "String Theory"
+        }
+      ],
+      "prior_runtime_evidence": {
+        "date": "2026-09-20",
+        "source": "docs/research/windows98-readiness-audit.json",
+        "category": "already_supported",
+        "first_failure": null,
+        "verified_profile_draws": 30
+      }
+    },
+    {
+      "id": "vertigo",
+      "requested_name": "Vertigo",
+      "name": "Vertigo",
+      "aliases": [],
+      "runtime_status": "unimplemented",
+      "ocuvera_status": "not_integrated",
+      "note": "",
+      "artifacts": [
+        {
+          "role": "primary",
+          "sha256": "E15A2A1F36B5411EE8D42668E478E45D53C7EE61B1668936EAEEB8A122928735",
+          "paths_relative_to_ad": [
+            "Vertigo.ad",
+            "windows98-2026-09-20/AFTERDRK/AD20/VERTIGO.AD"
+          ],
+          "resident_name": "VERTIGO",
+          "supported_profile": null
+        }
+      ],
+      "prior_runtime_evidence": {
+        "date": "2026-09-20",
+        "source": "docs/research/windows98-readiness-audit.json",
+        "category": "os_fixup",
+        "first_failure": "S2:0BB7: only non-additive internal/imported selector, offset16, and far16:16 relocations are implemented."
+      }
+    },
+    {
+      "id": "wrap-around",
+      "requested_name": "Wrap Around",
+      "name": "Wrap Around",
+      "aliases": [],
+      "runtime_status": "unimplemented",
+      "ocuvera_status": "not_integrated",
+      "note": "WARP.AD is a different screensaver; its successful probe does not establish Wrap Around support.",
+      "artifacts": [
+        {
+          "role": "primary",
+          "sha256": "5BE395E7C04CA464076380951F2B6784AA1F1E18575E62E2C71BB586DF9F1B7A",
+          "paths_relative_to_ad": [
+            "Wrap Around.ad",
+            "windows98-2026-09-20/AFTERDRK/AD20/WRAP.AD"
+          ],
+          "resident_name": "WRAP",
+          "supported_profile": null
+        }
+      ],
+      "prior_runtime_evidence": {
+        "date": "2026-09-20",
+        "source": "docs/research/windows98-readiness-audit.json",
+        "category": "os_fixup",
+        "first_failure": "S2:04BF: only non-additive internal/imported selector, offset16, and far16:16 relocations are implemented."
+      }
+    },
+    {
+      "id": "flying-toasters",
+      "requested_name": "Flying Toasters",
+      "name": "Flying Toasters",
+      "aliases": [],
+      "runtime_status": "unimplemented",
+      "ocuvera_status": "not_integrated",
+      "note": "Available artifact is Flying Toasters Pro (resident name TOASTPRO). Target this version; classic Flying Toasters is not separately identified.",
+      "artifacts": [
+        {
+          "role": "primary",
+          "sha256": "0CE730257CF360DF0023BCD2AA3120CA9AB93D788135DECA3F63060A71824FD9",
+          "paths_relative_to_ad": [
+            "windows98-2026-09-20/AFTERDRK/AD30/TOASTER3.AD"
+          ],
+          "resident_name": "TOASTPRO",
+          "supported_profile": null
+        }
+      ],
+      "prior_runtime_evidence": {
+        "date": "2026-09-20",
+        "source": "docs/research/windows98-readiness-audit.json",
+        "category": "additive_relocation",
+        "first_failure": "S1:028E: only non-additive internal/imported selector, offset16, and far16:16 relocations are implemented."
+      }
+    }
+  ]
+}

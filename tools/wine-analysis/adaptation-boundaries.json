@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "status": "Proposed inspection boundaries, not validated replacements or traversal exclusions",
+  "entries": [
+    {
+      "name": "MapSL",
+      "file": "dlls/krnl386.exe16/selector.c",
+      "disposition": "guest_memory_adapter",
+      "reason": "Wine selector translation must be connected to our checked guest memory, not copied as a host-pointer implementation."
+    },
+    {
+      "name": "MapLS",
+      "file": "dlls/krnl386.exe16/selector.c",
+      "disposition": "guest_memory_adapter",
+      "reason": "Exposing host data to a Win16 caller needs explicit guest-address and lifetime handling."
+    },
+    {
+      "name": "get_dc_ptr",
+      "file": "dlls/win32u/dc.c",
+      "disposition": "device_context_adapter",
+      "reason": "Inspect the required DC fields and lifetime assumptions against our host-owned context model."
+    },
+    {
+      "name": "release_dc_ptr",
+      "file": "dlls/win32u/dc.c",
+      "disposition": "device_context_adapter",
+      "reason": "Wine's acquisition/release contract belongs with the DC lookup adaptation."
+    },
+    {
+      "name": "get_dc_attr",
+      "file": "dlls/gdi32/dc.c",
+      "disposition": "device_context_adapter",
+      "reason": "Returned Wine attributes are not interchangeable with our C# context; inspect fields used by each caller."
+    },
+    {
+      "name": "stretch_bitmapinfo",
+      "file": "dlls/win32u/dibdrv/bitblt.c",
+      "disposition": "algorithm_candidate",
+      "reason": "Buffer-oriented scaling seam. Its indirect pixel-format helpers and state accesses remain part of the investigation."
+    },
+    {
+      "name": "calc_1d_stretch_params",
+      "file": "dlls/win32u/dibdrv/bitblt.c",
+      "disposition": "algorithm_candidate",
+      "reason": "Coordinate and sampling calculations are candidates for adaptation and independent conformance tests."
+    },
+    {
+      "name": "LocalAlloc16",
+      "file": "dlls/krnl386.exe16/local.c",
+      "disposition": "existing_partial_service",
+      "reason": "Our local heap covers a limited contract. Consult Wine for missing flags/behavior without assuming our implementation covers every caller."
+    },
+    {
+      "name": "GlobalAlloc16",
+      "file": "dlls/krnl386.exe16/global.c",
+      "disposition": "stateful_service_gap",
+      "reason": "Movable/global allocation semantics need to fit our segment and handle ownership; this is more than copying an allocator function."
+    }
+  ]
+}

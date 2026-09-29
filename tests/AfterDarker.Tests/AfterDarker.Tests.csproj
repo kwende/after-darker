@@ -53,6 +53,9 @@
   <ItemGroup Condition="'$(TestLocalShapes)' != 'true'">
     <Compile Remove="LocalShapes/**/*.cs" />
   </ItemGroup>
+  <ItemGroup Condition="'$(TestLocalSpheres)' != 'true'">
+    <Compile Remove="LocalSpheres/**/*.cs" />
+  </ItemGroup>
   <ItemGroup Condition="'$(TestLocalStainedGlass)' != 'true'">
     <Compile Remove="LocalStainedGlass/**/*.cs" />
   </ItemGroup>

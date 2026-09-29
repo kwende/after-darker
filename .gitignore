@@ -13,6 +13,7 @@ obj/
 artifacts/
 TestResults/
 coverage/
+__pycache__/
 
 # Local logs and scratch data
 *.log
