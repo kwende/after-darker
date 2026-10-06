@@ -40,29 +40,38 @@ public static class SupportedModules
     public const string RainstormSha256 = "41611FED9E314B2F4F1C0653D1A5B948E41E70E464293D2F6489691E4C8DF5C7";
     /// <summary>Exact Fade Away artifact verified with the Radar effect and a white initial image.</summary>
     public const string FadeAwaySha256 = "D224AF9A0EA75F3B4C24A837F9743B13851D3ACB03BE3607E0C9094DF6E28B21";
-    /// <summary>Identify a tested module revision by its bytes, rejecting unsupported input before loading.</summary>
-    public static string Identify(ReadOnlySpan<byte> file) => Convert.ToHexString(SHA256.HashData(file)) switch
+    /// <summary>Supported original revisions. Stable IDs distinguish these from native recreations.</summary>
+    public static IReadOnlyList<SupportedArtifact> Artifacts { get; } = Array.AsReadOnly(new SupportedArtifact[]
     {
-        MondrianInitialization.Sha256 => "Mondrian",
-        SpiralGyraSha256 => "Spiral Gyra",
-        RainstormSha256 => "Rainstorm",
-        FadeAwaySha256 => "Fade Away",
-        LasersSha256 => "Lasers",
-        MagicSha256 => "Magic",
-        StringTheorySha256 => "String Theory",
-        ZotSha256 => "Zot!",
-        HardRainSha256 => "Hard Rain",
-        ShapesSha256 => "Shapes",
-        SpheresSha256 => "Spheres",
-        StainedGlassSha256 => "Stained Glass",
-        GravitySha256 => "Gravity",
-        PuzzleSha256 => "Puzzle",
-        CanOfWormsSha256 => "Can of Worms",
-        GeoBounceSha256 => "GeoBounce",
-        NocturnesSha256 => "Nocturnes",
-        PunchOutSha256 => "Punch Out",
-        _ => throw new NotSupportedException("This AD file is not supported yet. Supported modules: the analyzed Mondrian, Spiral Gyra, Rainstorm, Fade Away, Lasers, Magic, String Theory, Zot!, Hard Rain, Shapes, Spheres, Stained Glass, Gravity, Can of Worms, GeoBounce, Nocturnes, Punch Out and Puzzle versions. File names alone do not identify a supported version.")
-    };
+        new("mondrian", "Mondrian", MondrianInitialization.Sha256),
+        new("spiral-gyra", "Spiral Gyra", SpiralGyraSha256),
+        new("rainstorm", "Rainstorm", RainstormSha256),
+        new("fade-away", "Fade Away", FadeAwaySha256),
+        new("lasers", "Lasers", LasersSha256),
+        new("magic", "Magic", MagicSha256),
+        new("string-theory", "String Theory", StringTheorySha256),
+        new("zot", "Zot!", ZotSha256),
+        new("hard-rain", "Hard Rain", HardRainSha256),
+        new("shapes", "Shapes", ShapesSha256),
+        new("spheres", "Spheres", SpheresSha256),
+        new("stained-glass", "Stained Glass", StainedGlassSha256),
+        new("gravity", "Gravity", GravitySha256),
+        new("puzzle", "Puzzle", PuzzleSha256),
+        new("can-of-worms", "Can of Worms", CanOfWormsSha256),
+        new("geobounce", "GeoBounce", GeoBounceSha256),
+        new("nocturnes", "Nocturnes", NocturnesSha256),
+        new("punch-out", "Punch Out", PunchOutSha256),
+    });
+
+    /// <summary>Look up an exact artifact hash without allocating or executing a guest.</summary>
+    public static SupportedArtifact? FindByHash(string sha256) =>
+        Artifacts.FirstOrDefault(artifact => string.Equals(artifact.Sha256, sha256, StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>Identify a tested revision by bytes; a filename is never evidence of compatibility.</summary>
+    public static string Identify(ReadOnlySpan<byte> file) =>
+        FindByHash(Convert.ToHexString(SHA256.HashData(file)))?.DisplayName
+        ?? throw new NotSupportedException($"This AD revision is not supported. Supported modules: {string.Join(", ", Artifacts.Select(artifact => artifact.DisplayName))}. File names alone do not identify a supported version.");
+
     /// <summary>Construct the selected profile and shared session without yet executing guest code.</summary>
     public static IAnimationSession Open(byte[] file, PlaybackOptions options, SessionTiming? timing = null,
         DiagnosticOptions? diagnostics = null, TextWriter? output = null) => Identify(file) switch
