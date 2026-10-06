@@ -15,7 +15,7 @@
   <ItemGroup>
     <ProjectReference Include="../AfterDarker.Core/AfterDarker.Core.csproj" />
     <PackageReference Include="UnicornEngine.Unicorn" Version="2.1.3" />
-    <None Include="$(UnicornNativePath)" Link="unicorn.dll" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="$(UnicornNativePath)" Link="unicorn.dll" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
   <!-- The existing pinned engine now belongs to the reusable execution layer.
        The native asset propagates to hosts; apphost CFG configuration stays with each executable. -->

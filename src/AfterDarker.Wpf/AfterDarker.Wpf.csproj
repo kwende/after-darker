@@ -13,7 +13,5 @@
   <ItemGroup>
     <ProjectReference Include="../AfterDarker.Runtime/AfterDarker.Runtime.csproj" />
   </ItemGroup>
-  <Target Name="ConfigureWpfAppHost" AfterTargets="Build" Condition="'$(DesignTimeBuild)' != 'true'">
-    <Exec Command="powershell.exe -NoProfile -ExecutionPolicy Bypass -File &quot;$(RepositoryRoot)tools\configure-tutorial-apphost.ps1&quot; -ExecutablePath &quot;$(TargetDir)$(AssemblyName).exe&quot;" />
-  </Target>
+  <Import Project="../../build/AfterDarker.UnicornAppHost.targets" />
 </Project>
