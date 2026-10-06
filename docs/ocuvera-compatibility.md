@@ -1,5 +1,25 @@
 # Hosting original AD modules in Ocuvera Toasters
 
+**October 4 implementation:** Both [publishing](localappdata-publishing.md) and
+[the original-module adapter](ocuvera-integration.md) are implemented. The installed
+Ocuvera `.scr` passed playback, native-scene rotation, restart and cleanup for all
+18 supported artifacts. Treat the assessment below as historical design context;
+the integration guide records current contracts and remaining proof gaps.
+
+**Current direction, updated October 4:** see the refreshed
+[single-entry integration plan](ocuvera-integration-plan.md), based on After
+Darker `a5683f2` and a fresh inspection of Ocuvera `db2e78e`. Use one **After Dark**
+catalog entry with internal selection of a supported original. Small Ocuvera
+interface changes are explicitly welcome. The owner prefers Visual Studio folder publishing to
+`%LOCALAPPDATA%\OcuveraToasters` on two owned machines with Visual Studio;
+complete Release output is also acceptable initially. Installers, NuGet delivery,
+public feeds and single-file `.scr` bundling are optional, not prerequisites.
+The implementation/deployment suggestions below are the earlier assessment;
+the new plan supersedes individual-entry and mandatory packaging recommendations.
+The lifecycle, resource-ownership and proof boundaries remain applicable.
+The owner has now fixed original AD playback to the primary monitor only;
+secondary displays use Ocuvera's existing blanking mode.
+
 Assessment date: 2026-09-20. Source snapshots: After Darker `ddd273c` (Shapes
 merged) and Ocuvera Toasters `db2e78e` (`stained glass`). Both working trees were
 clean on `main` when inspected. Ocuvera was inspected locally without changes.
@@ -35,8 +55,8 @@ flowchart TD
 Ocuvera owns which screensaver runs, for how long, where its windows appear and
 when user input ends the application. After Darker owns the guest machine,
 module lifecycle, Win16 behavior, drawing surface and guest pacing. A generic
-adapter connects those responsibilities. Each supported original module gets
-its own catalog entry, but uses the same adapter implementation.
+adapter connects those responsibilities. The September 29 design groups originals
+under one After Dark catalog entry, retaining each original's internal identity.
 
 The existing tutorial and standalone WPF player remain valuable consumers of
 the library. Neither should become an obligatory dependency of Ocuvera.
@@ -157,17 +177,17 @@ Ocuvera should discover a configured external module directory, validate files,
 and register available recognized modules. Missing files/unknown revisions need
 diagnostics without preventing its native collection from running. Use distinct
 identities such as `afterdark-shapes` / `Shapes (Original Win16)` alongside the
-existing native `shapes` entry. Register each module individually for selection
-and settings instead of hiding a second randomizer inside one AD entry.
+existing native `shapes` entry. These are internal original identities; the newer
+plan deliberately exposes one grouped After Dark entry with its own selection.
 
-The currently recognized artifacts cover Mondrian, Spiral Gyra, Rainstorm,
+At the initial assessment, recognized artifacts covered Mondrian, Spiral Gyra, Rainstorm,
 Fade Away, Lasers, Magic, String Theory, Zot!, Hard Rain and Shapes. Packaging
 does not add support for other modules or other revisions. Their current
 profile choices and limitations remain: for example, Fade Away runs Radar on
 white initial pixels and eventually stays black. Desktop capture and other
 styles are separate work; expose capability-specific controls only when proven.
 
-### 5. Preserve presentation and define monitor behavior
+### 5. Preserve presentation on the primary monitor
 
 Keep guest resolution separate from WPF viewport size. A fixed 640x480 guest
 is a useful first integration setting, scaled by the presenter with an explicit
@@ -182,19 +202,15 @@ loses those images. The existing worker publishes checkpoints and applies the
 documented short holds; the adapter should consume that stream. A latest-frame
 mailbox still cannot guarantee a stalled UI sees every transient image.
 
-Ocuvera supports independent, duplicated, virtual-desktop and primary-only
-monitor modes. Independent playback needs a separate session/clock/state per
-instance and measured concurrency/resource behavior. Its duplicate mode
-currently creates separate scenes with equal `Random` seeds; After Darker
-does not consume that `Random`. Guest seeds can come from emulated civil time,
-and the high-level worker currently hardcodes `SessionTiming.Live()`. Expose
-an intentional timing/seed policy rather than assuming independent sessions
-automatically produce different pictures or equal seeds guarantee live lockstep.
+The owner narrowed this scope on September 30: original AD modules run only on
+the primary monitor. Use Ocuvera's **PrimaryOnlyWithBlanking** mode, keeping one
+guest, one sequential worker and one mailbox consumer. Secondary displays stay
+black; Ocuvera's native scenes retain their own monitor policies.
 
-For truly identical mirrored output, one playback worker can feed multiple
-presenters through deliberate fan-out. Do not attach several consumers directly
-to `LatestFrameMailbox`: reading consumes the pending frame. Start acceptance
-with one display, then verify the chosen multi-monitor policy explicitly.
+The earlier independent/mirrored-display proposal is withdrawn. No frame fan-out,
+per-monitor guest instances or cross-monitor seed policy is required. Acceptance
+still checks correct primary placement and secondary blanking on a multi-display
+machine. Resize/DPI changes affect presentation, not guest memory dimensions.
 
 ## Delivery milestones and proof
 
@@ -219,7 +235,7 @@ module collection is completed.
 3. **Collection readiness:** discover all available supported originals; verify
    selection/settings, repeated rotation, missing/invalid files, initialization
    and playback failures, cancellation during startup/drawing, lightning
-   presentation, and the selected monitor/seed policy. Soak-test CPU, memory and
+   presentation, primary placement and secondary blanking. Soak-test CPU, memory and
    handles over many rotations, then repeat in the final published artifact.
 
 Public tests should use generated/source-owned fixtures and fake playback

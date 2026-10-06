@@ -1,0 +1,14 @@
+<Project>
+  <!-- Explicit host opt-in. Referencing Runtime alone never patches a consumer executable. -->
+  <PropertyGroup>
+    <AfterDarkerAppHostScript>$(MSBuildThisFileDirectory)..\tools\configure-unicorn-apphost.ps1</AfterDarkerAppHostScript>
+  </PropertyGroup>
+  <Target Name="ConfigureUnicornBuildAppHost" AfterTargets="Build"
+          Condition="'$(DesignTimeBuild)' != 'true' and '$(UseAppHost)' == 'true'">
+    <Exec Command="powershell.exe -NoProfile -ExecutionPolicy Bypass -File &quot;$(AfterDarkerAppHostScript)&quot; -ExecutablePath &quot;$(TargetDir)$(AssemblyName).exe&quot; -OutputDirectory &quot;$(TargetDir).&quot; -ExecutableName &quot;$(AssemblyName).exe&quot;" />
+  </Target>
+  <Target Name="ConfigureUnicornPublishAppHost" AfterTargets="Publish"
+          Condition="'$(DesignTimeBuild)' != 'true' and '$(UseAppHost)' == 'true'">
+    <Exec Command="powershell.exe -NoProfile -ExecutionPolicy Bypass -File &quot;$(AfterDarkerAppHostScript)&quot; -ExecutablePath &quot;$(PublishDir)$(AssemblyName).exe&quot; -OutputDirectory &quot;$(PublishDir).&quot; -ExecutableName &quot;$(AssemblyName).exe&quot;" />
+  </Target>
+</Project>

@@ -6,12 +6,13 @@
   "scope": "26 selected original screensavers, followed by integration into the Ocuvera Toasters collection. Additional screensavers are optional after this milestone.",
   "version_policy": "One identified and verified version per selection is sufficient; preserve alternatives without requiring every revision.",
   "completion_policy": "Supported original-code color playback with documented options and adaptations, bounded lifecycle/cleanup and tests, then packaged Ocuvera integration. Native recreations and WineVDM playback alone do not count.",
-  "audit_proof": "September 27 artifact/registry audit refreshed September 28 after Spheres production playback, six local tests and WPF smoke verification. Other runtime evidence remains dated separately; Ocuvera integration is pending.",
-  "supported_registry_sha256": "f60523196aeacca59a0aa3ae87f6e0064ce07a57d7f1b7c1c1ff0d93c1f86951",
+  "audit_proof": "September 27 artifact/registry audit refreshed September 28 after Spheres production playback, six local tests and WPF smoke verification. Other runtime evidence remains dated separately; October 4 installed Ocuvera short playback/rotation/cleanup passed for all 14 supported selections; second-machine, physical multi-monitor and soak proof remain.",
+  "supported_registry_sha256": "61f214fba22a46d3a82fece6fd26b549d4f1ea171cf0603827ce2484d5389d17",
   "counts": {
     "identity_investigation": 1,
     "unimplemented": 11,
-    "supported": 14
+    "supported": 14,
+    "ocuvera_locally_verified": 14
   },
   "entries": [
     {
@@ -68,7 +69,7 @@
       "name": "Spheres",
       "aliases": [],
       "runtime_status": "supported",
-      "ocuvera_status": "not_integrated",
+      "ocuvera_status": "locally_verified",
       "note": "Fixed color profile: controls 55/5/100/1, square pixels and explicit PRIMARY_PAL direct-RGB adaptation. 3401 draws verify 100 spheres, periodic clear and continuation; WPF lifecycle verified.",
       "artifacts": [
         {
@@ -92,6 +93,11 @@
         "source": "docs/research/spheres-execution.md",
         "category": "production_supported",
         "verification": "359 tests passed (353 public + 6 local Spheres); WPF playback/readback, stop/restart, switch to Shapes, and close while playing passed."
+      },
+      "ocuvera_evidence": {
+        "date": "2026-10-04",
+        "source": "docs/ocuvera-integration.md",
+        "scope": "Installed x64 SCR: original -> Whitney -> original -> awaited stop; short playback only."
       }
     },
     {
@@ -190,7 +196,7 @@
       "name": "Fade Away",
       "aliases": [],
       "runtime_status": "supported",
-      "ocuvera_status": "not_integrated",
+      "ocuvera_status": "locally_verified",
       "note": "Radar effect on a white starting image; other styles are not claimed.",
       "artifacts": [
         {
@@ -210,6 +216,11 @@
         "category": "already_supported",
         "first_failure": null,
         "verified_profile_draws": 30
+      },
+      "ocuvera_evidence": {
+        "date": "2026-10-04",
+        "source": "docs/ocuvera-integration.md",
+        "scope": "Installed x64 SCR: original -> Whitney -> original -> awaited stop; short playback only."
       }
     },
     {
@@ -220,7 +231,7 @@
         "Geo Bounce"
       ],
       "runtime_status": "supported",
-      "ocuvera_status": "not_integrated",
+      "ocuvera_status": "locally_verified",
       "note": "Fixed shaded tetrahedron profile.",
       "artifacts": [
         {
@@ -240,6 +251,11 @@
         "category": "already_supported",
         "first_failure": null,
         "verified_profile_draws": 30
+      },
+      "ocuvera_evidence": {
+        "date": "2026-10-04",
+        "source": "docs/ocuvera-integration.md",
+        "scope": "Installed x64 SCR: original -> Whitney -> original -> awaited stop; short playback only."
       }
     },
     {
@@ -275,7 +291,7 @@
       "name": "Gravity",
       "aliases": [],
       "runtime_status": "supported",
-      "ocuvera_status": "not_integrated",
+      "ocuvera_status": "locally_verified",
       "note": "Four colored balls; silent playback.",
       "artifacts": [
         {
@@ -295,6 +311,11 @@
         "category": "already_supported",
         "first_failure": null,
         "verified_profile_draws": 30
+      },
+      "ocuvera_evidence": {
+        "date": "2026-10-04",
+        "source": "docs/ocuvera-integration.md",
+        "scope": "Installed x64 SCR: original -> Whitney -> original -> awaited stop; short playback only."
       }
     },
     {
@@ -303,7 +324,7 @@
       "name": "Hard Rain",
       "aliases": [],
       "runtime_status": "supported",
-      "ocuvera_status": "not_integrated",
+      "ocuvera_status": "locally_verified",
       "note": "Five-drop profile; distinct from Rainstorm.",
       "artifacts": [
         {
@@ -323,6 +344,11 @@
         "category": "already_supported",
         "first_failure": null,
         "verified_profile_draws": 30
+      },
+      "ocuvera_evidence": {
+        "date": "2026-10-04",
+        "source": "docs/ocuvera-integration.md",
+        "scope": "Installed x64 SCR: original -> Whitney -> original -> awaited stop; short playback only."
       }
     },
     {
@@ -331,7 +357,7 @@
       "name": "Lasers",
       "aliases": [],
       "runtime_status": "supported",
-      "ocuvera_status": "not_integrated",
+      "ocuvera_status": "locally_verified",
       "note": "Three-ray profile.",
       "artifacts": [
         {
@@ -351,6 +377,11 @@
         "category": "already_supported",
         "first_failure": null,
         "verified_profile_draws": 30
+      },
+      "ocuvera_evidence": {
+        "date": "2026-10-04",
+        "source": "docs/ocuvera-integration.md",
+        "scope": "Installed x64 SCR: original -> Whitney -> original -> awaited stop; short playback only."
       }
     },
     {
@@ -359,7 +390,7 @@
       "name": "Magic",
       "aliases": [],
       "runtime_status": "supported",
-      "ocuvera_status": "not_integrated",
+      "ocuvera_status": "locally_verified",
       "note": "100-line trail and horizontal mirroring.",
       "artifacts": [
         {
@@ -379,6 +410,11 @@
         "category": "already_supported",
         "first_failure": null,
         "verified_profile_draws": 30
+      },
+      "ocuvera_evidence": {
+        "date": "2026-10-04",
+        "source": "docs/ocuvera-integration.md",
+        "scope": "Installed x64 SCR: original -> Whitney -> original -> awaited stop; short playback only."
       }
     },
     {
@@ -416,7 +452,7 @@
         "Mondrias"
       ],
       "runtime_status": "supported",
-      "ocuvera_status": "not_integrated",
+      "ocuvera_status": "locally_verified",
       "note": "Requested spelling normalized to the original module and existing profile.",
       "artifacts": [
         {
@@ -436,6 +472,11 @@
         "category": "already_supported",
         "first_failure": null,
         "verified_profile_draws": 30
+      },
+      "ocuvera_evidence": {
+        "date": "2026-10-04",
+        "source": "docs/ocuvera-integration.md",
+        "scope": "Installed x64 SCR: original -> Whitney -> original -> awaited stop; short playback only."
       }
     },
     {
@@ -471,7 +512,7 @@
       "name": "Nocturnes",
       "aliases": [],
       "runtime_status": "supported",
-      "ocuvera_status": "not_integrated",
+      "ocuvera_status": "locally_verified",
       "note": "Colored eye sprites.",
       "artifacts": [
         {
@@ -491,6 +532,11 @@
         "category": "already_supported",
         "first_failure": null,
         "verified_profile_draws": 30
+      },
+      "ocuvera_evidence": {
+        "date": "2026-10-04",
+        "source": "docs/ocuvera-integration.md",
+        "scope": "Installed x64 SCR: original -> Whitney -> original -> awaited stop; short playback only."
       }
     },
     {
@@ -526,7 +572,7 @@
       "name": "Rainstorm",
       "aliases": [],
       "runtime_status": "supported",
-      "ocuvera_status": "not_integrated",
+      "ocuvera_status": "locally_verified",
       "note": "Includes intermediate lightning presentation.",
       "artifacts": [
         {
@@ -546,6 +592,11 @@
         "category": "already_supported",
         "first_failure": null,
         "verified_profile_draws": 30
+      },
+      "ocuvera_evidence": {
+        "date": "2026-10-04",
+        "source": "docs/ocuvera-integration.md",
+        "scope": "Installed x64 SCR: original -> Whitney -> original -> awaited stop; short playback only."
       }
     },
     {
@@ -554,7 +605,7 @@
       "name": "Shapes",
       "aliases": [],
       "runtime_status": "supported",
-      "ocuvera_status": "not_integrated",
+      "ocuvera_status": "locally_verified",
       "note": "Color profile; direct-RGB palette adaptation.",
       "artifacts": [
         {
@@ -574,6 +625,11 @@
         "category": "already_supported",
         "first_failure": null,
         "verified_profile_draws": 30
+      },
+      "ocuvera_evidence": {
+        "date": "2026-10-04",
+        "source": "docs/ocuvera-integration.md",
+        "scope": "Installed x64 SCR: original -> Whitney -> original -> awaited stop; short playback only."
       }
     },
     {
@@ -584,7 +640,7 @@
         "Spyral Glyra"
       ],
       "runtime_status": "supported",
-      "ocuvera_status": "not_integrated",
+      "ocuvera_status": "locally_verified",
       "note": "Embedded title is Spiral Gyra; retain requested spelling as an alias.",
       "artifacts": [
         {
@@ -604,6 +660,11 @@
         "category": "already_supported",
         "first_failure": null,
         "verified_profile_draws": 30
+      },
+      "ocuvera_evidence": {
+        "date": "2026-10-04",
+        "source": "docs/ocuvera-integration.md",
+        "scope": "Installed x64 SCR: original -> Whitney -> original -> awaited stop; short playback only."
       }
     },
     {
@@ -612,7 +673,7 @@
       "name": "Stained Glass",
       "aliases": [],
       "runtime_status": "supported",
-      "ocuvera_status": "not_integrated",
+      "ocuvera_status": "locally_verified",
       "note": "Fixed tested color controls.",
       "artifacts": [
         {
@@ -632,6 +693,11 @@
         "category": "already_supported",
         "first_failure": null,
         "verified_profile_draws": 30
+      },
+      "ocuvera_evidence": {
+        "date": "2026-10-04",
+        "source": "docs/ocuvera-integration.md",
+        "scope": "Installed x64 SCR: original -> Whitney -> original -> awaited stop; short playback only."
       }
     },
     {
@@ -640,7 +706,7 @@
       "name": "String Theory",
       "aliases": [],
       "runtime_status": "supported",
-      "ocuvera_status": "not_integrated",
+      "ocuvera_status": "locally_verified",
       "note": "Three groups of 100 strings.",
       "artifacts": [
         {
@@ -660,6 +726,11 @@
         "category": "already_supported",
         "first_failure": null,
         "verified_profile_draws": 30
+      },
+      "ocuvera_evidence": {
+        "date": "2026-10-04",
+        "source": "docs/ocuvera-integration.md",
+        "scope": "Installed x64 SCR: original -> Whitney -> original -> awaited stop; short playback only."
       }
     },
     {
@@ -742,5 +813,6 @@
         "first_failure": "S1:028E: only non-additive internal/imported selector, offset16, and far16:16 relocations are implemented."
       }
     }
-  ]
+  ],
+  "integration_audit_date": "2026-10-04"
 }

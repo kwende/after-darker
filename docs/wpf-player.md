@@ -259,3 +259,10 @@ and unavailable audio. A generated color pattern supplies visible content to
 scramble. The normal hand rolled renderer is the only playback path; the native
 experiment menu/flag/profiles were removed. See [Puzzle](research/puzzle-execution.md)
 and [why the native spike was retired](research/native-gdi-spike-decision.md).
+
+## Publish the standalone player
+
+The **LocalAppData** Visual Studio profile publishes the complete app to
+`%LOCALAPPDATA%\AfterDarker`. Its host configuration runs after both Build and
+Publish. Use absolute module paths outside the developer checkout; inputs are
+not bundled. See [the shared publishing guide](localappdata-publishing.md).
