@@ -1,8 +1,88 @@
 # Current Status
 
-Last updated: 2026-09-28
+## October 5: Marbles effort assessment
+
+A fresh single-file probe confirms the selected original still stops in loading,
+before any guest execution. Coverage is 25 implemented / 67 unimplemented distinct
+imports, including 49 unresolved AD_RSRC ordinals. Static inspection narrowed the
+first blocker to four zero-addend selector fixups, but also identified 964 floating-
+point OS fixups, WIN87EM's register ABI, and missing global allocation. We have the
+small original resource helper; sample exports include simple accessors as well as
+internal helper calls. Counts alone do not establish the required visual path.
+See [the bounded assessment and rough effort range](research/marbles-readiness.md).
+No production code or module support changed. The recommended next checkpoint is
+loader/FPU conformance followed by an initialization trace, before a broad helper port.
+
+
+## October 4: original modules integrated into Ocuvera
+
+The owner authorized consumer integration following the LocalAppData deployment
+proof. One After Dark entry now discovers external files by the runtime catalog's
+hashes, selects originals internally, presents copied frames, and awaits guest
+shutdown through Ocuvera rotation/input/window exit. Native scenes inherit an
+immediately completed StopAsync. No new Win16 API was required.
+
+The installed `.scr` passed original -> Whitney -> original -> repeated stop for
+all **18 supported artifacts**, including visible intermediate-image delivery for
+Rainstorm and Zot!. Cleanup assertions found no retained locks or owned guest
+resources. **357 After Darker tests and 6 Ocuvera tests passed**. This is bounded
+local integration evidence, not a long soak, second-machine or physical multi-
+monitor verification. See [the implementation and setup guide](ocuvera-integration.md).
+Earlier deployment-only notes below describe the preceding increment.
+
+
+Last updated: 2026-10-04
 
 ## Project phase
+
+**LocalAppData publishing configured and verified (October 4).** Both executable
+projects now have Release/win-x64/framework-dependent Visual Studio profiles:
+AfterDarker.Wpf publishes to `%LOCALAPPDATA%\AfterDarker`, Ocuvera to
+`%LOCALAPPDATA%\OcuveraToasters`. Ocuvera references Runtime/Core and receives
+managed/native Unicorn dependencies. Explicit host-imported build targets apply
+and verify the CFG workaround before Ocuvera copies `.exe` to `.scr`; the two
+published files were byte-identical. No system policy or screensaver selection
+was changed. See [the publish guide](localappdata-publishing.md).
+
+The installed `.scr` passed source-owned 16-bit addition with hook stop/resume
+from another working directory (AX=12, x64). The published WPF player passed
+Spheres readback, stop/restart and clean shutdown. All **354 public tests passed**.
+Shell association launching replaced diagnostic arguments with `/S`; the new
+verification helper uses direct process creation. Visual Studio profile targets
+were exercised by CLI, not the VS UI; the second machine remains untested.
+This delivers build/publish configuration only. The actual Ocuvera After Dark
+scene and awaitable rotation/exit adapter remain pending; no Win16 surface grew.
+
+**Deployment simplified (October 4).** The owner prefers a Visual Studio folder-
+publish profile targeting `%LOCALAPPDATA%\OcuveraToasters` on two owned machines,
+both with Visual Studio. Complete Release output is acceptable for the first
+working integration. Plan Release/win-x64/framework-dependent output with the
+matching .NET Windows Desktop runtime, automatic CFG configuration and `.scr`
+copy, and external AD files/settings. No installer or clean-machine deployment
+proof is required. The consumer profile is now implemented as recorded above;
+the scene/lifetime integration is still pending.
+
+**Primary-monitor-only scope (September 30).** The owner confirmed that original
+AD screensavers will only run on the main monitor. The integration plan now
+uses Ocuvera's PrimaryOnlyWithBlanking mode as the permanent playback boundary:
+one guest, one worker and one mailbox consumer, with secondary displays black.
+Mirrored playback, per-monitor guests, frame fan-out and cross-monitor seed
+coordination are removed from the planned work. Verify primary-display placement
+and secondary blanking; implementation and deployment remain pending.
+
+**Ocuvera integration scoped, not implemented (September 29).** Fresh source
+inspection found After Darker `a5683f2` and Ocuvera `db2e78e` clean on main.
+The [current plan](ocuvera-integration-plan.md) uses one After Dark scene entry
+that randomly selects a supported original, the existing background worker and
+RGB24 frames, plus awaitable stop propagated through Ocuvera rotation/exit.
+The owner explicitly welcomes small consumer-interface changes and a complete
+installation folder deployed by PowerShell to a few owned machines. NuGet and
+single-file bundling are optional. Existing embedded-resource loading carries
+over; generalized external helper loading is not introduced by packaging.
+The first unresolved proof is Unicorn/apphost behavior from a folder-published
+Ocuvera-style `.scr`, followed by real rotation and shutdown. No Ocuvera source,
+runtime implementation, package or installation was changed in this assessment.
+The 26-selection scope below remains unchanged; this is integration planning.
 
 **Milestone 1 is now the fixed v1 target:** [26 owner-selected screensavers](milestones/milestone-1.md),
 then integration into Ocuvera Toasters. Following Spheres production verification

@@ -55,6 +55,16 @@ Set **AfterDarker.Wpf** as the startup project and press F5. It finds your local
 them while running. See the [WPF player guide](docs/wpf-player.md)
 for controls, command-line launch and the original-code execution boundary.
 
+To install the player under your user account, use the **LocalAppData** Visual
+Studio publish profile. See [publishing and the Ocuvera native-engine check](docs/localappdata-publishing.md).
+
+## Ocuvera Toasters integration
+
+The Ocuvera collection now includes **After Dark (original modules)**. Configure
+an external AD folder once; Ocuvera chooses this entry alongside its native scenes,
+then chooses a supported original internally. All 18 current profiles passed local
+installed-host playback/rotation checks. See [setup, ownership and proof boundaries](docs/ocuvera-integration.md).
+
 ## Status
 
 The repository now runs eighteen original modules in a live WPF window.

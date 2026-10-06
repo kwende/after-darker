@@ -32,8 +32,9 @@ by integration into Ocuvera Toasters. Treat
 for selection and progress. Older readiness lists are research, not additional
 release requirements. More screensavers are optional after this milestone.
 
-- Finish selected original-code profiles before undertaking consumer integration;
-  preserve the Ocuvera compatibility requirements while doing so.
+- The owner authorized integration of the currently supported subset on October 4.
+  Continue the remaining selected originals without expanding the 26-module scope;
+  preserve the shared consumer contract while doing so.
 - One verified version per selection is sufficient; retain distinct versions
   and identify the supported bytes by hash. Record aliases and target changes.
 - Distinguish production support, diagnostic success, identity investigation
@@ -120,8 +121,17 @@ snapshot, proposed work and acceptance checks.
 
 - Keep `AfterDarker.Core` and `AfterDarker.Runtime` usable without our WPF
   executable, console runner or developer checkout. Ocuvera should consume the
-  runtime through a package and a small scene adapter; it should not duplicate
+  runtime through a library reference and a small scene adapter; it should not duplicate
   the NE loader, Win16 services or module profiles.
+- The September 29 integration scope uses one **After Dark** collection entry
+  selecting an available supported original internally. Preserve per-original
+  identities for diagnostics; individual outer catalog entries are optional.
+  The owner prefers a Visual Studio folder-publish profile targeting
+  `%LOCALAPPDATA%\OcuveraToasters` on two owned machines with Visual Studio
+  (October 4). Complete Release output is acceptable for the first proof.
+  Keep deployment minimal: an installer and clean-machine support are not required. Project references are acceptable for the first
+  consumer; NuGet publication and single-file `.scr` bundling must not block it.
+  See [the implemented integration](docs/ocuvera-integration.md) and [original plan](docs/ocuvera-integration-plan.md).
 - The owner controls both projects and explicitly permits evolving Ocuvera's
   interfaces. Prefer a clear shared lifecycle over awkward workarounds for its
   current synchronous scene contract. Existing native scenes can complete new
@@ -133,16 +143,18 @@ snapshot, proposed work and acceptance checks.
 - Transfer copied pixels and typed metadata across the presentation boundary.
   WPF objects belong to the UI thread. Preserve intermediate images needed by
   Rainstorm/Zot!, bounded buffering, and explicit guest-resolution/scaling rules.
-  Account for multiple monitors and session-local clocks/state; a consuming
-  mailbox is not a multi-window broadcast mechanism.
+  Original AD playback is primary-monitor-only (owner decision, September 30),
+  using Ocuvera's PrimaryOnlyWithBlanking mode for secondary displays. Keep one
+  guest, worker and mailbox consumer. Do not add mirrored playback, frame fan-out,
+  per-monitor guests or cross-monitor seed coordination for this integration.
 - Give originals stable identities distinct from native recreations. Discover
   user-supplied files through supported artifact identities, not filenames alone.
   Packages must not contain proprietary AD files or require the local `/ad/`
   folder. Adding a supported profile should not require another renderer in
   Ocuvera. The color-playback policy applies to both hosts.
 - Keep native dependency delivery and executable requirements inspectable.
-  Initial compatibility targets Windows x64/.NET 10, including Ocuvera's
-  single-file `.scr` publication. Our current Unicorn/CFG apphost workaround is
+  Initial compatibility targets Windows x64/.NET 10 with a complete folder
+  installation; single-file `.scr` publication is optional. Our current Unicorn/CFG apphost workaround is
   a consumer integration concern; never silently patch arbitrary executables,
   the shared .NET host or system policy from a package.
 - When changing public contracts, timing, presentation, lifecycle or deployment,

@@ -7,8 +7,8 @@ decision, not a commitment to support every After Dark release through 1999.
 
 The deliverable is these **26 original screensavers running in After Darker and
 integrated into the Ocuvera Toasters collection**, alongside its existing scenes.
-Finish the chosen modules first, then do the consumer integration. Keep that
-integration requirement in view while evolving the runtime.
+The owner authorized integration of the already supported subset on October 4;
+the remaining original modules still retain their existing scope.
 
 ## Current position
 
@@ -21,8 +21,10 @@ As of the September 28 Spheres production verification and refreshed registry au
   work required.
 - **1 identity/execution investigation:** Starry Night. The original host plays
   it according to the owner, but no standalone module was found in our collection.
-- **Ocuvera integration remains pending for all 26.** Production-player support
-  is not milestone completion.
+- **14 selected originals locally integrated in Ocuvera**, as of October 4.
+  Installed-host short playback, rotation and cleanup passed. Second-machine,
+  physical multi-monitor and longer soak validation remain; 12 selections still
+  lack runtime support. See [integration evidence](../ocuvera-integration.md).
 
 The repository has **18 supported modules in total**. Can of Worms, Punch Out,
 Puzzle and Zot! are already supported but are outside this selected list. Keep
@@ -118,7 +120,8 @@ For each selected screensaver:
 Then complete the [Ocuvera integration acceptance work](../ocuvera-compatibility.md):
 package consumption, stable original-module identities, user-supplied file
 discovery, selection/rotation alongside native scenes, copied frame delivery,
-bounded execution and awaited shutdown, multi-monitor behavior, and the published
+bounded execution and awaited shutdown, primary-only playback with secondary
+display blanking, and the published
 Windows x64 `.scr`/native-dependency path. Integration needs its own evidence;
 it does not follow automatically from WPF playback.
 

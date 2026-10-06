@@ -231,3 +231,25 @@ and shutdown. See [testing](testing.md) for the default and opt-in commands.
 
 Paths above are relative to their corresponding projects under `src/` or `tests/`.
 See [Puzzle](research/puzzle-execution.md) and [the archived native decision](research/native-gdi-spike-decision.md).
+
+## Application deployment and native-engine diagnostics
+
+- `build/AfterDarker.UnicornAppHost.targets`: executable-host opt-in to CFG
+  configuration for build/publish; a Runtime reference alone does not opt in.
+- `tools/configure-unicorn-apphost.ps1`: scoped editbin call and final PE flag check.
+- `src/AfterDarker.Runtime/Diagnostics/NativeRuntimeDiagnostics.cs`: source-owned
+  16-bit execution plus hook stop/resume inside the consuming process.
+- [LocalAppData publishing](localappdata-publishing.md): both Visual Studio
+  profiles, Ocuvera `.scr` ordering and installed-process acceptance.
+
+## Ocuvera consumer boundary
+
+- `SupportedModules.Artifacts` / `SupportedArtifact`: canonical original identities.
+- `AfterDarkLibrary`: bounded off-thread discovery, deduplication, load-time hash validation.
+- `AfterDarkPlayer`: one worker/mailbox with observable completion and awaited stop.
+- In Ocuvera, `Modules/AfterDark/AfterDarkModule.cs` owns the original shuffled bag;
+  `AfterDarkScene.cs` owns the UI bitmap and player lifetime.
+- Ocuvera's `ScreensaverSceneHost`, `ScreensaverWindowManager` and `ScreensaverManager`
+  propagate awaitable shutdown from input/rotation to the worker before disposing UI.
+
+See [the integration guide](ocuvera-integration.md) for the complete ownership flow.
